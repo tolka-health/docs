@@ -1,0 +1,161 @@
+#!/usr/bin/env bash
+#
+# Pre-commit hook: PHI / PII / Business IP guard
+# Scans staged file content for patterns that must never be committed.
+# Mirrors CI checks in .github/workflows/ci.yml but runs locally for fast feedback.
+
+set -euo pipefail
+
+RED='\033[0;31m'
+YELLOW='\033[0;33m'
+GREEN='\033[0;32m'
+BOLD='\033[1m'
+NC='\033[0m'
+
+FAILED=0
+
+# Get staged files (added/modified only, not deleted)
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null || true)
+
+if [ -z "$STAGED_FILES" ]; then
+  exit 0
+fi
+
+# Helper: scan staged file content (what will actually be committed) for a pattern
+# Only scans added lines (+ prefix) in the diff to avoid matching removed content
+scan_staged() {
+  local pattern="$1"
+  local label="$2"
+  local include_glob="${3:-}"
+  local exclude_glob="${4:-}"
+
+  for file in $STAGED_FILES; do
+    # Always skip the hook itself (it contains the patterns it checks for)
+    case "$file" in
+      .hooks/*) continue ;;
+    esac
+
+    # Apply include filter
+    if [ -n "$include_glob" ]; then
+      case "$file" in
+        $include_glob) ;; # matches
+        *) continue ;;
+      esac
+    fi
+
+    # Apply exclude filter
+    if [ -n "$exclude_glob" ]; then
+      case "$file" in
+        $exclude_glob) continue ;; # skip
+        *) ;;
+      esac
+    fi
+
+    [ -f "$file" ] || continue
+
+    # Only check ADDED lines (lines starting with +, excluding the +++ header)
+    if git diff --cached -- "$file" | grep '^+' | grep -v '^+++' | grep -iE "$pattern" > /dev/null 2>&1; then
+      echo -e "  ${RED}BLOCKED${NC} [$label] in ${BOLD}$file${NC}"
+      # Show the matching line for context
+      git diff --cached -- "$file" | grep '^+' | grep -v '^+++' | grep -iE "$pattern" | head -3 | while read -r line; do
+        echo -e "           ${line:0:120}"
+      done
+      FAILED=1
+    fi
+  done
+}
+
+echo -e "${BOLD}Running PHI / PII / IP pre-commit checks...${NC}"
+echo ""
+
+# ─────────────────────────────────────────────
+# 1. PHI patterns (realistic patient scenarios)
+#    Only in content/component files, NOT in CI workflows (which define these patterns)
+# ─────────────────────────────────────────────
+echo -e "  ${YELLOW}Checking${NC} PHI patterns in content..."
+
+CONTENT="src/*"
+EXCLUDE_CI=".github/*"
+
+scan_staged "patient reports"       "PHI" "$CONTENT" ""
+scan_staged "history of presenting" "PHI" "$CONTENT" ""
+scan_staged "chief complaint"       "PHI" "$CONTENT" ""
+scan_staged "pasient rapporterer"   "PHI" "$CONTENT" ""
+scan_staged "presenting complaint"  "PHI" "$CONTENT" ""
+scan_staged "[0-9]{1,2}.year.old.*(male|female|man|woman|boy|girl)" "PHI" "$CONTENT" ""
+
+# ─────────────────────────────────────────────
+# 2. PII patterns
+# ─────────────────────────────────────────────
+echo -e "  ${YELLOW}Checking${NC} PII patterns..."
+
+# Fødselsnummer (11-digit Norwegian national ID) — in any file
+scan_staged '\b[0-9]{11}\b' "PII: possible fødselsnummer" "$CONTENT" ""
+# European date format DD.MM.YYYY — in content files
+scan_staged '[0-9]{2}\.[0-9]{2}\.[0-9]{4}' "PII: date pattern" "$CONTENT" ""
+
+# ─────────────────────────────────────────────
+# 3. Real API keys / secrets in content files
+# ─────────────────────────────────────────────
+echo -e "  ${YELLOW}Checking${NC} API keys & secrets..."
+
+# Production keys — anywhere
+scan_staged 'sk_live_[a-zA-Z0-9]' "SECRET: production API key"
+# Private keys — anywhere
+scan_staged '-----BEGIN (RSA |EC )?PRIVATE KEY' "SECRET: private key"
+# .env file content patterns
+scan_staged '^[A-Z_]+=.{20,}' "SECRET: possible env var with value" "*.env*" ""
+
+# ─────────────────────────────────────────────
+# 4. Business IP (scoring internals, algorithm details)
+#    Only in content/component files
+# ─────────────────────────────────────────────
+echo -e "  ${YELLOW}Checking${NC} business IP leakage..."
+
+scan_staged 'tokenOverlap'            "IP: scoring function name"      "$CONTENT" ""
+scan_staged 'embeddingSimilarity'      "IP: scoring function name"      "$CONTENT" ""
+scan_staged 'keywordPreservation'      "IP: scoring function name"      "$CONTENT" ""
+scan_staged 'promptSuffix'             "IP: prompt engineering detail"   "$CONTENT" ""
+scan_staged 'domain-rules\.ts'         "IP: internal file reference"    "$CONTENT" ""
+scan_staged 'prompt-templates\.ts'     "IP: internal file reference"    "$CONTENT" ""
+scan_staged 'evaluator\.ts'            "IP: internal file reference"    "$CONTENT" ""
+scan_staged 'token-overlap\.ts'        "IP: internal file reference"    "$CONTENT" ""
+scan_staged 'tolka-forward-v'          "IP: model architecture name"    "$CONTENT" ""
+
+# ─────────────────────────────────────────────
+# 5. Production URL in OpenAPI spec (spec must be sandbox-only)
+# ─────────────────────────────────────────────
+echo -e "  ${YELLOW}Checking${NC} production URLs in OpenAPI spec..."
+
+scan_staged 'api\.tolka\.health' "IP: production URL in public spec" "public/openapi/*" ""
+
+# ─────────────────────────────────────────────
+# 6. Confidence threshold calibration values
+# ─────────────────────────────────────────────
+echo -e "  ${YELLOW}Checking${NC} confidence threshold leakage..."
+
+scan_staged 'confidence.{0,20}(0\.72|0\.85|0\.65)' "IP: confidence calibration value" "$CONTENT" ""
+scan_staged 'baseline.{0,20}(0\.72|0\.85)'          "IP: baseline calibration value"   "$CONTENT" ""
+scan_staged 'threshold.{0,20}(0\.60|0\.75|0\.90)'   "IP: threshold boundary value"     "$CONTENT" ""
+
+# ─────────────────────────────────────────────
+# 7. Local filesystem paths
+# ─────────────────────────────────────────────
+echo -e "  ${YELLOW}Checking${NC} local filesystem paths..."
+
+scan_staged '/Users/[a-zA-Z]' "PATH: absolute local path"
+scan_staged 'MedBridge'        "IP: internal project name"
+
+# ─────────────────────────────────────────────
+# Result
+# ─────────────────────────────────────────────
+echo ""
+if [ $FAILED -eq 1 ]; then
+  echo -e "${RED}${BOLD}Commit blocked.${NC} Fix the issues above before committing."
+  echo -e "See CONTRIBUTING.md 'Privacy & IP protection rules' for details."
+  echo -e "To bypass (${RED}not recommended${NC}): git commit --no-verify"
+  exit 1
+else
+  echo -e "${GREEN}${BOLD}All checks passed.${NC}"
+  exit 0
+fi

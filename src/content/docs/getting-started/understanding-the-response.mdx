@@ -1,0 +1,119 @@
+---
+title: Understanding the Response
+description: A field-by-field walkthrough of the Tolka API response — what each value means for your UI and for the clinician.
+sidebar:
+  order: 2
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import ApiResponse from '../../../components/ApiResponse.astro';
+
+Every call to `/v1/medical/translate` or `/v1/medical/safe-translate` returns the same response envelope. Here is a full example with every field populated:
+
+```json
+{
+  "translation": "Do you have chest pain?",
+  "back_translation": "Har du brystsmerter?",
+  "confidence": 0.91,
+  "risk": "low",
+  "flags": [],
+  "verified": true,
+  "metadata": {
+    "domain": "emergency",
+    "source_lang": "nb",
+    "target_lang": "en",
+    "model": "tolka-v1",
+    "request_id": "req_01HX4K2MN7VPTJ8X9ZQR3W5YB6"
+  }
+}
+```
+
+---
+
+## `translation` — string
+
+The translated text in the target language. This is the value to display to the end user.
+
+:::caution[For high-risk translations]
+When `risk` is `high` or `critical`, your UI **must** present a clinician acknowledgment step before displaying the translation to the patient. See [Handling Refusals](/guides/handling-refusals/).
+:::
+
+---
+
+## `back_translation` — string
+
+An independent retranslation from the target language back to the source language. This is **not** round-tripped from `translation` — it is generated independently to catch meaning drift.
+
+**How to use it in your UI:**
+- You can optionally display `back_translation` alongside `translation` so the clinician can visually compare.
+- A back-translation that differs significantly from the original is reflected in a lower `confidence` score and may trigger `flags`.
+
+---
+
+## `confidence` — float (0.0–1.0)
+
+A quality score combining three independent verification signals. A higher score means the translation is more likely to faithfully preserve clinical meaning.
+
+Higher scores indicate greater fidelity to the original clinical meaning. However, **use `risk` as your primary UI signal** — it already accounts for language-pair differences and maps directly to recommended clinical actions.
+
+:::note[Low-resource languages]
+For language pairs with limited training data (e.g., Somali→English), confidence baselines are adjusted to reflect data coverage differences. Use `risk` — not raw `confidence` — as your UI decision signal. It already normalises for language-pair variation.
+:::
+
+---
+
+## `risk` — enum
+
+The clinical risk level of this translation. This is the **primary field** your UI should act on.
+
+| Value | Meaning | Recommended action |
+|-------|---------|-------------------|
+| `"low"` | Translation is highly reliable | Display normally |
+| `"medium"` | Translation may have minor ambiguity | Show a subtle caution indicator |
+| `"high"` | Meaningful difference detected between source and back-translation | Require clinician acknowledgment before displaying to patient |
+| `"critical"` | An automatic safety rule fired | Block display; require clinician to review original text |
+
+:::danger[Critical risk]
+A `"critical"` risk level means a deterministic safety rule fired — for example, a negation was flipped or a dosage number changed. Always block display and require clinician review.
+:::
+
+---
+
+## `flags` — array of strings
+
+Zero or more safety flags explaining why `risk` is elevated. An empty array `[]` with `risk: "low"` means no issues were detected.
+
+| Flag | Triggered when |
+|------|---------------|
+| `"negation_flip"` | A negation present in the source was absent in the translation, or vice versa (e.g., "no pain" → "pain") |
+| `"numerical_change"` | A number in the source changed in the translation (dosages, frequencies, ages) |
+| `"keyword_mismatch"` | A clinically significant medical term in the source is absent from the translation |
+
+Multiple flags can be present simultaneously.
+
+---
+
+## `verified` — boolean
+
+`true` if back-translation verification completed successfully. `false` if the verification step could not be completed — in this case `confidence` may be lower and you should treat the translation with caution regardless of `risk`.
+
+---
+
+## `metadata` — object
+
+| Field | Description |
+|-------|-------------|
+| `domain` | The clinical domain used for this translation (echoes your request) |
+| `source_lang` | BCP 47 language code of the source text |
+| `target_lang` | BCP 47 language code of the translation |
+| `model` | Tolka model version identifier (use this for debugging and regression tracking) |
+| `request_id` | Unique request identifier. Include this in support tickets. |
+
+---
+
+## What's next
+
+- [Set up authentication →](/getting-started/authentication/)
+- [Learn about risk levels in depth →](/concepts/confidence-and-risk/)
+- [Learn how confidence is computed →](/concepts/translation-pipeline/)
+

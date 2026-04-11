@@ -1,0 +1,55 @@
+---
+/**
+ * ApiResponse.astro
+ * Displays an annotated API JSON response with inline callouts.
+ * Props:
+ *   - json: the JSON object to display
+ *   - annotations: Record<string, string> — field path -> explanation
+ */
+interface Props {
+  json: Record<string, unknown>;
+  title?: string;
+}
+const { json, title = 'Example response' } = Astro.props;
+const formatted = JSON.stringify(json, null, 2);
+---
+
+<figure class="api-response">
+  {title && <figcaption class="api-response__title">{title}</figcaption>}
+  <pre class="api-response__code"><code set:html={formatted.replace(
+    /"([^"]+)":\s*("[^"]*"|[\d.]+|true|false|null|\[.*?\])/g,
+    (match, key) => `<span class="field" data-field="${key}">${match}</span>`
+  )}></code></pre>
+</figure>
+
+<style>
+  .api-response {
+    margin: 1.25rem 0;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    border: 1px solid var(--sl-color-gray-3);
+  }
+
+  .api-response__title {
+    padding: 0.5rem 1rem;
+    background: var(--sl-color-gray-2);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--sl-color-gray-5);
+    border-bottom: 1px solid var(--sl-color-gray-3);
+    font-style: normal;
+  }
+
+  .api-response__code {
+    margin: 0;
+    padding: 1rem 1.25rem;
+    font-size: 0.8125rem;
+    overflow-x: auto;
+    background: var(--sl-color-gray-1);
+  }
+
+  .field {
+    position: relative;
+  }
+</style>
+

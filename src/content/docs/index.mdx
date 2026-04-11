@@ -1,0 +1,93 @@
+---
+title: Tolka Developer Documentation
+description: Medical translation API for healthcare providers. Zero PHI storage, EU-only deployment, back-translation verified.
+template: splash
+hero:
+  tagline: The medical translation API built for healthcare. Translate without storing. Understand without risk.
+  image:
+    file: ../../assets/tolka-logo.svg
+  actions:
+    - text: Quickstart — 5 minutes
+      link: /getting-started/quickstart/
+      icon: right-arrow
+      variant: primary
+    - text: Interactive API Reference
+      link: /api-reference/
+      variant: secondary
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+<div class="code-teaser">
+  <div class="code-teaser-label">Make your first call</div>
+  <pre class="code-teaser-pre">{`curl https://sandbox.tolka-api.fly.dev/v1/translate \\
+  -H "Authorization: Bearer sk_sandbox_public_tolka_eval2026" \\
+  -d '{"text":"Har du smerter?","source":"nb","target":"en","domain":"gp"}'`}</pre>
+  <div class="code-teaser-response">
+    <span class="resp-arrow">→</span>
+    <span class="resp-body">{`{"translation":"Do you have pain?","confidence":0.97,"verified":true}`}</span>
+  </div>
+</div>
+
+## Start here
+
+<div class="card-grid">
+  <a href="/getting-started/quickstart/">
+    <div class="card-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m3.75 13.5 10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z" /></svg></div>
+    <div class="card-body">
+      <div class="card-title">Quickstart</div>
+      <div class="card-desc">Translate your first medical text in 5 minutes using the sandbox key — no sign-up required.</div>
+    </div>
+
+  </a>
+  <a href="/api-reference/">
+    <div class="card-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75 22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3-4.5 16.5" /></svg></div>
+    <div class="card-body">
+      <div class="card-title">API Reference</div>
+      <div class="card-desc">Interactive OpenAPI explorer with try-it-out. Pre-populated with synthetic examples.</div>
+    </div>
+
+  </a>
+  <a href="/sdks/web/installation/">
+    <div class="card-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m21 7.5-9-5.25L3 7.5m18 0-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" /></svg></div>
+    <div class="card-body">
+      <div class="card-title">Web SDK</div>
+      <div class="card-desc">Drop-in <code>&lt;tolka-translate&gt;</code> web component and <code>TolkaClient</code> for JavaScript/TypeScript.</div>
+    </div>
+
+  </a>
+  <a href="/concepts/translation-pipeline/">
+    <div class="card-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 0 1-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 0 1 4.5 0m0 0v5.714a2.25 2.25 0 0 0 .659 1.591L19 14.5M14.25 3.104c.251.023.501.05.75.082M19 14.5l-1.47 4.898a2.25 2.25 0 0 1-2.155 1.602H8.625a2.25 2.25 0 0 1-2.154-1.602L5 14.5m14 0H5" /></svg></div>
+    <div class="card-body">
+      <div class="card-title">How It Works</div>
+      <div class="card-desc">The 5-step pipeline: forward translation → back-translation → safety verification → enriched response.</div>
+    </div>
+
+  </a>
+</div>
+
+## Explore by topic
+
+<CardGrid>
+  <Card title="Getting Started" icon="rocket">
+    [Quickstart](/getting-started/quickstart/) · [Authentication](/getting-started/authentication/) · [Rate Limits](/getting-started/rate-limits/) · [Going to Production](/getting-started/going-to-production/)
+  </Card>
+  <Card title="Concepts" icon="open-book">
+    [Translation Pipeline](/concepts/translation-pipeline/) · [Confidence & Risk](/concepts/confidence-and-risk/) · [Clinical Domains](/concepts/clinical-domains/) · [Privacy Architecture](/concepts/privacy-architecture/)
+  </Card>
+  <Card title="Guides" icon="document">
+    [First Integration](/guides/first-integration/) · [Migrate from Google Translate](/guides/migrating-from-google-translate/) · [Emergency Department](/guides/emergency-department/) · [Handling Refusals](/guides/handling-refusals/)
+  </Card>
+  <Card title="Compliance" icon="shield">
+    [Privacy Architecture](/concepts/privacy-architecture/) · [Compliance & Trust](/about/compliance/) · [Support & SLAs](/about/support/)
+  </Card>
+</CardGrid>
+
+<div class="trust-strip">
+  <span>Zero PHI storage</span>
+  <span>EU-only deployment</span>
+  <span>Back-translation verified</span>
+  <span>GDPR compliant</span>
+  <span>550+ tests</span>
+</div>
+

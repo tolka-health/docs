@@ -1,0 +1,48 @@
+---
+title: Android SDK
+description: Tolka Android SDK for Kotlin and Jetpack Compose — coming soon.
+sidebar:
+  order: 1
+  label: Android (Coming Soon)
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+<Aside type="note" title="Coming soon">
+  The Tolka Android SDK is under development. Target availability: Q3 2026.
+
+  [Join the early access list →](https://tolka.health/contact)
+</Aside>
+
+The Android SDK will provide:
+
+- **`TolkaClient` for Kotlin** — coroutine-native, typed API client
+- **Jetpack Compose components** — `TolkaTranslate` and `TolkaVoice` composables
+- **Offline mode** — Emergency domain support with on-device inference for zero-connectivity environments (Emergency plan only)
+- **Biometric auth** — Integration with Android BiometricPrompt for key storage
+
+---
+
+## Planned API surface
+
+```kotlin
+// Planned — not yet available
+val tolka = TolkaClient(apiKey = BuildConfig.TOLKA_API_KEY)
+
+val result = tolka.translate(
+    text = "Har du smerter i brystet?",
+    sourceLang = "nb",
+    targetLang = "en",
+    domain = TolkaDomain.EMERGENCY,
+)
+
+println(result.translation) // "Do you have chest pain?"
+println(result.risk)        // Risk.LOW
+```
+
+---
+
+## Get notified
+
+Register your interest at [tolka.health/contact](https://tolka.health/contact) to be notified when the Android SDK enters beta.
+

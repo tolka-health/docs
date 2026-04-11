@@ -1,0 +1,111 @@
+name: Sync OpenAPI spec from tolka
+
+# Triggered by an automated workflow from the core API repo on tagged releases.
+
+on:
+  repository_dispatch:
+    types: [openapi-spec-update]
+
+jobs:
+  sync-spec:
+    name: Validate and sync OpenAPI spec
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Decode and write spec
+        run: |
+          echo "${{ github.event.client_payload.spec_content }}" | base64 -d > /tmp/tolka-v1-new.yaml
+          echo "Received spec for version ${{ github.event.client_payload.version }}"
+
+      - name: PHI content lint (REQUIRED — blocks sync on failure)
+        run: |
+          SPEC=/tmp/tolka-v1-new.yaml
+          FAILED=0
+
+          # Reject example values longer than 80 characters (likely realistic patient text)
+          if python3 -c "
+          import yaml, sys
+          with open('$SPEC') as f:
+              spec = yaml.safe_load(f)
+          def check(obj, path=''):
+              if isinstance(obj, dict):
+                  for k, v in obj.items():
+                      check(v, f'{path}.{k}')
+              elif isinstance(obj, list):
+                  for i, v in enumerate(obj):
+                      check(v, f'{path}[{i}]')
+              elif isinstance(obj, str) and len(obj) > 80:
+                  if path.endswith('.example') or 'example' in path.lower():
+                      print(f'Long example at {path}: {repr(obj[:100])}')
+                      sys.exit(1)
+          check(spec)
+          "; then
+            echo "Long example check passed"
+          else
+            echo "::error::Example value exceeds 80 characters — potential PHI"
+            FAILED=1
+          fi
+
+          # Reject common PHI patterns
+          PHI_PATTERNS=("patient reports" "history of" "chief complaint" "pasient rapporterer")
+          for pattern in "${PHI_PATTERNS[@]}"; do
+            if grep -i "$pattern" "$SPEC"; then
+              echo "::error::PHI pattern '$pattern' found in spec"
+              FAILED=1
+            fi
+          done
+
+          # Reject Norwegian national ID patterns (11 digits)
+          if grep -E '\b[0-9]{11}\b' "$SPEC"; then
+            echo "::error::Potential fødselsnummer (11-digit number) found in spec"
+            FAILED=1
+          fi
+
+          if [ $FAILED -eq 1 ]; then
+            echo "::error::PHI lint failed — spec sync blocked"
+            exit 1
+          fi
+          echo "PHI lint passed — safe to sync"
+
+      - name: Validate OpenAPI spec
+        run: |
+          pnpm dlx @redocly/cli lint /tmp/tolka-v1-new.yaml
+
+      - name: Verify sandbox URL only (no production URL)
+        run: |
+          if grep -i "tolka-api.fly.dev" /tmp/tolka-v1-new.yaml | grep -v "sandbox"; then
+            echo "::error::Non-sandbox server URL detected in spec. Only sandbox.tolka-api.fly.dev should appear in the public spec."
+            exit 1
+          fi
+          echo "Server URL check passed"
+
+      - name: Copy spec to docs repo
+        run: |
+          cp /tmp/tolka-v1-new.yaml public/openapi/tolka-v1.yaml
+
+      - name: Create pull request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore: sync OpenAPI spec v${{ github.event.client_payload.version }}"
+          branch: openapi-sync/v${{ github.event.client_payload.version }}
+          title: "chore: sync OpenAPI spec v${{ github.event.client_payload.version }}"
+          body: |
+            Automated sync of `public/openapi/tolka-v1.yaml` from the `tolka` repo.
+
+            **Version:** `${{ github.event.client_payload.version }}`
+
+            **Checks passed:**
+            - PHI content lint
+            - OpenAPI spec validation (Redocly)
+            - Sandbox-only server URL verification
+
+            Review the diff carefully before merging — spec changes affect the interactive API reference.
+          labels: openapi-sync,automated
+

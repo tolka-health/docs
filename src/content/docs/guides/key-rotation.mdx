@@ -1,0 +1,150 @@
+---
+title: Key Rotation
+description: Zero-downtime API key rotation procedure — how to replace a Tolka API key without dropping requests.
+sidebar:
+  order: 7
+---
+
+import { Steps, Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+
+Rotate your Tolka API key regularly (recommended: every 90 days) and immediately if a key is suspected to be compromised. The rotate endpoint provides a brief overlap window so running services are never interrupted.
+
+---
+
+## How rotation works
+
+1. You call `POST /v1/admin/keys/:id/rotate`
+2. Tolka generates a new key secret
+3. **Both the old and new key are valid for 5 minutes** (the overlap window)
+4. After 5 minutes, the old key is automatically revoked
+5. During the overlap, deploy your new key secret to all services
+
+:::danger[Store the new secret immediately]
+The new secret is returned once in the rotation response and never shown again. Store it in your secret manager immediately before doing anything else.
+:::
+
+---
+
+## Step-by-step procedure
+
+<Steps>
+1. **Identify the key to rotate**
+
+   ```bash
+   curl https://api.tolka.health/v1/admin/keys \
+     -H "Authorization: Bearer $TOLKA_API_KEY"
+   # Note the key id: "key_01HX..."
+   ```
+
+2. **Rotate the key and capture the new secret**
+
+   <Tabs>
+   <TabItem label="cURL">
+   ```bash
+   NEW_SECRET=$(curl -s -X POST https://api.tolka.health/v1/admin/keys/key_01HX.../rotate \
+     -H "Authorization: Bearer $TOLKA_API_KEY" | jq -r '.secret')
+
+   echo "New secret: $NEW_SECRET"
+   # Store this immediately — do not let the shell session close without saving it
+   ```
+   </TabItem>
+   <TabItem label="TypeScript">
+   ```typescript
+   const rotated = await tolka.admin.keys.rotate('key_01HX...');
+   // rotated.secret — store in your secret manager NOW
+   await secretManager.update('TOLKA_API_KEY', rotated.secret);
+   ```
+   </TabItem>
+   </Tabs>
+
+3. **Deploy the new secret to all services**
+
+   You have **5 minutes** from the rotation call. Update every environment that uses this key:
+
+   ```bash
+   # Example: AWS Systems Manager Parameter Store
+   aws ssm put-parameter \
+     --name "/prod/tolka/api-key" \
+     --value "$NEW_SECRET" \
+     --type "SecureString" \
+     --overwrite
+
+   # Trigger rolling restart of services using the key
+   kubectl rollout restart deployment/your-api-service
+   ```
+
+4. **Verify the new key works**
+
+   ```bash
+   curl -X POST https://api.tolka.health/v1/medical/translate \
+     -H "Authorization: Bearer $NEW_SECRET" \
+     -H "Content-Type: application/json" \
+     -d '{"text":"test","source_lang":"nb","target_lang":"en","domain":"gp"}'
+   # Should return 200
+   ```
+
+5. **Confirm old key is revoked after overlap**
+
+   After 5 minutes, the old key should return `401 EXPIRED_API_KEY`:
+
+   ```bash
+   curl https://api.tolka.health/v1/admin/keys \
+     -H "Authorization: Bearer $OLD_SECRET"
+   # Should return 401
+   ```
+
+</Steps>
+
+---
+
+## Automated rotation (recommended)
+
+Set up automated rotation on a 90-day schedule using a CI/CD pipeline or cron job:
+
+```yaml
+# GitHub Actions example — runs quarterly
+name: Rotate Tolka API key
+on:
+  schedule:
+    - cron: '0 2 1 */3 *'  # 02:00 on the 1st of every 3rd month
+
+jobs:
+  rotate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Rotate key
+        run: |
+          NEW_SECRET=$(curl -s -X POST \
+            "https://api.tolka.health/v1/admin/keys/${{ vars.TOLKA_KEY_ID }}/rotate" \
+            -H "Authorization: Bearer ${{ secrets.TOLKA_API_KEY }}" | jq -r '.secret')
+          echo "::add-mask::$NEW_SECRET"
+          # Update your secret store here
+```
+
+---
+
+## Emergency rotation (key compromise)
+
+If a key is suspected to be compromised, revoke it immediately — do not use the rotation overlap:
+
+```bash
+curl -X DELETE https://api.tolka.health/v1/admin/keys/key_01HX... \
+  -H "Authorization: Bearer $TOLKA_ADMIN_KEY"
+```
+
+Then create a new key:
+
+```bash
+curl -X POST https://api.tolka.health/v1/admin/keys \
+  -H "Authorization: Bearer $TOLKA_ADMIN_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Emergency replacement key", "type": "live"}'
+```
+
+---
+
+## What's next
+
+- [Admin Keys API reference →](/api-reference/admin-keys/)
+- [Authentication overview →](/getting-started/authentication/)
+

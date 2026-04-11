@@ -1,0 +1,103 @@
+---
+title: Web Components
+description: The <tolka-translate> and <tolka-voice> drop-in web components — attributes, events, and slots.
+sidebar:
+  order: 3
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+The Web SDK ships two custom elements you can drop into any HTML without a build step.
+
+---
+
+## `<tolka-translate>`
+
+A complete translation UI: text input, language selector, translated output, and a confidence/risk indicator.
+
+```html
+<tolka-translate
+  api-key="sk_test_..."
+  source-lang="nb"
+  target-lang="en"
+  domain="gp"
+  safe-mode="true">
+</tolka-translate>
+```
+
+### Attributes
+
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `api-key` | string | — | Required. Your Tolka API key. |
+| `source-lang` | string | — | Required. BCP 47 source language. |
+| `target-lang` | string | — | Required. BCP 47 target language. |
+| `domain` | string | `"gp"` | Clinical domain. |
+| `safe-mode` | boolean | `false` | When `true`, uses `/safe-translate` and withholds the output on high/critical risk. |
+| `session-token` | string | — | Active session token from `TolkaClient.sessions.create()`. |
+| `locale` | string | `"en"` | UI locale for labels (see [Localization](/sdks/web/localization/)). |
+| `placeholder` | string | — | Placeholder text for the input area. |
+
+### Events
+
+| Event | Detail | Description |
+|-------|--------|-------------|
+| `tolka:translated` | `{ translation, confidence, risk, flags, verified }` | Fired on each successful translation |
+| `tolka:withheld` | `{ flags, risk }` | Fired when safe mode withholds a translation |
+| `tolka:error` | `{ code, message, requestId }` | Fired on API error |
+
+```javascript
+document.querySelector('tolka-translate').addEventListener('tolka:translated', (e) => {
+  console.log(e.detail.translation);
+  console.log(e.detail.risk);
+});
+```
+
+### Slots
+
+| Slot | Description |
+|------|-------------|
+| `disclaimer` | Override the default PHI disclaimer text shown above the input |
+| `withheld-message` | Custom message shown when a translation is withheld (safe mode) |
+
+---
+
+## `<tolka-voice>`
+
+Voice input variant — records audio, transcribes, and translates. Requires microphone permission.
+
+```html
+<tolka-voice
+  api-key="sk_test_..."
+  source-lang="so"
+  target-lang="nb"
+  domain="emergency"
+  safe-mode="true">
+</tolka-voice>
+```
+
+### Additional attributes (beyond `<tolka-translate>`)
+
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `max-seconds` | number | `60` | Maximum recording duration |
+| `auto-submit` | boolean | `false` | Automatically submit for translation when recording stops |
+
+### Events (additional)
+
+| Event | Detail | Description |
+|-------|--------|-------------|
+| `tolka:recording-start` | — | Microphone recording started |
+| `tolka:recording-stop` | `{ transcript }` | Recording stopped; transcript is the raw transcription before translation |
+
+:::caution[Microphone permission]
+The `<tolka-voice>` component will prompt the browser for microphone access. Users in clinical settings may have browser permission policies that block this. Always provide a text input fallback (`<tolka-translate>`) in the same UI.
+:::
+
+---
+
+## What's next
+
+- [Styling — CSS custom properties and ::part() selectors →](/sdks/web/styling/)
+- [Localization →](/sdks/web/localization/)
+

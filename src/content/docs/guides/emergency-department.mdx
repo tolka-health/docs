@@ -1,0 +1,101 @@
+---
+title: Emergency Department
+description: Integrating Tolka into emergency department workflows — domain config, safe mode, voice input, and speed requirements.
+sidebar:
+  order: 3
+---
+
+import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+
+Emergency department translation has unique requirements: speed is critical, translations must be clinically precise, and incorrect translations can directly harm patients. This guide covers the recommended configuration for ED settings.
+
+---
+
+## Domain configuration
+
+Always use `domain: "emergency"` for ED contexts. This domain:
+- Prioritises **unambiguous clinical phrasing** over conversational register
+- Renders anatomical terms explicitly (e.g., "bryst" → "chest", not "breast" in ambiguous contexts)
+- Uses short, directive sentence structure
+
+---
+
+## Recommended setup: safe mode + voice
+
+```typescript
+import { TolkaClient } from '@tolka/web-sdk';
+
+const tolka = new TolkaClient({ apiKey: process.env.TOLKA_API_KEY! });
+
+async function translateEmergency(text: string, sourceLang: string) {
+  const result = await tolka.safeTranslate({
+    text,
+    sourceLang,
+    targetLang: 'nb', // or 'en' depending on your setup
+    domain: 'emergency',
+  });
+
+  if (result.withheld) {
+    // In ED: alert immediately and escalate to professional interpreter
+    triggerInterpreterAlert({
+      reason: result.flags,
+      urgency: 'immediate',
+      patientLang: sourceLang,
+    });
+    return null;
+  }
+
+  return result;
+}
+```
+
+---
+
+## Web component for ED triage
+
+```html
+<tolka-voice
+  api-key="sk_live_..."
+  source-lang="so"
+  target-lang="nb"
+  domain="emergency"
+  safe-mode="true"
+  auto-submit="true"
+  max-seconds="30"
+  locale="so">
+</tolka-voice>
+```
+
+`auto-submit="true"` triggers translation immediately when recording stops — critical for rapid triage.
+
+:::caution[Always provide text fallback]
+Microphone access may be blocked on hospital network policies. Always co-locate `<tolka-voice>` with `<tolka-translate>` as a fallback.
+:::
+
+---
+
+## Latency expectations
+
+The `emergency` domain is optimised for speed. Check [status.tolka.health](https://status.tolka.health) for current latency percentiles.
+
+All response times include full safety verification. If `verified: false` is returned, verification could not be completed — the forward translation is still available but treat with additional caution.
+
+---
+
+## Escalation path
+
+When Tolka withholds a translation or returns `risk: "critical"`:
+
+1. Display a clear alert to clinical staff — not a generic error
+2. Trigger your interpreter request workflow immediately
+3. Log the `metadata.request_id` and `flags` for the patient record
+4. Do **not** retry automatically — re-translating the same text will produce the same safety result
+
+---
+
+## What's next
+
+- [Handling Refusals — full fallback UI patterns →](/guides/handling-refusals/)
+- [Safe Mode concept →](/concepts/safe-mode/)
+- [Clinical Domains →](/concepts/clinical-domains/)
+

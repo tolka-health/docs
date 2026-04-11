@@ -1,0 +1,142 @@
+---
+title: TolkaClient
+description: The TolkaClient JavaScript/TypeScript API client — translate, safeTranslate, createSession, and admin methods.
+sidebar:
+  order: 2
+---
+
+import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+
+`TolkaClient` is the primary programmatic interface to the Tolka API. It wraps every HTTP endpoint with typed methods and handles retries, error parsing, and session management.
+
+---
+
+## Initialisation
+
+```typescript
+import { TolkaClient } from '@tolka/web-sdk';
+
+const tolka = new TolkaClient({
+  apiKey: process.env.TOLKA_API_KEY!,
+  // Optional overrides:
+  baseUrl: 'https://api.tolka.health', // default
+  timeout: 10_000,                      // ms, default 10s
+  maxRetries: 2,                        // on 5xx only, default 2
+});
+```
+
+---
+
+## `tolka.translate(params)`
+
+```typescript
+const result = await tolka.translate({
+  text: 'Har du hodepine?',
+  sourceLang: 'nb',
+  targetLang: 'en',
+  domain: 'gp',
+  // sessionToken: session.token, // optional
+});
+
+result.translation      // string
+result.backTranslation  // string
+result.confidence       // number (0–1)
+result.risk             // 'low' | 'medium' | 'high' | 'critical'
+result.flags            // string[]
+result.verified         // boolean
+result.metadata         // { domain, sourceLang, targetLang, model, requestId }
+```
+
+---
+
+## `tolka.safeTranslate(params)`
+
+Same signature as `translate`. When the translation is withheld:
+
+```typescript
+const result = await tolka.safeTranslate({ text, sourceLang, targetLang, domain });
+
+if (result.withheld) {
+  // result.translation === null
+  console.warn('Withheld due to:', result.flags);
+}
+```
+
+---
+
+## `tolka.sessions.create(params)`
+
+```typescript
+const session = await tolka.sessions.create({
+  domain: 'gp',
+  sourceLang: 'ar',
+  targetLang: 'nb',
+  ttlMinutes: 45, // optional, default 60
+});
+
+session.token     // "stk_enc_..."
+session.expiresAt // ISO 8601 string
+session.sessionId // opaque ID for logging
+```
+
+---
+
+## `tolka.admin.keys.*`
+
+```typescript
+// List keys
+const { keys } = await tolka.admin.keys.list();
+
+// Create a key
+const key = await tolka.admin.keys.create({ name: 'CI key', type: 'test' });
+// key.secret — only available at creation. Store it immediately.
+
+// Rotate a key
+const rotated = await tolka.admin.keys.rotate('key_01HX...');
+
+// Revoke a key
+await tolka.admin.keys.revoke('key_01HX...');
+```
+
+---
+
+## `tolka.admin.usage.query(params)`
+
+```typescript
+const usage = await tolka.admin.usage.query({
+  from: '2026-04-01',
+  to: '2026-04-11',
+  granularity: 'day',
+});
+```
+
+---
+
+## Error handling
+
+All methods throw `TolkaApiError` on API errors:
+
+```typescript
+import { TolkaClient, TolkaApiError } from '@tolka/web-sdk';
+
+try {
+  const result = await tolka.translate({ ... });
+} catch (err) {
+  if (err instanceof TolkaApiError) {
+    console.error(err.code);       // 'RATE_LIMIT_EXCEEDED'
+    console.error(err.message);    // human-readable
+    console.error(err.requestId);  // for support tickets
+    console.error(err.retryAfter); // number | undefined
+  }
+}
+```
+
+See [Error Handling](/sdks/web/error-handling/) for full retry patterns.
+
+---
+
+## What's next
+
+- [Web Components →](/sdks/web/web-components/)
+- [Error Handling →](/sdks/web/error-handling/)
+

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 32" fill="none">
+  <path d="M12 6C8.686 6 6 8.686 6 12v8c0 3.314 2.686 6 6 6h8c3.314 0 6-2.686 6-6v-8c0-3.314-2.686-6-6-6h-8z" fill="#0D9488"/>
+  <path d="M14 13h4M16 11v6" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+  <text x="34" y="22" font-family="Inter, system-ui, sans-serif" font-size="16" font-weight="600" fill="currentColor">tolka</text>
+  <text x="83" y="22" font-family="Inter, system-ui, sans-serif" font-size="10" font-weight="400" fill="#6B7280">docs</text>
+</svg>
+

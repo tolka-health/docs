@@ -1,0 +1,119 @@
+---
+title: Authentication
+description: API keys for the Tolka API — sandbox, test, and production key lifecycle. How to create, rotate, and revoke keys.
+sidebar:
+  order: 3
+---
+
+import { Tabs, TabItem, Aside, Steps } from '@astrojs/starlight/components';
+
+The Tolka API uses **Bearer token** authentication. Pass your API key in the `Authorization` header on every request.
+
+```http
+Authorization: Bearer sk_test_your_key_here
+```
+
+---
+
+## Key types
+
+| Prefix | Name | Rate limit | Use case |
+|--------|------|------------|----------|
+| `sk_sandbox_public_...` | Shared sandbox | 10 req/min · 50 req/day per IP | Evaluate the API with no sign-up. Shared across all evaluators. |
+| `sk_test_...` | Personal test key | 60 req/min (Starter tier) | Development and integration testing. Full response fidelity. |
+| `sk_live_...` | Production key | Per-plan limit | Production deployments only. |
+
+:::danger[Never commit keys to source control]
+Always load keys from environment variables. Use `.env` files locally and your CI/CD secret manager in production. See the [key rotation guide](/guides/key-rotation/) for zero-downtime rotation.
+:::
+
+---
+
+## Get a test key
+
+1. **Sign up at [docs.tolka.health/signup](https://docs.tolka.health/signup)** — email and organisation name only, no credit card required.
+2. A `sk_test_` key is provisioned immediately.
+3. Manage keys at [docs.tolka.health/dashboard/keys](https://docs.tolka.health/dashboard/keys).
+
+---
+
+## Using your key
+
+<Tabs>
+<TabItem label="TypeScript">
+```typescript
+import { TolkaClient } from '@tolka/web-sdk';
+
+const tolka = new TolkaClient({
+  apiKey: process.env.TOLKA_API_KEY!,
+});
+```
+</TabItem>
+<TabItem label="cURL">
+```bash
+curl -X POST https://api.tolka.health/v1/medical/translate \
+  -H "Authorization: Bearer $TOLKA_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{ "text": "...", "source_lang": "nb", "target_lang": "en", "domain": "gp" }'
+```
+</TabItem>
+<TabItem label="Python">
+```python
+import os, requests
+
+headers = {"Authorization": f"Bearer {os.environ['TOLKA_API_KEY']}"}
+```
+</TabItem>
+</Tabs>
+
+---
+
+## Rotate a key (API)
+
+<Tabs>
+<TabItem label="TypeScript">
+```typescript
+const newKey = await tolka.admin.keys.rotate('key_01HX...');
+// Store newKey.secret immediately — it is shown only once.
+```
+</TabItem>
+<TabItem label="cURL">
+```bash
+curl -X POST https://api.tolka.health/v1/admin/keys/key_01HX.../rotate \
+  -H "Authorization: Bearer $TOLKA_API_KEY"
+```
+</TabItem>
+<TabItem label="Python">
+```python
+response = requests.post(
+    f"https://api.tolka.health/v1/admin/keys/{key_id}/rotate",
+    headers=headers,
+)
+new_secret = response.json()["secret"]  # store immediately
+```
+</TabItem>
+</Tabs>
+
+:::caution[Rotate, don't delete]
+Use the rotate endpoint rather than delete + create. Rotation generates a new key while briefly keeping the old key valid, enabling zero-downtime updates. See the [full key rotation guide](/guides/key-rotation/).
+:::
+
+---
+
+## Revoke a key
+
+```bash
+curl -X DELETE https://api.tolka.health/v1/admin/keys/key_01HX... \
+  -H "Authorization: Bearer $TOLKA_API_KEY"
+```
+
+Revocation is immediate and irreversible. Any request using the revoked key returns `401 INVALID_API_KEY`.
+
+---
+
+## What's next
+
+- [Environments — sandbox vs test vs production →](/getting-started/environments/)
+- [Zero-downtime key rotation guide →](/guides/key-rotation/)
+- [Admin Keys API reference →](/api-reference/admin-keys/)
+

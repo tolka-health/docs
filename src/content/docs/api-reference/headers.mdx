@@ -1,0 +1,58 @@
+---
+title: Headers
+description: HTTP request and response headers for the Tolka API — X-Request-Id, X-RateLimit-*, and Content-Type.
+sidebar:
+  order: 8
+  label: Headers
+---
+
+## Request headers
+
+| Header | Required | Description |
+|--------|----------|-------------|
+| `Authorization` | Yes | `Bearer <api-key>` — your Tolka API key |
+| `Content-Type` | Yes | `application/json` |
+| `X-Request-Id` | No | Supply your own idempotency/correlation ID. Tolka echoes it back in the response header and logs it alongside its own `request_id`. Useful for correlating Tolka logs with your own application logs. |
+| `Accept` | No | `application/json` (default) |
+
+---
+
+## Response headers
+
+### Rate limit headers
+
+| Header | Description |
+|--------|-------------|
+| `X-RateLimit-Limit` | Your plan's requests-per-minute ceiling |
+| `X-RateLimit-Remaining` | Requests remaining in the current 1-minute window |
+| `X-RateLimit-Reset` | Unix timestamp (seconds) when the current window resets |
+| `Retry-After` | Only on `429` responses. Seconds to wait before retrying. Always use this value — do not hardcode wait times. |
+
+### Tracing headers
+
+| Header | Description |
+|--------|-------------|
+| `X-Request-Id` | Tolka's unique identifier for this request. Include this in support tickets. Also present in `metadata.request_id` in the response body. |
+| `X-Response-Time` | Total server-side processing time in milliseconds. Useful for latency baseline monitoring. |
+
+---
+
+## Example response headers
+
+```http
+HTTP/2 200
+content-type: application/json
+x-request-id: req_01HX4K2MN7VPTJ8X9ZQR3W5YB6
+x-ratelimit-limit: 60
+x-ratelimit-remaining: 43
+x-ratelimit-reset: 1744375260
+x-response-time: 612ms
+```
+
+---
+
+## What's next
+
+- [Rate Limits — retry patterns →](/getting-started/rate-limits/)
+- [Error Catalog →](/api-reference/errors/)
+

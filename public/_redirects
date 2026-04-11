@@ -1,0 +1,12 @@
+# Cloudflare Pages redirects
+# Format: /old-path /new-path [status]
+# Convention: never delete a page without adding a 301 redirect here.
+# See: https://developers.cloudflare.com/pages/configuration/redirects/
+
+# ── Canonical trailing-slash redirects ──
+# (Cloudflare Pages handles these automatically with trailingSlash config)
+
+# ── Future redirects go here ──
+# Example:
+# /api-reference/overview /api-reference/index 301
+

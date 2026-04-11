@@ -1,0 +1,110 @@
+---
+title: Styling
+description: Customise the appearance of Tolka web components using CSS custom properties and ::part() selectors.
+sidebar:
+  order: 4
+---
+
+Tolka web components use Shadow DOM for encapsulation but expose a full set of CSS custom properties and `::part()` targets for theming.
+
+---
+
+## CSS custom properties
+
+Apply these on the host element or any ancestor:
+
+```css
+tolka-translate {
+  /* Layout */
+  --tolka-width: 100%;
+  --tolka-border-radius: 0.5rem;
+  --tolka-padding: 1rem;
+
+  /* Colors */
+  --tolka-color-primary: #0D9488;       /* teal — matches Tolka brand */
+  --tolka-color-bg: #ffffff;
+  --tolka-color-bg-secondary: #f9fafb;
+  --tolka-color-border: #e5e7eb;
+  --tolka-color-text: #111827;
+  --tolka-color-text-secondary: #6b7280;
+
+  /* Risk indicators */
+  --tolka-color-risk-low: #059669;
+  --tolka-color-risk-medium: #d97706;
+  --tolka-color-risk-high: #dc2626;
+  --tolka-color-risk-critical: #7c3aed;
+
+  /* Typography */
+  --tolka-font-family: inherit;
+  --tolka-font-size: 1rem;
+  --tolka-font-size-sm: 0.875rem;
+}
+```
+
+---
+
+## `::part()` selectors
+
+For deeper customisation, target Shadow DOM parts directly:
+
+| Part | Element |
+|------|---------|
+| `container` | Outermost wrapper div |
+| `input` | Source text textarea |
+| `output` | Translated text display area |
+| `risk-badge` | Risk level badge |
+| `confidence-bar` | Confidence indicator bar |
+| `submit-button` | Translate button |
+| `disclaimer` | PHI disclaimer banner |
+| `withheld-alert` | Alert shown when translation is withheld |
+
+```css
+tolka-translate::part(input) {
+  font-size: 1.125rem;
+  border: 2px solid var(--tolka-color-primary);
+}
+
+tolka-translate::part(risk-badge) {
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+tolka-translate::part(submit-button) {
+  background: var(--color-brand);
+  border-radius: 0.25rem;
+  padding: 0.5rem 1.5rem;
+}
+```
+
+---
+
+## Dark mode
+
+The component respects `prefers-color-scheme` automatically. You can also force a theme via a data attribute on the host:
+
+```html
+<tolka-translate data-theme="dark" ...></tolka-translate>
+<tolka-translate data-theme="light" ...></tolka-translate>
+```
+
+---
+
+## Embedding in an EHR frame
+
+When embedding inside an iframe within an EHR system (e.g., DIPS, Helseplattformen), set a fixed height and ensure `--tolka-color-bg` matches the EHR's background to avoid visual seams:
+
+```css
+tolka-translate {
+  --tolka-color-bg: #f4f4f5;   /* match your EHR frame background */
+  --tolka-border-radius: 0;    /* flat edges for frame embedding */
+}
+```
+
+---
+
+## What's next
+
+- [Localization →](/sdks/web/localization/)
+- [Web Components reference →](/sdks/web/web-components/)
+

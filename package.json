@@ -1,0 +1,31 @@
+{
+  "name": "tolka-health-docs",
+  "type": "module",
+  "version": "1.0.0",
+  "description": "Developer documentation for the Tolka medical translation API",
+  "license": "Apache-2.0",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "check": "astro check",
+    "lint:links": "lychee --offline ./src/content/**/*.mdx",
+    "lint:prose": "vale src/content",
+    "prepare": "git config core.hooksPath .hooks"
+  },
+  "dependencies": {
+    "@astrojs/starlight": "^0.32.0",
+    "astro": "^5.6.0",
+    "sharp": "^0.33.0"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.0",
+    "typescript": "^5.7.0"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "packageManager": "pnpm@10.33.0"
+}
+

@@ -1,0 +1,167 @@
+---
+title: Quickstart
+description: Translate your first medical text with the Tolka API in 5 minutes using the public sandbox key.
+sidebar:
+  order: 1
+---
+
+import { Tabs, TabItem, Aside, Steps } from '@astrojs/starlight/components';
+
+Get a working medical translation in **5 minutes**. No account required — use the shared sandbox key.
+
+:::note[Sandbox key limitations]
+`sk_sandbox_public_tolka_eval2026` is rate-limited to 10 requests/minute, 50/day per IP.
+Responses include a `"sandbox": true` flag and simplified scoring. For full fidelity, [get a test key](/getting-started/authentication/).
+:::
+
+## Choose your path
+
+**Path A — Zero tooling (CDN script tag).** Paste into any HTML file and open in a browser.
+
+**Path B — npm project.** Recommended for real integrations.
+
+---
+
+## Path A: CDN (30 seconds)
+
+Create `index.html` and open it in your browser:
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><title>Tolka test</title></head>
+<body>
+  <tolka-translate
+    api-key="sk_sandbox_public_tolka_eval2026"
+    source-lang="nb"
+    target-lang="en"
+    domain="gp">
+  </tolka-translate>
+
+  <script
+    src="https://cdn.tolka.health/sdk/web/latest/tolka.min.js"
+    crossorigin="anonymous">
+  </script>
+</body>
+</html>
+```
+
+You should see the `<tolka-translate>` widget render with a text input and translated output.
+
+---
+
+## Path B: npm
+
+<Steps>
+1. **Install the SDK**
+
+   ```bash
+   pnpm add @tolka/web-sdk
+   # or: npm install @tolka/web-sdk
+   ```
+
+2. **Make your first translation**
+
+   <Tabs>
+   <TabItem label="TypeScript">
+   ```typescript
+   import { TolkaClient } from '@tolka/web-sdk';
+
+   const tolka = new TolkaClient({
+     apiKey: 'sk_sandbox_public_tolka_eval2026',
+     baseUrl: 'https://sandbox.tolka-api.fly.dev',
+   });
+
+   const result = await tolka.translate({
+     text: 'Har du smerter i brystet?',
+     sourceLang: 'nb',
+     targetLang: 'en',
+     domain: 'emergency',
+   });
+
+   console.log(result.translation);   // "Do you have chest pain?"
+   console.log(result.confidence);    // 0.94
+   console.log(result.risk);          // "low"
+   ```
+   </TabItem>
+   <TabItem label="cURL">
+   ```bash
+   curl -X POST https://sandbox.tolka-api.fly.dev/v1/medical/translate \
+     -H "Authorization: Bearer sk_sandbox_public_tolka_eval2026" \
+     -H "Content-Type: application/json" \
+     -d '{
+       "text": "Har du smerter i brystet?",
+       "source_lang": "nb",
+       "target_lang": "en",
+       "domain": "emergency"
+     }'
+   ```
+   </TabItem>
+   <TabItem label="Python">
+   ```python
+   import requests
+
+   response = requests.post(
+       "https://sandbox.tolka-api.fly.dev/v1/medical/translate",
+       headers={"Authorization": "Bearer sk_sandbox_public_tolka_eval2026"},
+       json={
+           "text": "Har du smerter i brystet?",
+           "source_lang": "nb",
+           "target_lang": "en",
+           "domain": "emergency",
+       },
+   )
+   data = response.json()
+   print(data["translation"])   # "Do you have chest pain?"
+   print(data["confidence"])    # 0.94
+   print(data["risk"])          # "low"
+   ```
+   </TabItem>
+   </Tabs>
+
+3. **Verify your setup**
+
+   A successful response looks like this:
+
+   ```json
+   {
+     "translation": "Do you have chest pain?",
+     "back_translation": "Har du brystsmerter?",
+     "confidence": 0.94,
+     "risk": "low",
+     "flags": [],
+     "verified": true,
+     "sandbox": true,
+     "metadata": {
+       "domain": "emergency",
+       "source_lang": "nb",
+       "target_lang": "en",
+       "model": "tolka-v1",
+       "request_id": "req_01HX..."
+     }
+   }
+   ```
+
+   Check `verified: true` and `risk: "low"`. You're ready to integrate.
+
+</Steps>
+
+---
+
+## Troubleshooting
+
+| Error | Code | Fix |
+|-------|------|-----|
+| `INVALID_API_KEY` | `401` | Verify the key is prefixed `sk_sandbox_`, `sk_test_`, or `sk_live_`. No extra whitespace. |
+| `RATE_LIMIT_EXCEEDED` | `429` | Sandbox allows 10 req/min. Wait for the `Retry-After` header value (seconds) before retrying. |
+| `SERVICE_UNAVAILABLE` | `503` | Tolka is temporarily down. Check [status.tolka.health](https://status.tolka.health) and retry with exponential backoff. |
+| `TEXT_TOO_LONG` | `400` | Text exceeds 2,000 characters. Split into shorter segments at sentence boundaries. |
+
+---
+
+## What's next
+
+- [Understand the response fields →](/getting-started/understanding-the-response/)
+- [Get a personal test key →](/getting-started/authentication/)
+- [See all supported language pairs →](/getting-started/environments/)
+

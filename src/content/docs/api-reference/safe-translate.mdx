@@ -1,0 +1,105 @@
+---
+title: POST /safe-translate
+description: The safe-translate endpoint — automatic withholding of translations that fail safety checks.
+sidebar:
+  order: 3
+  label: POST /safe-translate
+---
+
+import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+
+`POST /v1/medical/safe-translate` behaves identically to `/translate` but **automatically withholds the translation** when risk exceeds the safe threshold (`"high"` or `"critical"`).
+
+For the full schema, see the [Interactive Reference](/api-reference/index/).
+
+---
+
+## Withheld response shape
+
+When a translation is withheld, `translation` and `back_translation` are `null` and `withheld: true` is present:
+
+```json
+{
+  "translation": null,
+  "back_translation": null,
+  "confidence": 0.48,
+  "risk": "critical",
+  "flags": ["negation_flip", "keyword_mismatch"],
+  "verified": true,
+  "withheld": true,
+  "metadata": { ... }
+}
+```
+
+This is a `200` response — not an error. Your UI must check `withheld` before rendering `translation`.
+
+---
+
+## Safe response shape
+
+When the translation passes safety checks:
+
+```json
+{
+  "translation": "Do you take any blood-thinning medication?",
+  "back_translation": "Tar du blodfortynnende medisiner?",
+  "confidence": 0.93,
+  "risk": "low",
+  "flags": [],
+  "verified": true,
+  "withheld": false,
+  "metadata": { ... }
+}
+```
+
+---
+
+## Handling withheld translations in your UI
+
+<Tabs>
+<TabItem label="TypeScript">
+```typescript
+const result = await tolka.safeTranslate({
+  text: sourceText,
+  sourceLang: 'so',
+  targetLang: 'nb',
+  domain: 'emergency',
+});
+
+if (result.withheld) {
+  // Translation is NOT safe to display
+  return (
+    <RefusalAlert
+      flags={result.flags}
+      message="The translation quality could not be verified. Use a professional interpreter."
+    />
+  );
+}
+
+// Safe to display
+return <TranslationDisplay text={result.translation} risk={result.risk} />;
+```
+</TabItem>
+<TabItem label="cURL">
+```bash
+curl -X POST https://api.tolka.health/v1/medical/safe-translate \
+  -H "Authorization: Bearer $TOLKA_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "text": "Tar pasienten blodfortynnende?",
+    "source_lang": "nb",
+    "target_lang": "en",
+    "domain": "pharmacy"
+  }'
+```
+</TabItem>
+</Tabs>
+
+---
+
+## What's next
+
+- [Handling Refusals — full UI patterns for withheld translations →](/guides/handling-refusals/)
+- [Safe Mode concept →](/concepts/safe-mode/)
+- [POST /translate →](/api-reference/translate/)
+

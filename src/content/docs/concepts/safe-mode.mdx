@@ -1,0 +1,129 @@
+---
+title: Safe Mode
+description: How Tolka's safe mode differs from standard mode — when translations are withheld and what your UI should do.
+sidebar:
+  order: 4
+---
+
+import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+
+Tolka has two translation endpoints:
+
+| Endpoint | Mode | Behaviour on low confidence |
+|----------|------|-----------------------------|
+| `POST /v1/medical/translate` | Standard | Always returns a translation, even for `"critical"` risk |
+| `POST /v1/medical/safe-translate` | Safe | **Withholds the translation** if risk exceeds the safe threshold |
+
+---
+
+## When to use safe mode
+
+Use `POST /v1/medical/safe-translate` in clinical settings where **displaying an incorrect translation is more dangerous than displaying no translation**. This is the recommended mode for:
+
+- Emergency department triage
+- Medication instruction delivery
+- Any context where a clinician cannot easily verify the translation
+
+Use standard `/translate` when you need to always receive a translation (e.g., to log it for later review, to display it to clinical staff rather than patients, or to run batch processing pipelines).
+
+---
+
+## How safe mode works
+
+When `risk` is `"high"` or `"critical"`, a safe mode response **withholds** the translation:
+
+```json
+{
+  "translation": null,
+  "back_translation": null,
+  "confidence": 0.54,
+  "risk": "critical",
+  "flags": ["negation_flip"],
+  "verified": true,
+  "withheld": true,
+  "metadata": {
+    "domain": "emergency",
+    "source_lang": "so",
+    "target_lang": "nb",
+    "model": "tolka-v1",
+    "request_id": "req_01HX..."
+  }
+}
+```
+
+`translation` and `back_translation` are `null`. The `withheld: true` field signals that the response is intentionally incomplete.
+
+:::note[`withheld` is not an error]
+A `200` status code is still returned. `withheld: true` is a safety outcome, not a failure. Your UI should treat it as "translation not available — use fallback".
+:::
+
+---
+
+## UI pattern for withheld translations
+
+```typescript
+const result = await tolka.safeTranslate({ text, sourceLang, targetLang, domain });
+
+if (result.withheld) {
+  return showRefusalMessage({
+    reason: result.flags,
+    fallbackInstructions: 'Please use a professional interpreter for this exchange.',
+  });
+}
+
+// Safe to display
+displayTranslation(result.translation);
+```
+
+<Tabs>
+<TabItem label="TypeScript">
+```typescript
+import { TolkaClient, TolkaApiError } from '@tolka/web-sdk';
+
+const result = await tolka.safeTranslate({
+  text: 'Tar du medisiner for hjertet?',
+  sourceLang: 'nb',
+  targetLang: 'en',
+  domain: 'pharmacy',
+});
+
+if (result.withheld) {
+  console.warn('Translation withheld:', result.flags);
+  // Show fallback UI
+} else {
+  console.log(result.translation);
+}
+```
+</TabItem>
+<TabItem label="cURL">
+```bash
+curl -X POST https://api.tolka.health/v1/medical/safe-translate \
+  -H "Authorization: Bearer $TOLKA_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "text": "Tar du medisiner for hjertet?",
+    "source_lang": "nb",
+    "target_lang": "en",
+    "domain": "pharmacy"
+  }'
+```
+</TabItem>
+</Tabs>
+
+---
+
+## What to show the clinician when a translation is withheld
+
+1. **Explain** that the translation did not meet quality standards (not that "an error occurred").
+2. **Show the flags** if they are meaningful to the clinician (e.g., "A negation may have been lost in translation").
+3. **Recommend an alternative** — a professional interpreter, a telephone interpretation service, or re-phrasing the question in simpler terms.
+4. **Do not retry automatically** without user action — a re-translation of the same text will produce the same result.
+
+---
+
+## What's next
+
+- [Handling Refusals guide — full UI patterns →](/guides/handling-refusals/)
+- [POST /safe-translate reference →](/api-reference/safe-translate/)
+- [Confidence & Risk — risk levels explained →](/concepts/confidence-and-risk/)
+

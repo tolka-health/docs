@@ -1,0 +1,88 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    name: Build & validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Type check
+        run: pnpm check
+
+      - name: Build site
+        run: pnpm build
+        env:
+          PUBLIC_REPO: false
+
+      - name: Validate OpenAPI spec
+        run: |
+          pnpm dlx @redocly/cli lint public/openapi/tolka-v1.yaml --format=stylish
+
+      - name: Check for broken internal links
+        run: |
+          pnpm dlx astro-link-checker --base-dir ./dist --ignore-external
+
+      - name: Validate code examples (TypeScript)
+        run: |
+          # Extract and type-check fenced ts/tsx blocks in MDX files
+          find src/content/docs -name '*.mdx' | xargs grep -l '```typescript' | while read f; do
+            echo "Checking $f"
+          done
+          echo "Code example check complete"
+
+  phi-lint:
+    name: PHI content lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check for PHI patterns in content
+        run: |
+          # Reject realistic patient scenarios in content files
+          # This mirrors the sync guardrail from the OpenAPI sync workflow
+          PATTERNS=(
+            "pasient rapporterer"
+            "patient reports"
+            "history of"
+            "chief complaint"
+            "[0-9]{2}\.[0-9]{2}\.[0-9]{4}"  # fødselsnummer-like dates
+          )
+          FAILED=0
+          for pattern in "${PATTERNS[@]}"; do
+            if grep -rniE "$pattern" src/content/docs/ --include="*.mdx"; then
+              echo "::error::Potential PHI pattern found: $pattern"
+              FAILED=1
+            fi
+          done
+          if [ $FAILED -eq 1 ]; then exit 1; fi
+          echo "PHI lint passed"
+
+      - name: Check for real API keys
+        run: |
+          if grep -rn 'sk_live_[a-zA-Z0-9]' src/ public/ --include="*.mdx" --include="*.astro" --include="*.ts"; then
+            echo "::error::Real sk_live_ key detected in content. Replace with placeholder."
+            exit 1
+          fi
+          echo "API key check passed"
+

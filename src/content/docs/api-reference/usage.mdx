@@ -1,0 +1,91 @@
+---
+title: Admin — Usage
+description: Query translation usage statistics via the Tolka Admin Usage API.
+sidebar:
+  order: 6
+  label: Admin — Usage
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+`GET /v1/admin/usage` returns aggregated usage statistics for your account. No raw translation text is exposed — only counts, confidence distributions, and risk breakdowns.
+
+For the full schema, see the [Interactive Reference](/api-reference/index/).
+
+---
+
+## Query parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `from` | ISO 8601 date | Start of the reporting window |
+| `to` | ISO 8601 date | End of the reporting window |
+| `domain` | string | Filter by clinical domain (optional) |
+| `source_lang` | string | Filter by source language (optional) |
+| `target_lang` | string | Filter by target language (optional) |
+| `granularity` | `day` \| `week` \| `month` | Aggregation bucket (default: `day`) |
+
+---
+
+## Example request and response
+
+<Tabs>
+<TabItem label="cURL">
+```bash
+curl "https://api.tolka.health/v1/admin/usage?from=2026-04-01&to=2026-04-11&granularity=day" \
+  -H "Authorization: Bearer $TOLKA_API_KEY"
+```
+</TabItem>
+<TabItem label="TypeScript">
+```typescript
+const usage = await tolka.admin.usage.query({
+  from: '2026-04-01',
+  to: '2026-04-11',
+  granularity: 'day',
+});
+```
+</TabItem>
+</Tabs>
+
+```json
+{
+  "period": { "from": "2026-04-01", "to": "2026-04-11" },
+  "total_requests": 1284,
+  "by_risk": {
+    "low": 1102,
+    "medium": 118,
+    "high": 52,
+    "critical": 12
+  },
+  "by_domain": {
+    "emergency": 340,
+    "gp": 712,
+    "mental_health": 98,
+    "pediatric": 88,
+    "pharmacy": 46
+  },
+  "confidence_p50": 0.89,
+  "confidence_p10": 0.71,
+  "withheld_count": 12,
+  "buckets": [
+    { "date": "2026-04-01", "requests": 118, "withheld": 1 },
+    { "date": "2026-04-02", "requests": 134, "withheld": 2 }
+  ]
+}
+```
+
+---
+
+## Using usage data for monitoring
+
+- **Elevated `by_risk.critical` rate** — if `critical` exceeds 2–3% of total, investigate whether the correct `domain` is being passed for the texts being translated.
+- **Declining `confidence_p50`** — a drop in median confidence over time may indicate a language pair mismatch or domain mismatch in your integration.
+- **`withheld_count` trends** — rising withheld counts are an early signal of translation quality issues for a specific language pair or domain.
+
+---
+
+## What's next
+
+- [Monitoring Quality guide →](/guides/monitoring-quality/)
+- [Rate Limits →](/getting-started/rate-limits/)
+

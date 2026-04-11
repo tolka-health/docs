@@ -1,0 +1,106 @@
+---
+title: POST /translate
+description: Use-case guide for the Tolka translate endpoint — when to use it, edge cases, and integration patterns.
+sidebar:
+  order: 2
+  label: POST /translate
+---
+
+import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+
+`POST /v1/medical/translate` is the standard translation endpoint. It **always** returns a translation, regardless of confidence or risk level.
+
+For the full request/response schema, see the [Interactive Reference](/api-reference/index/).
+
+---
+
+## When to use `/translate` vs `/safe-translate`
+
+Use `/translate` when:
+- You need a translation regardless of quality (e.g., logging, staff-only display, batch review pipelines)
+- You are building your own risk-handling UI and want full control over the display logic
+- You are in a research or audit context
+
+Use [`/safe-translate`](/api-reference/safe-translate/) when:
+- The translation will be displayed directly to patients
+- You are in an emergency or high-stakes clinical context
+- You want Tolka to handle the withholding decision
+
+---
+
+## Required fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `text` | string | Source text to translate. Max 2,000 characters. |
+| `source_lang` | string | BCP 47 source language code (e.g., `"nb"`) |
+| `target_lang` | string | BCP 47 target language code (e.g., `"en"`) |
+| `domain` | string | Clinical domain: `emergency`, `gp`, `mental_health`, `pediatric`, `pharmacy` |
+
+## Optional fields
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `session_token` | string | — | Active session token from `POST /session`. If provided, `source_lang`, `target_lang`, and `domain` are inferred from the session. |
+
+---
+
+## Edge cases
+
+### Text over 2,000 characters
+
+Split at **sentence boundaries**, not character limits. Mid-sentence splits create fragments that the safety verification treats as incomplete medical phrases, reducing confidence scores artificially.
+
+```typescript
+function splitMedicalText(text: string, maxLength = 1800): string[] {
+  const sentences = text.match(/[^.!?]+[.!?]+/g) ?? [text];
+  const chunks: string[] = [];
+  let current = '';
+  for (const sentence of sentences) {
+    if ((current + sentence).length > maxLength) {
+      if (current) chunks.push(current.trim());
+      current = sentence;
+    } else {
+      current += sentence;
+    }
+  }
+  if (current) chunks.push(current.trim());
+  return chunks;
+}
+```
+
+### Ambiguous language input
+
+If `source_lang` is set to an incorrect language code (e.g., the text is Somali but `nb` is passed), the pipeline will attempt to translate it but confidence will be very low. Consider using language detection on the client before calling Tolka.
+
+### Empty text
+
+A `400 INVALID_REQUEST` is returned for empty strings or strings containing only whitespace.
+
+---
+
+## Integration pattern: batch translation
+
+```typescript
+async function translateBatch(
+  texts: string[],
+  domain: TolkaDomain,
+): Promise<TranslateResponse[]> {
+  // Tolka is not a batch API — translate in parallel with concurrency limiting
+  const limit = pLimit(5); // max 5 concurrent requests
+  return Promise.all(
+    texts.map((text) =>
+      limit(() => tolka.translate({ text, sourceLang: 'nb', targetLang: 'en', domain }))
+    )
+  );
+}
+```
+
+---
+
+## What's next
+
+- [POST /safe-translate →](/api-reference/safe-translate/)
+- [Error Catalog →](/api-reference/errors/)
+- [Translation Pipeline concept →](/concepts/translation-pipeline/)
+

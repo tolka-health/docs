@@ -1,0 +1,132 @@
+---
+title: Migrate from Google Translate
+description: Step-by-step guide to replacing Google Cloud Translation API calls with Tolka in an existing integration.
+sidebar:
+  order: 2
+---
+
+import { Steps, Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+
+Tolka is a drop-in replacement for Google Cloud Translation in medical contexts. This guide shows the exact code changes needed and explains the richer response you get in return.
+
+:::caution[Why this matters]
+Google Translate is not medically safe for clinical use. It has no back-translation verification, no confidence scoring, no safety checks, and no awareness of clinical domain. A single negation flip ("no pain" → "pain") is undetectable with Google Translate. With Tolka, it triggers `risk: "critical"` and `flags: ["negation_flip"]` automatically.
+:::
+
+---
+
+## Before and after
+
+<Tabs>
+<TabItem label="Before (Google Translate)">
+```typescript
+import { TranslationServiceClient } from '@google-cloud/translate';
+
+const client = new TranslationServiceClient();
+
+const [response] = await client.translateText({
+  parent: `projects/${projectId}/locations/global`,
+  contents: [text],
+  mimeType: 'text/plain',
+  sourceLanguageCode: 'nb',
+  targetLanguageCode: 'en',
+});
+
+const translation = response.translations[0].translatedText;
+// No confidence. No risk. No safety check. No back-translation.
+```
+</TabItem>
+<TabItem label="After (Tolka)">
+```typescript
+import { TolkaClient } from '@tolka/web-sdk';
+
+const tolka = new TolkaClient({ apiKey: process.env.TOLKA_API_KEY! });
+
+const result = await tolka.safeTranslate({
+  text,
+  sourceLang: 'nb',
+  targetLang: 'en',
+  domain: 'gp', // match your care context
+});
+
+if (result.withheld) {
+  // Tolka detected a safety issue — handle it
+  return showFallback(result.flags);
+}
+
+const translation = result.translation;
+// Plus: result.confidence, result.risk, result.flags, result.back_translation
+```
+</TabItem>
+</Tabs>
+
+---
+
+## Migration steps
+
+<Steps>
+1. **Install Tolka**
+   ```bash
+   pnpm add @tolka/web-sdk
+   ```
+
+2. **Replace the translation call**
+
+   Find every call to `translateText` (or equivalent) and replace it with `tolka.safeTranslate()`. Map your language codes — Google uses `nb-NO`, Tolka uses BCP 47 short form `nb`.
+
+   ```typescript
+   // Language code mapping if needed
+   const langMap: Record<string, string> = {
+     'nb-NO': 'nb',
+     'ar-SA': 'ar',
+     'so-SO': 'so',
+     'pl-PL': 'pl',
+   };
+   const sourceLang = langMap[googleLangCode] ?? googleLangCode;
+   ```
+
+3. **Add a domain**
+
+   Google Translate has no domain concept. Choose the domain that best matches your care context. If you serve multiple departments, use a per-request domain mapping (see [Clinical Domains](/concepts/clinical-domains/)).
+
+4. **Handle the richer response**
+
+   You now have `confidence`, `risk`, `flags`, and `back_translation`. At minimum, add:
+   - A check for `result.withheld`
+   - A clinician acknowledgment step when `result.risk === 'high'`
+   - A hard block when `result.risk === 'critical'`
+
+5. **Update your error handling**
+
+   Google Translate throws generic `Error`s. Tolka throws typed `TolkaApiError` with machine-readable `code` values. Replace `catch (e) { console.error(e) }` with structured error handling (see [Error Handling](/sdks/web/error-handling/)).
+
+6. **Remove Google Translate dependencies**
+
+   ```bash
+   pnpm remove @google-cloud/translate
+   ```
+
+   Remove the Google Cloud project configuration and credentials from your environment.
+
+</Steps>
+
+---
+
+## Handling the added safety layer
+
+Your UI will now receive translations that were previously invisible edge cases:
+
+| Scenario | Google Translate | Tolka |
+|----------|-----------------|-------|
+| "ingen smerter" (no pain) mistranslated as "pain" | Silent error | `risk: "critical"`, `flags: ["negation_flip"]` |
+| Dosage "2 mg" translated as "20 mg" | Silent error | `risk: "critical"`, `flags: ["numerical_change"]` |
+| Medical term dropped from translation | Silent error | `risk: "high"`, `flags: ["keyword_mismatch"]` |
+
+---
+
+## What's next
+
+- [First Integration guide →](/guides/first-integration/)
+- [Confidence & Risk →](/concepts/confidence-and-risk/)
+- [Handling Refusals →](/guides/handling-refusals/)
+

@@ -1,0 +1,174 @@
+---
+title: Error Catalog
+description: All Tolka API error codes — HTTP status, meaning, and how to handle each in your integration.
+sidebar:
+  order: 7
+  label: Error Catalog
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+All Tolka API errors follow a consistent envelope:
+
+```json
+{
+  "error": {
+    "code": "RATE_LIMIT_EXCEEDED",
+    "message": "Rate limit exceeded. Retry after 23 seconds.",
+    "request_id": "req_01HX4K2MN7...",
+    "retry_after": 23
+  }
+}
+```
+
+Always check `error.code` in your code — `message` is for humans and may change between releases.
+
+---
+
+## Authentication errors (4xx)
+
+### `INVALID_API_KEY` — 401
+
+The key in the `Authorization` header is malformed, revoked, or does not exist.
+
+**Fix:** Verify the key is an exact copy with no extra whitespace. Confirm it has not been revoked in the dashboard.
+
+---
+
+### `EXPIRED_API_KEY` — 401
+
+The key was created with an expiry date and that date has passed.
+
+**Fix:** Create a new key or use the rotate endpoint before expiry.
+
+---
+
+### `INVALID_SESSION_TOKEN` — 401
+
+The `session_token` field contains a token that is malformed, tampered with, or was issued to a different API key.
+
+**Fix:** Do not modify session tokens. Create a new session if the token is invalid.
+
+---
+
+### `SESSION_EXPIRED` — 401
+
+The session token's TTL has elapsed.
+
+**Fix:** Create a new session (`POST /v1/medical/session`) and continue the encounter with the new token.
+
+---
+
+### `INSUFFICIENT_PERMISSIONS` — 403
+
+The API key does not have the scope required for this operation (e.g., using a non-admin key to access `/v1/admin/*`).
+
+**Fix:** Use an admin-scoped key for admin endpoints.
+
+---
+
+## Request errors (4xx)
+
+### `INVALID_REQUEST` — 400
+
+The request body is malformed — missing a required field, wrong type, or invalid JSON.
+
+**Fix:** Check the request against the [Interactive Reference](/api-reference/index/). The `message` field will identify the offending field.
+
+---
+
+### `TEXT_TOO_LONG` — 400
+
+The `text` field exceeds 2,000 characters.
+
+**Fix:** Split the text at sentence boundaries before calling the API. See [POST /translate edge cases](/api-reference/translate/).
+
+---
+
+### `UNSUPPORTED_LANGUAGE_PAIR` — 400
+
+The `source_lang` / `target_lang` combination is not supported.
+
+**Fix:** Check the [supported language pairs table](/getting-started/environments/).
+
+---
+
+### `INVALID_DOMAIN` — 400
+
+The `domain` value is not one of the five supported values.
+
+**Fix:** Use one of: `emergency`, `gp`, `mental_health`, `pediatric`, `pharmacy`.
+
+---
+
+## Rate limiting (4xx)
+
+### `RATE_LIMIT_EXCEEDED` — 429
+
+You have exceeded your plan's requests-per-minute limit.
+
+**Fix:** Read the `Retry-After` response header (seconds to wait). Implement exponential backoff. See [Rate Limits](/getting-started/rate-limits/).
+
+```json
+{
+  "error": {
+    "code": "RATE_LIMIT_EXCEEDED",
+    "message": "Rate limit exceeded. Retry after 23 seconds.",
+    "retry_after": 23
+  }
+}
+```
+
+---
+
+## Server errors (5xx)
+
+:::note[5xx errors are always retryable]
+All 5xx errors are transient. Retry with exponential backoff. If the error persists, check [status.tolka.health](https://status.tolka.health).
+:::
+
+### `TRANSLATION_FAILED` — 500
+
+The forward translation step failed unexpectedly.
+
+**Fix:** Retry. If the error persists for the same text, check whether the input contains unusual characters or encoding issues.
+
+---
+
+### `BACK_TRANSLATION_FAILED` — 500
+
+The back-translation step failed. The forward translation may have completed but could not be verified.
+
+**Behaviour:** This error is returned instead of a partial response. Retry — back-translation failures are typically transient.
+
+---
+
+### `SAFETY_CHECK_FAILED` — 500
+
+The safety verification step failed unexpectedly. Not to be confused with `risk: "critical"` — this error means the check itself could not run.
+
+**Fix:** Retry. Log the `request_id` for support if it persists.
+
+---
+
+### `SERVICE_UNAVAILABLE` — 503
+
+The API is temporarily unavailable — typically during a deployment or an infrastructure incident.
+
+**Fix:** Check [status.tolka.health](https://status.tolka.health). Implement exponential backoff with jitter starting at 1 second.
+
+---
+
+### `GATEWAY_TIMEOUT` — 504
+
+The upstream LLM inference service did not respond within the timeout window.
+
+**Fix:** Retry. Inference latency occasionally spikes under load.
+
+---
+
+## What's next
+
+- [Rate Limits →](/getting-started/rate-limits/)
+- [Headers — X-RateLimit-*, X-Request-Id →](/api-reference/headers/)
+

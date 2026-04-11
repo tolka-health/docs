@@ -1,0 +1,107 @@
+---
+title: Telehealth Integration
+description: Embedding the Tolka widget inside video consultation platforms and telehealth iframes.
+sidebar:
+  order: 5
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Tolka integrates with telehealth platforms as a side panel or overlay within a video consultation. The `<tolka-translate>` web component is the recommended embedding approach — it requires no server-side code and works in any iframe-capable environment.
+
+---
+
+## Embedding in a side panel
+
+The most common pattern is a side panel alongside the video feed:
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Consultation Translation</title>
+  <script src="https://cdn.tolka.health/sdk/web/1.0.0/tolka.min.js" crossorigin="anonymous"></script>
+  <style>
+    body { margin: 0; background: #f9fafb; font-family: sans-serif; }
+    tolka-translate { display: block; padding: 1rem; }
+  </style>
+</head>
+<body>
+  <tolka-translate
+    api-key="sk_live_..."
+    source-lang="ar"
+    target-lang="nb"
+    domain="gp"
+    safe-mode="true"
+    locale="ar">
+  </tolka-translate>
+</body>
+</html>
+```
+
+Serve this page from your platform and embed it in an `<iframe>` in the consultation UI.
+
+:::caution[API key exposure]
+When embedding in a client-side iframe, the API key is visible in page source. Mitigate this by:
+1. Using a short-lived, session-scoped proxy token instead of a raw `sk_live_` key
+2. Restricting the key to your platform's domain via IP/origin allowlisting in the Tolka dashboard
+:::
+
+---
+
+## Receiving translation events from the iframe
+
+If your platform wraps the Tolka panel in an iframe, you can receive translation events via `postMessage`:
+
+```javascript
+// In the iframe page (tolka side panel)
+document.querySelector('tolka-translate').addEventListener('tolka:translated', (e) => {
+  window.parent.postMessage({
+    type: 'tolka:translated',
+    detail: e.detail,
+  }, 'https://your-telehealth-platform.com');
+});
+
+// In the parent page (video consultation UI)
+window.addEventListener('message', (event) => {
+  if (event.origin !== 'https://your-tolka-panel.com') return;
+  if (event.data.type === 'tolka:translated') {
+    console.log('Translation:', event.data.detail.translation);
+    console.log('Risk:', event.data.detail.risk);
+  }
+});
+```
+
+---
+
+## Integration with specific platforms
+
+### Whereby / Daily.co (embedded meetings)
+
+These platforms support custom app sidebar iframes. Use the `postMessage` pattern above to share translation events with the host page.
+
+### Helsenorge / Norsk Helsenett
+
+For integrations within NHN-governed platforms, ensure the Tolka API key is provisioned separately for the NHN deployment environment. Contact [support@tolka.health](mailto:support@tolka.health) for NHN-specific integration guidance.
+
+### EHR-embedded video (Helseplattformen, DIPS)
+
+When embedding within an EHR's video module, use the flat-border styling preset:
+
+```css
+tolka-translate {
+  --tolka-border-radius: 0;
+  --tolka-color-bg: var(--ehr-panel-bg, #ffffff);
+}
+```
+
+---
+
+## What's next
+
+- [Styling — CSS custom properties →](/sdks/web/styling/)
+- [GP Consultation guide →](/guides/gp-consultation/)
+- [Sessions concept →](/concepts/sessions/)
+

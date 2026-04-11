@@ -1,0 +1,143 @@
+---
+title: Error Handling
+description: TolkaApiError — error codes, retry patterns, and handling all error scenarios in the Web SDK.
+sidebar:
+  order: 6
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+All `TolkaClient` methods throw `TolkaApiError` on failure. Never swallow errors silently — in a medical context, a failed translation must result in a clear fallback, not a silent empty string.
+
+---
+
+## `TolkaApiError` shape
+
+```typescript
+import { TolkaApiError } from '@tolka/web-sdk';
+
+try {
+  const result = await tolka.translate({ ... });
+} catch (err) {
+  if (err instanceof TolkaApiError) {
+    err.code        // string — machine-readable, see Error Catalog
+    err.message     // string — human-readable, may change between releases
+    err.statusCode  // number — HTTP status code
+    err.requestId   // string — include in support tickets
+    err.retryAfter  // number | undefined — seconds to wait before retry (429 only)
+  }
+  // Re-throw unknown errors
+  throw err;
+}
+```
+
+---
+
+## Retry pattern
+
+<Tabs>
+<TabItem label="TypeScript">
+```typescript
+import { TolkaClient, TolkaApiError } from '@tolka/web-sdk';
+
+async function translateWithRetry(
+  client: TolkaClient,
+  params: Parameters<TolkaClient['translate']>[0],
+  maxRetries = 3,
+) {
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await client.translate(params);
+    } catch (err) {
+      if (!(err instanceof TolkaApiError)) throw err;
+
+      const isRetryable =
+        err.statusCode === 429 ||
+        err.statusCode === 503 ||
+        err.statusCode === 504;
+
+      if (isRetryable && attempt < maxRetries) {
+        const delay = err.retryAfter
+          ? err.retryAfter * 1000
+          : Math.min(1000 * Math.pow(2, attempt) + Math.random() * 500, 30_000);
+        await new Promise((r) => setTimeout(r, delay));
+      } else {
+        throw err;
+      }
+    }
+  }
+}
+```
+</TabItem>
+<TabItem label="Python">
+```python
+import time, random
+from tolka import TolkaClient, TolkaApiError
+
+def translate_with_retry(client, params, max_retries=3):
+    for attempt in range(max_retries + 1):
+        try:
+            return client.translate(**params)
+        except TolkaApiError as e:
+            retryable = e.status_code in (429, 503, 504)
+            if retryable and attempt < max_retries:
+                delay = e.retry_after or min(2**attempt + random.random(), 30)
+                time.sleep(delay)
+            else:
+                raise
+```
+</TabItem>
+</Tabs>
+
+---
+
+## Error handling per code
+
+| `code` | Retryable | Recommended action |
+|--------|-----------|--------------------|
+| `INVALID_API_KEY` | No | Check key configuration; alert ops |
+| `EXPIRED_API_KEY` | No | Rotate key; alert ops |
+| `INVALID_SESSION_TOKEN` | No | Create a new session |
+| `SESSION_EXPIRED` | No | Create a new session; continue encounter |
+| `INSUFFICIENT_PERMISSIONS` | No | Use admin-scoped key |
+| `INVALID_REQUEST` | No | Fix request fields; log and alert |
+| `TEXT_TOO_LONG` | No | Split text at sentence boundaries |
+| `UNSUPPORTED_LANGUAGE_PAIR` | No | Check supported pairs |
+| `INVALID_DOMAIN` | No | Fix domain value |
+| `RATE_LIMIT_EXCEEDED` | Yes | Wait `retryAfter` seconds |
+| `TRANSLATION_FAILED` | Yes | Exponential backoff |
+| `BACK_TRANSLATION_FAILED` | Yes | Exponential backoff |
+| `SAFETY_CHECK_FAILED` | Yes | Exponential backoff |
+| `SERVICE_UNAVAILABLE` | Yes | Exponential backoff; check status page |
+| `GATEWAY_TIMEOUT` | Yes | Exponential backoff |
+
+---
+
+## Fallback UI requirements
+
+When all retries are exhausted, your UI **must** show a meaningful fallback:
+
+```typescript
+try {
+  return await translateWithRetry(tolka, params);
+} catch (err) {
+  if (err instanceof TolkaApiError) {
+    return {
+      fallback: true,
+      message: 'Translation service is temporarily unavailable. Please use a professional interpreter.',
+      requestId: err.requestId,
+    };
+  }
+  throw err;
+}
+```
+
+Never display an empty translation box to a patient. Always explain what happened and provide an alternative path.
+
+---
+
+## What's next
+
+- [Error Catalog — all 14 codes →](/api-reference/errors/)
+- [Rate Limits →](/getting-started/rate-limits/)
+

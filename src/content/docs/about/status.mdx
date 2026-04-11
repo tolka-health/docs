@@ -1,0 +1,48 @@
+---
+title: Status
+description: Tolka API service status and uptime information.
+sidebar:
+  order: 4
+---
+
+## Current status
+
+Live API status is available at **[status.tolka.health](https://status.tolka.health)**.
+
+The status page shows:
+- Current operational status for each API region
+- Active and resolved incidents
+- Scheduled maintenance windows
+- Historical uptime metrics
+
+---
+
+## Subscribe to updates
+
+Subscribe on the status page to receive incident notifications by:
+- Email
+- RSS feed
+- Webhook (Enterprise plan)
+
+---
+
+## SLA targets by plan
+
+| Plan | Uptime SLA | Measurement window |
+|------|-----------|-------------------|
+| Community / Starter | No SLA | — |
+| Pro | 99.5% | Calendar month |
+| Enterprise | 99.9% | Calendar month |
+| Emergency | 99.95% | Calendar month |
+
+SLA credits are defined in the Terms of Service at [tolka.health/legal/terms](https://tolka.health/legal/terms).
+
+---
+
+## What to do during an outage
+
+1. Check [status.tolka.health](https://status.tolka.health) — confirm whether there is an active incident.
+2. Implement your fallback UI (see [Error Handling](/sdks/web/error-handling/)) — never show an empty translation to a patient.
+3. Use exponential backoff with jitter for retries — do not hammer the API during recovery.
+4. For Enterprise/Emergency plans, use the dedicated support channel for incident updates.
+

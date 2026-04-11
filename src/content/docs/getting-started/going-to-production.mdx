@@ -1,0 +1,98 @@
+---
+title: Going to Production
+description: Production readiness checklist for the Tolka API — keys, rate limits, error handling, clinician sign-off UI, and monitoring.
+sidebar:
+  order: 6
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Before you go live with real patients, complete every item on this checklist.
+
+:::danger[Do not use test keys in production]
+`sk_test_` keys are not covered by production SLAs. Replace all test keys before deploying to live environments.
+:::
+
+---
+
+## 1. API key setup
+
+- [ ] Swap `sk_test_` key for a `sk_live_` production key
+- [ ] Store the key in your secret manager (AWS Secrets Manager, Vault, etc.) — never in code or `.env` files committed to git
+- [ ] Set up automatic key rotation on a schedule (see [Key Rotation guide](/guides/key-rotation/))
+- [ ] Restrict the key to IP allowlist or VPC if your infrastructure supports it
+
+---
+
+## 2. Rate limits
+
+- [ ] Verify your plan's rate limit covers peak traffic (see [Rate Limits](/getting-started/rate-limits/))
+- [ ] Implement `Retry-After`-aware retry logic with exponential backoff
+- [ ] Set up an alert if `X-RateLimit-Remaining` drops below 20% of your limit
+
+---
+
+## 3. Error handling
+
+- [ ] Handle all 14 error codes in your UI (see [Error Catalog](/api-reference/errors/))
+- [ ] Show a meaningful fallback when the API is unavailable — never display an empty translation box to a patient
+- [ ] Log `metadata.request_id` from every response so you can correlate issues with Tolka support
+
+---
+
+## 4. Clinician sign-off UI
+
+- [ ] Your UI **must** require clinician acknowledgment before displaying a translation to a patient when `risk` is `"high"` or `"critical"`
+- [ ] Consider showing `back_translation` alongside `translation` for high-risk translations so clinicians can verify
+- [ ] For `"critical"` risk, block display entirely and require the clinician to review the original source text
+
+Example sign-off flow:
+
+```typescript
+if (result.risk === 'critical') {
+  await showCriticalAlert({
+    flags: result.flags,
+    original: sourceText,
+    backTranslation: result.back_translation,
+  });
+  return; // do not display translation
+}
+
+if (result.risk === 'high') {
+  const acknowledged = await requireClinicianAcknowledgment({
+    translation: result.translation,
+    backTranslation: result.back_translation,
+    flags: result.flags,
+  });
+  if (!acknowledged) return;
+}
+
+displayTranslation(result.translation);
+```
+
+---
+
+## 5. Monitoring
+
+- [ ] Track `confidence` distributions per language pair to detect quality degradation
+- [ ] Alert on elevated `"high"` and `"critical"` risk rates (baseline varies by domain and language pair)
+- [ ] Monitor p99 API latency — check [status.tolka.health](https://status.tolka.health) for current SLA targets
+- [ ] Subscribe to [status.tolka.health](https://status.tolka.health) for incident notifications
+- [ ] Log the `metadata.model` field — when Tolka rolls a model update, you will see this change and can correlate confidence shifts
+
+---
+
+## 6. Privacy review
+
+- [ ] Confirm your application does **not** log the `text` field from requests or the `translation`/`back_translation` fields from responses in durable storage
+- [ ] Confirm your Data Processing Agreement (DPA) with Tolka is signed before going live with patient data (download from [/about/compliance/](/about/compliance/))
+- [ ] If your integration handles patient-identifiable text, complete your own DPIA
+
+---
+
+## What's next
+
+- [Translation Pipeline deep-dive →](/concepts/translation-pipeline/)
+- [Handling Refusals →](/guides/handling-refusals/)
+- [Compliance & Trust Center →](/about/compliance/)
+

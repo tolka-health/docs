@@ -1,0 +1,127 @@
+---
+/**
+ * PipelineDiagram.astro
+ * Visualises the 5-step Tolka medical translation pipeline.
+ * Rendered as semantic HTML + CSS so it works without JS
+ * and is accessible to screen readers.
+ */
+---
+
+<div class="pipeline" role="list" aria-label="Tolka 5-step translation pipeline">
+  <div class="pipeline-step" role="listitem">
+    <div class="step-number" aria-hidden="true">1</div>
+    <div class="step-body">
+      <div class="step-title">Input</div>
+      <div class="step-desc">Source text + clinical domain + language pair received via API</div>
+    </div>
+  </div>
+  <div class="pipeline-arrow" aria-hidden="true">↓</div>
+
+  <div class="pipeline-step" role="listitem">
+    <div class="step-number" aria-hidden="true">2</div>
+    <div class="step-body">
+      <div class="step-title">Forward Translation</div>
+      <div class="step-desc">Domain-aware LLM translation from source to target language</div>
+    </div>
+  </div>
+  <div class="pipeline-arrow" aria-hidden="true">↓</div>
+
+  <div class="pipeline-step" role="listitem">
+    <div class="step-number" aria-hidden="true">3</div>
+    <div class="step-body">
+      <div class="step-title">Back-Translation</div>
+      <div class="step-desc">Independent retranslation from target back to source for verification</div>
+    </div>
+  </div>
+  <div class="pipeline-arrow" aria-hidden="true">↓</div>
+
+  <div class="pipeline-step" role="listitem">
+    <div class="step-number" aria-hidden="true">4</div>
+    <div class="step-body">
+      <div class="step-title">Safety Verification</div>
+      <div class="step-desc">Multi-signal quality scoring across multiple independent verification checks</div>
+    </div>
+  </div>
+  <div class="pipeline-arrow" aria-hidden="true">↓</div>
+
+  <div class="pipeline-step pipeline-step--output" role="listitem">
+    <div class="step-number" aria-hidden="true">5</div>
+    <div class="step-body">
+      <div class="step-title">Enriched Response</div>
+      <div class="step-desc">
+        <code>translation</code>, <code>back_translation</code>, <code>confidence</code>,
+        <code>risk</code>, <code>flags</code>, <code>verified</code>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .pipeline {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    max-width: 480px;
+    margin: 1.5rem 0;
+    font-size: 0.9rem;
+  }
+
+  .pipeline-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 0.875rem 1.125rem;
+    background: var(--sl-color-gray-1);
+    border: 1px solid var(--sl-color-gray-3);
+    border-radius: 0.5rem;
+  }
+
+  .pipeline-step--output {
+    background: #f0fdfa;
+    border-color: #99f6e4;
+  }
+
+  [data-theme='dark'] .pipeline-step--output {
+    background: #042f2e;
+    border-color: #134e4a;
+  }
+
+  .step-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    min-width: 1.75rem;
+    background: var(--sl-color-accent);
+    color: #fff;
+    border-radius: 50%;
+    font-weight: 700;
+    font-size: 0.8125rem;
+  }
+
+  .step-title {
+    font-weight: 600;
+    color: var(--sl-color-black);
+    margin-bottom: 0.2rem;
+  }
+
+  [data-theme='dark'] .step-title {
+    color: var(--sl-color-white);
+  }
+
+  .step-desc {
+    color: var(--sl-color-gray-5);
+    line-height: 1.5;
+    font-size: 0.875rem;
+  }
+
+  .pipeline-arrow {
+    text-align: center;
+    color: var(--sl-color-accent);
+    font-size: 1.25rem;
+    padding: 0.125rem 0;
+    margin-left: 0.875rem;
+  }
+</style>
+

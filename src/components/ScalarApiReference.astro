@@ -1,0 +1,60 @@
+---
+/**
+ * ScalarApiReference.astro
+ * Renders the Scalar interactive API reference with:
+ * - PHI disclaimer banner (non-dismissible)
+ * - Sandbox-only server URL (no production URL)
+ * - autocomplete disabled on all inputs via Scalar config
+ */
+---
+
+<div class="phi-disclaimer" role="alert">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+    <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+  </svg>
+  <div>
+    <strong>Do not enter real patient information.</strong> This playground is for testing with
+    synthetic data only. All input is processed in-memory and never stored by Tolka, but your
+    browser may cache request history. Use the pre-filled examples or clearly synthetic phrases
+    such as <em>"Har du smerter?"</em>. Need production access?
+    <a href="/getting-started/authentication/">Create an account to get a test key →</a>
+  </div>
+</div>
+
+<div id="scalar-container" style="width:100%;height:85vh;min-height:600px;border:1px solid var(--sl-color-gray-3);border-radius:0.5rem;overflow:hidden;"></div>
+
+<script>
+  // Scalar CDN — loaded client-side so Pagefind doesn't index playground content
+  (function () {
+    const container = document.getElementById('scalar-container');
+    if (!container) return;
+
+    const script = document.createElement('script');
+    script.id = 'api-reference';
+    script.dataset.url = '/openapi/tolka-v1.yaml';
+    // Sandbox-only: production URL is never exposed in the public spec
+    script.dataset.configuration = JSON.stringify({
+      theme: 'default',
+      layout: 'modern',
+      defaultHttpClient: { targetKey: 'js', clientKey: 'fetch' },
+      servers: [{ url: 'https://sandbox.tolka-api.fly.dev', description: 'Sandbox (evaluation only)' }],
+      // Disable browser autocomplete on all input fields
+      persistAuth: false,
+      // Pre-populate synthetic examples from spec's example values
+    });
+    script.src = 'https://cdn.jsdelivr.net/npm/@scalar/api-reference@latest/dist/browser/standalone.min.js';
+    script.crossOrigin = 'anonymous';
+    container.appendChild(script);
+
+    // Disable autocomplete on dynamically rendered inputs
+    const observer = new MutationObserver(() => {
+      container.querySelectorAll('input, textarea').forEach((el) => {
+        el.setAttribute('autocomplete', 'off');
+        el.setAttribute('autocomplete', 'new-password'); // override aggressive browsers
+      });
+    });
+    observer.observe(container, { childList: true, subtree: true });
+  })();
+</script>
+

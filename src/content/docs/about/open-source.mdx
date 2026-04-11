@@ -1,0 +1,77 @@
+---
+title: Open Source
+description: Contributing to Tolka's open-source documentation, license, and community guidelines.
+sidebar:
+  order: 5
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+The Tolka documentation site is open source under the [Apache 2.0 license](https://github.com/tolka-health/docs/blob/main/LICENSE).
+
+<Aside type="note" title="Repository visibility">
+  This repository is currently **private** while the docs are in active development during the pilot phase. It will be made public after the full Tolka release. Once public, the "Edit this page" links on every page will activate.
+</Aside>
+
+---
+
+## How to contribute
+
+### Quick edits (once public)
+
+Every docs page will have an **"Edit this page on GitHub"** link at the bottom. Use it for typo fixes and small content improvements — no local setup needed.
+
+### Larger contributions
+
+1. Fork the [tolka-health/docs](https://github.com/tolka-health/docs) repository
+2. Install dependencies: `pnpm install`
+3. Start the dev server: `pnpm dev`
+4. Make your changes in `src/content/docs/`
+5. Open a pull request using the provided template
+
+### What we welcome
+
+- Corrections to technical inaccuracies
+- Improved code examples (must use placeholder keys and synthetic medical text)
+- New guides for specific clinical integration patterns
+- Improved clarity and plain-language explanations
+- Accessibility improvements
+
+### What we cannot accept
+
+- Prompt text, scoring algorithm details, or glossary data (see [IP Protection](#ip-protection))
+- Real patient scenarios in examples — all medical text must be clearly synthetic
+- Norwegian translations of technical API documentation (English-only by design)
+- Changes that weaken the PHI disclaimer or clinician acknowledgment guidance
+
+---
+
+## IP protection
+
+This docs repo is Apache 2.0. The core Tolka API — its orchestration pipeline, safety engine, scoring algorithms, clinical domain rules, and LLM prompt templates — is proprietary and lives in a separate private repository.
+
+**Never include in contributions:**
+- LLM prompt text or domain prompt suffixes
+- Confidence formula weights or sub-score names
+- Per-language-pair threshold or adjustment values
+- The full set of clinical domain disambiguation rules (use at most 2–3 examples)
+- Full glossary or phrase library content
+
+See `CONTRIBUTING.md` for the full contributor IP protection rules.
+
+---
+
+## License
+
+Documentation content: [Apache 2.0](https://github.com/tolka-health/docs/blob/main/LICENSE)
+
+The Tolka API, SDK source code, and core platform remain proprietary. Using the Tolka API is subject to the [Terms of Service](https://tolka.health/legal/terms).
+
+---
+
+## Community
+
+- **GitHub Discussions:** Q&A, ideas, and show-and-tell (once public)
+- **Support:** [support@tolka.health](mailto:support@tolka.health)
+- **Security:** [security@tolka.health](mailto:security@tolka.health)
+

@@ -1,0 +1,54 @@
+---
+title: Support
+description: Tolka support channels, response SLAs by plan, and how to report a security issue.
+sidebar:
+  order: 3
+---
+
+## Support channels by plan
+
+| Plan | Channel | Response time |
+|------|---------|---------------|
+| Community | [GitHub Discussions](https://github.com/tolka-health/docs/discussions) | Best effort |
+| Starter | [support@tolka.health](mailto:support@tolka.health) | 2 business days |
+| Pro | [support@tolka.health](mailto:support@tolka.health) | 1 business day |
+| Enterprise | Dedicated Slack channel + email | 4 hours (business hours) |
+| Emergency | 24/7 phone + dedicated Slack | 30 minutes |
+
+---
+
+## Before opening a ticket
+
+Include these in every support request — they allow us to pull the exact request from logs immediately:
+
+1. **`metadata.request_id`** from the affected API response (e.g., `req_01HX4K2MN7...`)
+2. The **endpoint** called (`/translate`, `/safe-translate`, etc.)
+3. The **error code** if applicable (e.g., `TRANSLATION_FAILED`)
+4. Your **key prefix** (e.g., `sk_test_` or `sk_live_`) — never the full secret
+5. The **approximate time** of the request (UTC)
+
+Do **not** include source text, translations, or any patient-identifiable information in support tickets.
+
+---
+
+## Service status
+
+Current API status: [status.tolka.health](https://status.tolka.health)
+
+Subscribe to status updates to receive incident notifications by email or RSS.
+
+---
+
+## Security vulnerabilities
+
+Report security issues to [security@tolka.health](mailto:security@tolka.health). Do not open a public GitHub issue for security vulnerabilities.
+
+We aim to acknowledge security reports within 24 hours and provide a remediation timeline within 72 hours.
+
+---
+
+## Feature requests and docs improvements
+
+- **Feature requests:** [GitHub Discussions → Ideas](https://github.com/tolka-health/docs/discussions/categories/ideas)
+- **Docs improvements:** Use the "Suggest an edit" link at the bottom of any docs page, or open an issue using the template at the bottom of this page.
+

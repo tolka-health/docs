@@ -1,0 +1,69 @@
+---
+title: Environments
+description: Sandbox, test, and production environments for the Tolka API — base URLs, key types, and supported language pairs.
+sidebar:
+  order: 4
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Tolka has three environments. Each has a separate base URL and requires the matching key type.
+
+## Environment summary
+
+| Environment | Base URL | Key prefix | Suitable for |
+|-------------|----------|-----------|--------------|
+| **Sandbox** | `https://sandbox.tolka-api.fly.dev` | `sk_sandbox_public_...` | Quick evaluation, no sign-up |
+| **Test** | `https://api.tolka.health` | `sk_test_...` | Integration development, CI pipelines |
+| **Production** | `https://api.tolka.health` | `sk_live_...` | Live patient-facing deployments |
+
+Test and production share the same API base URL — the key prefix determines which environment your request is routed to.
+
+:::note[Sandbox output is simplified]
+Sandbox responses include `"sandbox": true` and return simplified scoring. Domain-specific behaviour is identical across all domains in sandbox mode. Use a `sk_test_` key for full fidelity.
+:::
+
+---
+
+## Supported language pairs
+
+| Source | Target | Code pair | Notes |
+|--------|--------|-----------|-------|
+| Norwegian Bokmål | English | `nb → en` | Primary supported pair |
+| English | Norwegian Bokmål | `en → nb` | |
+| Arabic | Norwegian Bokmål | `ar → nb` | |
+| Arabic | English | `ar → en` | |
+| Somali | Norwegian Bokmål | `so → nb` | |
+| Somali | English | `so → en` | |
+| Polish | Norwegian Bokmål | `pl → nb` | |
+| Polish | English | `pl → en` | |
+| Tigrinya | Norwegian Bokmål | `ti → nb` | |
+| Dari | English | `prs → en` | |
+
+Language codes follow **BCP 47**. Pass them in `source_lang` and `target_lang`.
+
+:::caution[Low-resource language pairs]
+Some language pairs have adjusted confidence baselines. Always rely on `risk` as your primary UI signal rather than the raw `confidence` float.
+:::
+
+---
+
+## Clinical domains
+
+Pass one of these values in the `domain` field:
+
+| Value | Clinical context |
+|-------|-----------------|
+| `emergency` | Emergency and acute care — prioritises speed and unambiguous terminology |
+| `gp` | General practice consultations |
+| `mental_health` | Mental health and psychiatric settings |
+| `pediatric` | Paediatric care |
+| `pharmacy` | Medication instructions and pharmaceutical context |
+
+---
+
+## What's next
+
+- [Rate limits and retry strategy →](/getting-started/rate-limits/)
+- [Going to production checklist →](/getting-started/going-to-production/)
+

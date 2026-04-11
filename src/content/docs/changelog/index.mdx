@@ -1,0 +1,62 @@
+---
+title: Changelog
+description: API and SDK release history for the Tolka medical translation platform.
+sidebar:
+  order: 1
+  label: Changelog
+---
+
+All notable changes to the Tolka API and Web SDK are documented here.
+Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
+API versioning follows [Semantic Versioning](https://semver.org/).
+
+---
+
+## [1.0.0] — 2026-04-11
+
+Initial public release of the Tolka medical translation API and Web SDK.
+
+### Added
+
+#### API
+- `POST /v1/medical/translate` — domain-aware medical translation with back-translation verification
+- `POST /v1/medical/safe-translate` — translation with automatic withholding on high/critical risk
+- `POST /v1/medical/session` — encrypted client-side session tokens for multi-turn consultations
+- `GET /v1/admin/keys` · `POST /v1/admin/keys` · `GET /v1/admin/keys/:id` · `POST /v1/admin/keys/:id/rotate` · `DELETE /v1/admin/keys/:id` — full key lifecycle management
+- `GET /v1/admin/usage` — aggregated usage statistics with risk and domain breakdowns
+- Five clinical domains: `emergency`, `gp`, `mental_health`, `pediatric`, `pharmacy`
+- Ten supported language pairs across Norwegian Bokmål, English, Arabic, Somali, Polish, Tigrinya, and Dari
+- Risk levels: `low`, `medium`, `high`, `critical`
+- Safety flags: `negation_flip`, `numerical_change`, `keyword_mismatch`
+- `X-RateLimit-*` response headers on all endpoints
+- `X-Request-Id` tracing header
+- Shared public sandbox key (`sk_sandbox_public_tolka_eval2026`) for no-signup evaluation
+
+#### Web SDK (`@tolka/web-sdk` v1.0.0)
+- `TolkaClient` with full TypeScript types
+- `TolkaClient.translate()`, `TolkaClient.safeTranslate()`, `TolkaClient.sessions.create()`
+- `TolkaClient.admin.keys.*` and `TolkaClient.admin.usage.query()`
+- `<tolka-translate>` web component with risk indicator, PHI disclaimer, and event API
+- `<tolka-voice>` web component with microphone input and auto-submit
+- Built-in locales: `en`, `nb`, `ar`, `so`, `pl`
+- CSS custom properties and `::part()` theming API
+- `TolkaApiError` with typed `code`, `requestId`, and `retryAfter`
+- CDN distribution at `cdn.tolka.health/sdk/web/1.0.0/tolka.min.js`
+
+#### Infrastructure
+- EU-only deployment on Fly.io Frankfurt (`fra`) region
+- Cloudflare Pages hosting for `docs.tolka.health`
+- GitHub Actions CI: build, link check, code example validation
+- OpenAPI spec sync from `tolka` repo on tagged releases
+
+---
+
+## Upcoming
+
+### Planned for Q3 2026
+- Android SDK (Kotlin + Jetpack Compose)
+- iOS SDK (Swift + SwiftUI)
+- Offline mode for `emergency` domain (Emergency plan)
+- Developer self-service signup at `docs.tolka.health/signup`
+- Batch translation endpoint `POST /v1/medical/translate/batch`
+

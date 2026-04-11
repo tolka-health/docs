@@ -1,0 +1,86 @@
+---
+title: Translation Pipeline
+description: How the Tolka 5-step medical translation pipeline works — from input to enriched response.
+sidebar:
+  order: 1
+---
+
+import PipelineDiagram from '../../../components/PipelineDiagram.astro';
+import { Aside } from '@astrojs/starlight/components';
+
+Every call to the Tolka API passes through a five-step pipeline designed specifically for medical text. Understanding the pipeline helps you interpret confidence scores, handle failures gracefully, and choose the right domain for your use case.
+
+<PipelineDiagram />
+
+---
+
+## Step 1: Input
+
+The pipeline receives:
+- **`text`** — the source text to translate (max 2,000 characters)
+- **`source_lang`** / **`target_lang`** — BCP 47 language codes
+- **`domain`** — the clinical context (`emergency`, `gp`, `mental_health`, `pediatric`, or `pharmacy`)
+
+The domain is not cosmetic. It changes how the translation is produced — emergency translations prioritise unambiguous, clinically precise phrasing, while `gp` allows more conversational register.
+
+---
+
+## Step 2: Forward Translation
+
+The source text is translated to the target language by a large language model. The domain context is applied at this step to adjust phrasing, vocabulary, and register.
+
+Two disambiguation examples of how domain changes output:
+
+- The phrase **"pressure"** is translated as *blodtrykk* (blood pressure) in `emergency` domain but *press* (emotional stress) in `mental_health` domain.
+- The phrase **"discharge"** is translated as *utskrivning* (hospital discharge) in `gp` domain but *utflod* (discharge/secretion) in a relevant clinical sub-context.
+
+:::note[Domain is required]
+Always pass an explicit `domain`. Omitting it defaults to `gp`, which may produce sub-optimal results for specialised clinical contexts.
+:::
+
+---
+
+## Step 3: Back-Translation
+
+After the forward translation is produced, an **independent** back-translation is generated — translating from the target language back to the source language. This is a separate LLM call, not a reversal of the forward translation.
+
+The back-translation is included in the response as `back_translation` so clinicians can visually verify the round-trip makes sense.
+
+---
+
+## Step 4: Safety Verification
+
+The forward translation and back-translation are compared using multiple independent quality signals that together assess whether clinical meaning was faithfully preserved. These signals are combined into a single `confidence` score.
+
+Certain checks can independently trigger safety `flags`:
+
+| Flag | Description |
+|------|-------------|
+| `negation_flip` | A negation was inverted during translation (e.g., "no pain" became "pain") |
+| `numerical_change` | A number was altered (dosages, frequencies, ages) |
+| `keyword_mismatch` | A clinically significant term was dropped or changed |
+
+These flags always produce `risk: "critical"` regardless of the overall confidence score. They are deterministic, not probabilistic.
+
+---
+
+## Step 5: Enriched Response
+
+The pipeline returns the full enriched response including `translation`, `back_translation`, `confidence`, `risk`, `flags`, and `verified`.
+
+If any step fails:
+
+| Failure | Effect on response |
+|---------|--------------------|
+| Back-translation step fails | `verified: false`, `confidence` may be lower, `risk` may be elevated |
+| Safety verification fails | Response still returned; `verified: false` |
+| Forward translation fails | `503 SERVICE_UNAVAILABLE` — no partial response |
+
+---
+
+## What's next
+
+- [How to interpret confidence and risk in your UI →](/concepts/confidence-and-risk/)
+- [How clinical domains affect translation →](/concepts/clinical-domains/)
+- [POST /translate reference →](/api-reference/translate/)
+

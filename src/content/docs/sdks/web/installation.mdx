@@ -1,0 +1,94 @@
+---
+title: Installation
+description: Install the Tolka Web SDK via npm, pnpm, or CDN script tag.
+sidebar:
+  order: 1
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+The Tolka Web SDK (`@tolka/web-sdk`) provides:
+- **`TolkaClient`** — a typed JavaScript/TypeScript API client
+- **Web Components** — drop-in `<tolka-translate>` and `<tolka-voice>` elements
+
+---
+
+## Package manager
+
+<Tabs>
+<TabItem label="pnpm">
+```bash
+pnpm add @tolka/web-sdk
+```
+</TabItem>
+<TabItem label="npm">
+```bash
+npm install @tolka/web-sdk
+```
+</TabItem>
+<TabItem label="yarn">
+```bash
+yarn add @tolka/web-sdk
+```
+</TabItem>
+</Tabs>
+
+**TypeScript types are bundled** — no `@types/` package needed.
+
+---
+
+## CDN (no build step)
+
+For prototyping or embedding in systems without a build pipeline:
+
+```html
+<script
+  src="https://cdn.tolka.health/sdk/web/latest/tolka.min.js"
+  crossorigin="anonymous">
+</script>
+```
+
+This registers the web components globally and exposes `window.TolkaClient`. Pin to a specific version in production:
+
+```html
+<script
+  src="https://cdn.tolka.health/sdk/web/1.0.0/tolka.min.js"
+  crossorigin="anonymous">
+</script>
+```
+
+---
+
+## Verify installation
+
+```typescript
+import { TolkaClient } from '@tolka/web-sdk';
+
+const tolka = new TolkaClient({
+  apiKey: process.env.TOLKA_API_KEY!,
+});
+
+// Should resolve without error
+const result = await tolka.translate({
+  text: 'Har du smerter?',
+  sourceLang: 'nb',
+  targetLang: 'en',
+  domain: 'gp',
+});
+
+console.log(result.translation); // "Do you have pain?"
+```
+
+---
+
+## Browser support
+
+The SDK targets modern browsers (ES2020+). Web components use the Custom Elements v1 spec, supported in all evergreen browsers. No polyfills are included — add them if you need to support legacy environments.
+
+---
+
+## What's next
+
+- [TolkaClient API →](/sdks/web/tolka-client/)
+- [Web Components →](/sdks/web/web-components/)
+

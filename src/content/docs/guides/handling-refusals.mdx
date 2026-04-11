@@ -1,0 +1,114 @@
+---
+title: Handling Refusals
+description: What to do when Tolka withholds a translation in safe mode — UI patterns, fallback flows, and clinician guidance.
+sidebar:
+  order: 6
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+A "refusal" is when `POST /safe-translate` returns `withheld: true`. This is a safety outcome — not an error. Your UI must handle it gracefully and provide an alternative path.
+
+---
+
+## When does a refusal happen?
+
+Safe mode withholds a translation when `risk` is `"high"` or `"critical"`. This is triggered by:
+
+| Trigger | Flag |
+|---------|------|
+| Negation was flipped ("no pain" → "pain") | `negation_flip` |
+| A number changed in translation | `numerical_change` |
+| A clinical term was dropped from the translation | `keyword_mismatch` |
+| Overall quality below the safe threshold | No flag — `confidence` too low |
+
+---
+
+## Required UI behaviour
+
+### When `withheld: true`
+
+1. **Never show `null` to the user** — display a clear, human-readable explanation
+2. **Name the reason** if a flag is present (e.g., "A negation may have been lost")
+3. **Recommend an alternative** — professional interpreter, rephrased input, or telephone interpretation
+4. **Do not retry automatically** — the same text will produce the same result
+
+### When `risk: "high"` (translation provided)
+
+Show the translation behind a clinician acknowledgment step:
+
+```tsx
+function HighRiskTranslation({ result }: { result: TranslateResponse }) {
+  const [acknowledged, setAcknowledged] = useState(false);
+
+  if (!acknowledged) {
+    return (
+      <div className="risk-acknowledgment">
+        <p><strong>High risk translation — clinician review required</strong></p>
+        {result.flags.length > 0 && (
+          <ul>
+            {result.flags.map((f) => <li key={f}>{flagLabels[f]}</li>)}
+          </ul>
+        )}
+        <p>Back-translation: <em>{result.backTranslation}</em></p>
+        <button onClick={() => setAcknowledged(true)}>
+          I have reviewed this translation and confirm it is safe to use
+        </button>
+      </div>
+    );
+  }
+
+  return <TranslationDisplay text={result.translation} />;
+}
+```
+
+---
+
+## Refusal message templates
+
+```typescript
+const flagLabels: Record<string, string> = {
+  negation_flip: 'A negation may have been lost or added during translation (e.g., "no pain" ↔ "pain").',
+  numerical_change: 'A number changed between source and translation. Verify dosages and quantities.',
+  keyword_mismatch: 'A clinical term present in the source may be missing from the translation.',
+};
+
+function getRefusalMessage(flags: string[]): string {
+  if (flags.length === 0) {
+    return 'The translation quality could not be verified to a safe standard.';
+  }
+  return flags.map((f) => flagLabels[f] ?? f).join(' ');
+}
+```
+
+---
+
+## Refusal frequency by language pair
+
+Refusal rates are higher for low-resource language pairs (e.g., Somali, Tigrinya). If you see elevated withholding rates for a specific pair:
+
+1. Check that the correct `domain` is being passed for the clinical context
+2. Simplify the source text if possible (short, concrete sentences translate better than complex compound sentences)
+3. Contact [support@tolka.health](mailto:support@tolka.health) if the issue persists — high refusal rates for a specific input pattern are actionable feedback
+
+---
+
+## Logging refusals
+
+Always log withheld translations for quality monitoring. Include:
+- `metadata.request_id`
+- `flags`
+- `confidence`
+- `domain`
+- `source_lang` / `target_lang`
+
+Do **not** log the source `text` or `translation` — these may contain PHI.
+
+---
+
+## What's next
+
+- [Safe Mode concept →](/concepts/safe-mode/)
+- [Monitoring Quality →](/guides/monitoring-quality/)
+- [POST /safe-translate →](/api-reference/safe-translate/)
+

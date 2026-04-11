@@ -1,0 +1,104 @@
+---
+title: Compliance & Trust
+description: Tolka's GDPR, Normen, MDR, and EU AI Act compliance posture — inline and ungated for procurement teams.
+sidebar:
+  order: 2
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+This page is for DPOs, legal teams, and procurement officers evaluating Tolka. All compliance information is provided inline — no email gate, no PDF required to read it.
+
+---
+
+## GDPR
+
+**Role:** Tolka acts as a **data processor** under Article 28. Your organisation is the data controller.
+
+**Lawful basis for processing:** Healthcare providers typically rely on Article 9(2)(h) (healthcare purposes) or Article 6(1)(c) (legal obligation) for processing patient communications. Tolka does not establish your lawful basis — that is your organisation's responsibility.
+
+**Data minimisation:** Tolka's stateless architecture (see [Privacy Architecture](/concepts/privacy-architecture/)) means no patient text is stored. The principle of data minimisation is satisfied at the architectural level.
+
+**Data subject rights:** Right to erasure (Article 17) is trivially satisfied — Tolka holds no personal data to erase. Right to access (Article 15) applies only to the account and billing data Tolka holds about your organisation.
+
+**International transfers:** No data leaves the EEA. All infrastructure is in Frankfurt, Germany.
+
+**DPA:** Download the pre-signed Data Processing Agreement template: [DPA template (PDF)](https://tolka.health/compliance/tolka-dpa-template.pdf). Counter-sign and return to [legal@tolka.health](mailto:legal@tolka.health).
+
+---
+
+## Normen (Norwegian healthcare security standard)
+
+Tolka is working towards Normen certification. Current status:
+
+| Requirement | Status |
+|-------------|--------|
+| Data localisation (EEA) | ✓ Satisfied |
+| Access logging | ✓ Request ID and key ID logged (no PHI) |
+| Encryption in transit | ✓ TLS 1.3 |
+| Encryption at rest | ✓ All persistent data encrypted at rest |
+| Security assessment | In progress |
+| Formal Normen registration | In progress — expected Q3 2026 |
+
+Contact [compliance@tolka.health](mailto:compliance@tolka.health) for the current Normen self-assessment questionnaire.
+
+---
+
+## MDR (Medical Device Regulation)
+
+Tolka is a **documentation and communication tool**, not a clinical decision support system. It translates what a clinician or patient says — it does not diagnose, prescribe, or recommend treatment.
+
+Tolka's position: the API is **not a medical device** under MDR Article 2(1). The safety engine that flags translation quality issues is a quality control mechanism for the communication tool, not a diagnostic algorithm.
+
+If your use case requires a formal MDR Article 22 opinion letter, contact [compliance@tolka.health](mailto:compliance@tolka.health).
+
+---
+
+## EU AI Act
+
+Tolka's safety engine falls under the EU AI Act's consideration for **high-risk AI systems** in the healthcare sector (Annex III). Tolka's risk management measures include:
+
+- **Back-translation verification** — every translation is independently verified before being returned
+- **Multi-signal safety scoring** — three independent signals catch different categories of translation failure
+- **Deterministic critical overrides** — negation flips, numerical changes, and keyword mismatches always produce `risk: "critical"`, regardless of confidence
+- **Human oversight by design** — the API requires integrators to implement clinician acknowledgment for high-risk translations; Tolka cannot be used as a fully autonomous clinical translation system
+
+Full EU AI Act conformity documentation is available for Enterprise customers.
+
+---
+
+## Security
+
+| Control | Implementation |
+|---------|----------------|
+| Transport security | TLS 1.3, HSTS, certificate pinning on mobile SDKs |
+| Authentication | API key with Bearer token; short-lived key rotation supported |
+| Rate limiting | Per-key, per-IP limits to prevent abuse |
+| Audit logging | Request IDs and key IDs logged; no PHI in logs |
+| Infrastructure | Fly.io (SOC 2 Type II) on dedicated instances |
+| Dependency scanning | Automated CVE scanning on all dependencies |
+| Secret scanning | GitHub Advanced Security on all repos |
+
+---
+
+## Downloadable documents
+
+| Document | Format | Availability |
+|----------|--------|-------------|
+| Data Processing Agreement (DPA) | PDF | [Download](https://tolka.health/compliance/tolka-dpa-template.pdf) |
+| DIPA summary | PDF | Available for Enterprise customers |
+| Security whitepaper | PDF | [Contact us](https://tolka.health/contact) |
+| Architecture overview | PDF | [Download](https://tolka.health/compliance/tolka-architecture.pdf) |
+
+:::note[Ungated by design]
+The DPA and architecture overview are provided without email gates from the docs site. Procurement legal teams should not hit a lead-capture wall when evaluating a vendor's compliance posture.
+:::
+
+---
+
+## Contact
+
+- **Compliance questions:** [compliance@tolka.health](mailto:compliance@tolka.health)
+- **Legal / DPA:** [legal@tolka.health](mailto:legal@tolka.health)
+- **Security reports:** [security@tolka.health](mailto:security@tolka.health)
+

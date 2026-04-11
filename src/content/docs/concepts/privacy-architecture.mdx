@@ -1,0 +1,95 @@
+---
+title: Privacy Architecture
+description: How Tolka's zero-storage, EU-only architecture keeps patient data safe — no PHI logging, no persistence, GDPR by design.
+sidebar:
+  order: 6
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Tolka was designed with privacy as a structural constraint, not a policy layer. The architecture makes it technically impossible to retain patient health information — not just against policy to do so.
+
+---
+
+## Zero-storage model
+
+Tolka does **not** store translation input or output:
+
+- **Request text** (`text` field) is held in memory for the duration of the API request only. It is never written to disk, a database, or a log.
+- **Translation output** (`translation`, `back_translation`) is returned in the response and immediately discarded server-side.
+- **Session tokens** are encrypted opaque blobs. The server holds the encryption key but not the session contents — session state round-trips through the client.
+
+This means:
+- There is no dataset of patient communications to breach.
+- There is no data to hand over in response to a legal order beyond request metadata.
+- GDPR's right to erasure is trivially satisfied — there is nothing to erase.
+
+---
+
+## What Tolka does log
+
+For operations, billing, and security, Tolka retains:
+
+| Data | Retention | Purpose |
+|------|-----------|---------|
+| `metadata.request_id` | 90 days | Support and debugging |
+| API key identifier (not the secret) | Billing cycle | Usage accounting |
+| Response `confidence` and `risk` (no text) | 90 days | Quality monitoring |
+| IP address (hashed) | 30 days | Rate limiting and abuse prevention |
+
+:::note[No PHI in logs]
+None of the logged data contains the translated text, back-translation, or source text. Logs are safe to inspect by non-clinical operations staff.
+:::
+
+---
+
+## EU-only infrastructure
+
+All Tolka API processing occurs on infrastructure within the European Economic Area:
+
+- **API servers:** Deployed on [Fly.io](https://fly.io) in the `fra` (Frankfurt, Germany) region.
+- **No data leaves the EEA** during normal operation.
+- LLM inference is routed exclusively to EEA-compliant endpoints.
+
+This satisfies Normen's data localisation requirements and the GDPR Article 44 restriction on international data transfers.
+
+---
+
+## Data flow diagram
+
+```
+Client (Browser / App)
+        │
+        │  HTTPS — text in transit, TLS 1.3
+        ▼
+Tolka API (Frankfurt, EEA)
+        │
+        ├── Forward translation (in-memory)
+        ├── Back-translation (in-memory)
+        ├── Safety verification (in-memory)
+        │
+        ├── Log: request_id, key_id, confidence, risk, IP (hashed)
+        │         (no text, no translation)
+        │
+        └── Response — translation returned to client
+                │
+                └── Server discards all text immediately
+```
+
+---
+
+## GDPR role
+
+Tolka acts as a **data processor** on behalf of your organisation (the data controller). When you use the Tolka API with patient text:
+
+- You are responsible for having a lawful basis for the processing (typically Article 9(2)(h) — healthcare purposes).
+- Tolka's obligations as processor are defined in the Data Processing Agreement (DPA).
+- Download the pre-signed DPA template from [/about/compliance/](/about/compliance/).
+
+---
+
+## What's next
+
+- [Compliance & Trust Center →](/about/compliance/)
+- [Going to Production — privacy review checklist →](/getting-started/going-to-production/)
+

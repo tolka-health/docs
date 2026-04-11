@@ -1,0 +1,106 @@
+---
+title: Admin — Keys
+description: Create, list, rotate, and revoke Tolka API keys via the Admin Keys API.
+sidebar:
+  order: 5
+  label: Admin — Keys
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+The Admin Keys API lets you programmatically manage API keys for your organisation. For the full schema, see the [Interactive Reference](/api-reference/index/).
+
+---
+
+## Endpoints at a glance
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/v1/admin/keys` | List all keys |
+| `POST` | `/v1/admin/keys` | Create a new key |
+| `GET` | `/v1/admin/keys/:id` | Get a single key |
+| `POST` | `/v1/admin/keys/:id/rotate` | Rotate (replace) a key |
+| `DELETE` | `/v1/admin/keys/:id` | Revoke a key |
+
+All endpoints require a `sk_live_` or `sk_test_` key with admin scope.
+
+---
+
+## List keys
+
+```bash
+curl https://api.tolka.health/v1/admin/keys \
+  -H "Authorization: Bearer $TOLKA_API_KEY"
+```
+
+Response:
+```json
+{
+  "keys": [
+    {
+      "id": "key_01HX4K2MN7...",
+      "name": "Production – EHR integration",
+      "prefix": "sk_live_",
+      "created_at": "2026-04-01T08:00:00Z",
+      "last_used_at": "2026-04-11T14:23:00Z",
+      "expires_at": null
+    }
+  ],
+  "total": 1
+}
+```
+
+:::note[Secret is never returned]
+The full key secret is only returned once — at creation time. Store it securely. The list and get endpoints return only the key `id`, `name`, and `prefix`.
+:::
+
+---
+
+## Create a key
+
+<Tabs>
+<TabItem label="cURL">
+```bash
+curl -X POST https://api.tolka.health/v1/admin/keys \
+  -H "Authorization: Bearer $TOLKA_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "CI pipeline key",
+    "type": "test",
+    "expires_in_days": 90
+  }'
+```
+</TabItem>
+<TabItem label="TypeScript">
+```typescript
+const key = await tolka.admin.keys.create({
+  name: 'CI pipeline key',
+  type: 'test',
+  expiresInDays: 90,
+});
+// key.secret is only available here — store it now
+console.log(key.secret); // "sk_test_..."
+```
+</TabItem>
+</Tabs>
+
+---
+
+## Rotate a key (zero-downtime)
+
+Rotation generates a new secret while briefly keeping the old key valid (overlap window: 5 minutes). Use this for zero-downtime key updates.
+
+```bash
+curl -X POST https://api.tolka.health/v1/admin/keys/key_01HX.../rotate \
+  -H "Authorization: Bearer $TOLKA_API_KEY"
+```
+
+See the [Key Rotation guide](/guides/key-rotation/) for a full zero-downtime deployment procedure.
+
+---
+
+## What's next
+
+- [Zero-downtime Key Rotation guide →](/guides/key-rotation/)
+- [Authentication overview →](/getting-started/authentication/)
+

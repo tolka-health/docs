@@ -1,0 +1,97 @@
+---
+title: Localization
+description: Built-in locales for the Tolka web components and how to add custom translations.
+sidebar:
+  order: 5
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Tolka web components ship with built-in UI string translations for the languages most common in Norwegian healthcare settings.
+
+---
+
+## Built-in locales
+
+| Locale code | Language |
+|-------------|---------|
+| `en` | English (default) |
+| `nb` | Norwegian Bokmål |
+| `ar` | Arabic (RTL) |
+| `so` | Somali |
+| `pl` | Polish |
+
+Pass the `locale` attribute on the component:
+
+```html
+<tolka-translate
+  api-key="sk_test_..."
+  source-lang="ar"
+  target-lang="nb"
+  domain="gp"
+  locale="ar">
+</tolka-translate>
+```
+
+Arabic (`ar`) automatically enables RTL layout for the component UI.
+
+---
+
+## Custom locale
+
+Override individual strings by passing a `locale-overrides` attribute:
+
+```html
+<tolka-translate
+  locale="nb"
+  locale-overrides='{"submit": "Oversett nå", "disclaimer": "Ikke skriv inn pasientopplysninger."}'>
+</tolka-translate>
+```
+
+Or via JavaScript:
+
+```javascript
+const widget = document.querySelector('tolka-translate');
+widget.localeOverrides = {
+  submit: 'Oversett nå',
+  placeholder: 'Skriv medisinsk tekst her...',
+  riskLabel: {
+    low: 'Lav risiko',
+    medium: 'Middels risiko',
+    high: 'Høy risiko',
+    critical: 'Kritisk — ikke vis til pasient',
+  },
+};
+```
+
+---
+
+## Available string keys
+
+| Key | Default (en) | Description |
+|-----|-------------|-------------|
+| `placeholder` | `"Enter medical text to translate..."` | Input textarea placeholder |
+| `submit` | `"Translate"` | Submit button label |
+| `disclaimer` | `"Do not enter real patient information."` | PHI disclaimer text |
+| `withheld` | `"Translation withheld — safety check failed."` | Safe-mode refusal message |
+| `riskLabel.low` | `"Low risk"` | Risk badge label |
+| `riskLabel.medium` | `"Medium risk"` | Risk badge label |
+| `riskLabel.high` | `"High risk — clinician review required"` | Risk badge label |
+| `riskLabel.critical` | `"Critical — do not display to patient"` | Risk badge label |
+| `verifiedLabel` | `"Back-translation verified"` | Verification indicator |
+| `loading` | `"Translating..."` | Loading state label |
+| `error.default` | `"Translation failed. Please try again."` | Generic error message |
+
+---
+
+## RTL support
+
+Arabic (`ar`) and other RTL languages are handled automatically when `locale="ar"` is set. The component flips its layout direction, text alignment, and icon positions. If your outer page is also RTL (`dir="rtl"`), no additional configuration is needed.
+
+---
+
+## What's next
+
+- [Error Handling →](/sdks/web/error-handling/)
+- [Styling →](/sdks/web/styling/)
+

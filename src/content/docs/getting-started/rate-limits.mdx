@@ -1,0 +1,108 @@
+---
+title: Rate Limits
+description: Per-plan rate limits for the Tolka API, response headers, and retry strategies.
+sidebar:
+  order: 5
+---
+
+import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+
+## Per-plan limits
+
+| Plan | Requests/minute | Requests/month | Burst |
+|------|----------------|----------------|-------|
+| Sandbox (shared) | 10 / IP | 50 / IP / day | No burst |
+| Community | 20 | 200 | 40 for 10s |
+| Starter | 60 | 500 | 120 for 10s |
+| Pro | 300 | 5,000 | 600 for 10s |
+| Enterprise | Custom | Unlimited | Negotiated |
+| Emergency | 500 | Unlimited | 1,000 for 10s |
+
+---
+
+## Rate limit headers
+
+Every response includes these headers:
+
+| Header | Description |
+|--------|-------------|
+| `X-RateLimit-Limit` | Your plan's requests-per-minute ceiling |
+| `X-RateLimit-Remaining` | Requests remaining in the current minute window |
+| `X-RateLimit-Reset` | Unix timestamp when the window resets |
+| `Retry-After` | Seconds to wait before retrying (present only on `429` responses) |
+
+```http
+HTTP/2 200
+X-RateLimit-Limit: 60
+X-RateLimit-Remaining: 43
+X-RateLimit-Reset: 1744375260
+```
+
+---
+
+## Handling 429 responses
+
+When you exceed your limit, the API returns `429 RATE_LIMIT_EXCEEDED`:
+
+```json
+{
+  "error": {
+    "code": "RATE_LIMIT_EXCEEDED",
+    "message": "Rate limit exceeded. Retry after 23 seconds.",
+    "retry_after": 23
+  }
+}
+```
+
+**Always use `Retry-After`** — do not hardcode wait times.
+
+<Tabs>
+<TabItem label="TypeScript">
+```typescript
+async function translateWithRetry(
+  client: TolkaClient,
+  params: TranslateParams,
+  maxRetries = 3,
+): Promise<TranslateResponse> {
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await client.translate(params);
+    } catch (err) {
+      if (err instanceof TolkaApiError && err.code === 'RATE_LIMIT_EXCEEDED') {
+        const wait = (err.retryAfter ?? Math.pow(2, attempt)) * 1000;
+        if (attempt < maxRetries) await new Promise((r) => setTimeout(r, wait));
+        else throw err;
+      } else {
+        throw err;
+      }
+    }
+  }
+  throw new Error('unreachable');
+}
+```
+</TabItem>
+<TabItem label="Python">
+```python
+import time
+
+def translate_with_retry(client, params, max_retries=3):
+    for attempt in range(max_retries + 1):
+        try:
+            return client.translate(**params)
+        except TolkaApiError as e:
+            if e.code == "RATE_LIMIT_EXCEEDED" and attempt < max_retries:
+                wait = e.retry_after or (2 ** attempt)
+                time.sleep(wait)
+            else:
+                raise
+```
+</TabItem>
+</Tabs>
+
+---
+
+## What's next
+
+- [Going to production checklist →](/getting-started/going-to-production/)
+- [Error catalog →](/api-reference/errors/)
+

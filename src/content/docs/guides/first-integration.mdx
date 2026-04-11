@@ -1,0 +1,142 @@
+---
+title: First Integration
+description: End-to-end guide — from API key to a working medical translation feature in your application.
+sidebar:
+  order: 1
+---
+
+import { Steps, Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+
+This guide walks through a complete integration: from obtaining a key to a production-ready translation flow with proper error handling and clinician sign-off UI.
+
+---
+
+<Steps>
+1. **Get an API key**
+
+   Sign up at [docs.tolka.health/signup](https://docs.tolka.health/signup). You'll receive a `sk_test_` key immediately — no credit card required.
+
+   Store it in your environment:
+
+   ```bash
+   # .env (never commit this file)
+   TOLKA_API_KEY=sk_test_your_key_here
+   ```
+
+2. **Install the SDK**
+
+   ```bash
+   pnpm add @tolka/web-sdk
+   ```
+
+3. **Initialise the client**
+
+   ```typescript
+   // lib/tolka.ts
+   import { TolkaClient } from '@tolka/web-sdk';
+
+   export const tolka = new TolkaClient({
+     apiKey: process.env.TOLKA_API_KEY!,
+   });
+   ```
+
+4. **Determine the clinical domain**
+
+   Map your application's care context to a Tolka domain before every call:
+
+   ```typescript
+   import type { TolkaDomain } from '@tolka/web-sdk';
+
+   function getDomain(careContext: string): TolkaDomain {
+     const map: Record<string, TolkaDomain> = {
+       emergency: 'emergency',
+       gp: 'gp',
+       mental_health: 'mental_health',
+       pediatric: 'pediatric',
+       pharmacy: 'pharmacy',
+     };
+     return map[careContext] ?? 'gp';
+   }
+   ```
+
+5. **Translate with safe mode**
+
+   Use `/safe-translate` for patient-facing output:
+
+   ```typescript
+   import { tolka } from '@/lib/tolka';
+   import { TolkaApiError } from '@tolka/web-sdk';
+
+   async function translateForPatient(
+     text: string,
+     sourceLang: string,
+     targetLang: string,
+     domain: TolkaDomain,
+   ) {
+     try {
+       const result = await tolka.safeTranslate({ text, sourceLang, targetLang, domain });
+
+       if (result.withheld) {
+         return { status: 'withheld', flags: result.flags };
+       }
+
+       return {
+         status: result.risk === 'high' ? 'requires-acknowledgment' : 'ready',
+         translation: result.translation,
+         backTranslation: result.back_translation,
+         risk: result.risk,
+         confidence: result.confidence,
+         flags: result.flags,
+       };
+     } catch (err) {
+       if (err instanceof TolkaApiError) {
+         return { status: 'error', code: err.code, requestId: err.requestId };
+       }
+       throw err;
+     }
+   }
+   ```
+
+6. **Handle each outcome in your UI**
+
+   ```tsx
+   const outcome = await translateForPatient(text, 'nb', 'en', domain);
+
+   switch (outcome.status) {
+     case 'ready':
+       return <TranslationDisplay text={outcome.translation} risk={outcome.risk} />;
+
+     case 'requires-acknowledgment':
+       return (
+         <ClinicianAcknowledgment
+           translation={outcome.translation}
+           backTranslation={outcome.backTranslation}
+           flags={outcome.flags}
+           onConfirm={() => setShowTranslation(true)}
+         />
+       );
+
+     case 'withheld':
+       return <RefusalAlert flags={outcome.flags} />;
+
+     case 'error':
+       return <TranslationError code={outcome.code} requestId={outcome.requestId} />;
+   }
+   ```
+
+7. **Go to production**
+
+   - Replace `sk_test_` with `sk_live_` from your dashboard
+   - Complete the [Production Readiness checklist](/getting-started/going-to-production/)
+   - Sign the [Data Processing Agreement](/about/compliance/)
+
+</Steps>
+
+---
+
+## What's next
+
+- [Migrate from Google Translate →](/guides/migrating-from-google-translate/)
+- [Emergency Department integration →](/guides/emergency-department/)
+- [Going to Production checklist →](/getting-started/going-to-production/)
+

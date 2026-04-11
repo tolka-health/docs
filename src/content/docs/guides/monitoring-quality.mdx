@@ -1,0 +1,114 @@
+---
+title: Monitoring Quality
+description: Using Tolka's usage API and confidence metrics to detect translation quality degradation early.
+sidebar:
+  order: 8
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+Monitoring translation quality is a patient safety responsibility, not just an operational one. This guide covers the metrics to track and the thresholds to alert on.
+
+---
+
+## Key metrics
+
+| Metric | How to get it | Alert guidance |
+|--------|--------------|----------------|
+| `confidence_p50` | `GET /v1/admin/usage` | Alert on significant week-over-week drops |
+| `confidence_p10` | `GET /v1/admin/usage` | Alert on sustained declines per language pair |
+| Critical risk rate | `by_risk.critical / total_requests` | Alert if noticeably above your observed baseline |
+| Withheld rate | `withheld_count / total_requests` | Alert on sustained increases above your baseline |
+| `verified: false` rate | Track in your application logs | Alert on any sustained increase |
+
+---
+
+## Querying usage metrics
+
+<Tabs>
+<TabItem label="TypeScript">
+```typescript
+const usage = await tolka.admin.usage.query({
+  from: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+  to: new Date().toISOString().split('T')[0],
+  granularity: 'day',
+});
+
+const criticalRate = usage.by_risk.critical / usage.total_requests;
+const withheldRate = usage.withheld_count / usage.total_requests;
+
+// Set your own alert thresholds based on your observed baselines
+if (criticalRate > YOUR_CRITICAL_RATE_THRESHOLD) {
+  alert(`Critical risk rate elevated: ${(criticalRate * 100).toFixed(1)}%`);
+}
+```
+</TabItem>
+<TabItem label="cURL">
+```bash
+curl "https://api.tolka.health/v1/admin/usage?from=2026-04-04&to=2026-04-11&granularity=day" \
+  -H "Authorization: Bearer $TOLKA_API_KEY"
+```
+</TabItem>
+</Tabs>
+
+---
+
+## Segmenting by language pair and domain
+
+Aggregate metrics can mask problems in specific language pairs. Always break down monitoring by language pair:
+
+```typescript
+// Check each supported language pair separately
+const pairs = [
+  { source: 'nb', target: 'en' },
+  { source: 'ar', target: 'nb' },
+  { source: 'so', target: 'nb' },
+  { source: 'pl', target: 'nb' },
+];
+
+for (const pair of pairs) {
+  const usage = await tolka.admin.usage.query({
+    from: weekAgo,
+    to: today,
+    sourceLang: pair.source,
+    targetLang: pair.target,
+  });
+
+  if (usage.total_requests > 10) { // only alert if there's meaningful volume
+    const criticalRate = usage.by_risk.critical / usage.total_requests;
+    if (criticalRate > YOUR_CRITICAL_RATE_THRESHOLD) {
+      notify(`High critical rate for ${pair.source}→${pair.target}: ${criticalRate}`);
+    }
+  }
+}
+```
+
+---
+
+## Interpreting trends
+
+| Observation | Likely cause | Action |
+|-------------|--------------|--------|
+| Rising critical rate for a specific language pair | Domain mismatch (wrong domain being passed) | Audit which `domain` your integration uses for this pair |
+| Falling `confidence_p50` across all pairs | Model update (check `metadata.model` in logs) | Monitor for 48h; contact support if it continues |
+| Spike in `verified: false` | Upstream verification issues | Check [status.tolka.health](https://status.tolka.health); contact support |
+| Rising withheld rate for low-resource pairs | Expected — low-resource pairs have adjusted baselines | Ensure clinician escalation paths are working |
+
+---
+
+## Dashboard integration
+
+Connect the usage API to your existing monitoring stack:
+
+- **Grafana / Prometheus:** Schedule a cron job to call the usage API and push metrics to a Prometheus pushgateway
+- **Datadog:** Use the Datadog HTTP check or a Lambda function to call the usage API and send custom metrics
+- **PagerDuty:** Wire your monitoring stack to page on-call when critical rate or withheld rate thresholds are exceeded
+
+---
+
+## What's next
+
+- [Admin Usage API reference →](/api-reference/usage/)
+- [Handling Refusals →](/guides/handling-refusals/)
+- [Going to Production →](/getting-started/going-to-production/)
+

@@ -1,0 +1,18 @@
+extends: substitution
+message: Use '%s' instead of '%s'
+level: error
+ignorecase: false
+swap:
+  # Brand name
+  tolka: Tolka
+  TOLKA: Tolka
+  # Hyphenation
+  back translation: back-translation
+  backtranslation: back-translation
+  Back Translation: Back-Translation
+  # Consistent terminology
+  confidence score: confidence score
+  risk level: risk level
+  safe translate: safe-translate
+  safeTranslate: safeTranslate
+

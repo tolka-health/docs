@@ -1,0 +1,106 @@
+---
+title: Clinical Domains
+description: The five Tolka clinical domains — what each means, when to use it, and how domain context affects translation.
+sidebar:
+  order: 3
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+The `domain` parameter tells Tolka the clinical context of the text being translated. This is not a filter — it actively changes how the translation is produced.
+
+Always pass an explicit domain. Omitting it defaults to `gp`.
+
+---
+
+## Available domains
+
+### `emergency`
+
+**Use for:** Emergency departments, acute care, ambulance communications, triage.
+
+Prioritises **speed, clarity, and unambiguous clinical precision**. Translations favour short, directive phrasing over conversational register. Anatomical terms are rendered explicitly — the domain assumes the communication is time-critical and the audience includes clinical staff, not only patients.
+
+---
+
+### `gp`
+
+**Use for:** General practice consultations, primary care, routine appointments.
+
+The default domain. Balances clinical accuracy with accessible, conversational language. Suitable for most outpatient interactions.
+
+---
+
+### `mental_health`
+
+**Use for:** Psychiatric consultations, psychological assessments, mental health triage.
+
+Handles sensitive terminology around mental health, self-harm, and emotional state with appropriate clinical care. Avoids stigmatising language and preserves emotional nuance.
+
+---
+
+### `pediatric`
+
+**Use for:** Paediatric consultations, child and adolescent health, communications with parents and guardians.
+
+Adjusts register to be accessible to parents and guardians while maintaining clinical precision with medical staff. Handles age-specific terminology (e.g., developmental milestones).
+
+---
+
+### `pharmacy`
+
+**Use for:** Medication instructions, prescription information, pharmacist–patient communications.
+
+Prioritises numerical precision (dosages, frequencies, durations) and preserves medication names exactly. The `numerical_change` safety flag is especially active in this domain.
+
+---
+
+## Why domain matters: two examples
+
+### Example 1: "pressure"
+
+| Domain | Norwegian source | English translation |
+|--------|-----------------|---------------------|
+| `emergency` | "Har du trykk i brystet?" | "Do you have chest pressure?" |
+| `mental_health` | "Kjenner du på press i hverdagen?" | "Do you feel pressure in daily life?" |
+
+The same word "trykk/press" maps to physically distinct clinical concepts depending on context.
+
+### Example 2: "discharge"
+
+| Domain | Norwegian source | English translation |
+|--------|-----------------|---------------------|
+| `gp` | "Han ble utskrevet i går." | "He was discharged yesterday." |
+| `pharmacy` | "Det er noe utflod." | "There is some discharge." |
+
+:::caution[Wrong domain = wrong translation]
+A `mental_health` text sent with `domain: "pharmacy"` will be translated with emphasis on numerical precision at the expense of emotional nuance. Match the domain to the actual clinical context.
+:::
+
+---
+
+## Choosing a domain
+
+If your integration serves multiple clinical contexts, pass the domain dynamically based on the care setting:
+
+```typescript
+function getDomain(careContext: CareContext): TolkaDomain {
+  switch (careContext) {
+    case 'ED': return 'emergency';
+    case 'GP_VISIT': return 'gp';
+    case 'PSYCH': return 'mental_health';
+    case 'PAEDS': return 'pediatric';
+    case 'DISPENSARY': return 'pharmacy';
+    default: return 'gp';
+  }
+}
+```
+
+---
+
+## What's next
+
+- [Safe Mode — when translations are withheld →](/concepts/safe-mode/)
+- [Emergency Department guide →](/guides/emergency-department/)
+- [GP Consultation guide →](/guides/gp-consultation/)
+

@@ -1,0 +1,130 @@
+---
+title: Confidence & Risk
+description: How to interpret Tolka's confidence score and risk levels in your UI — what they mean for developers and for clinicians.
+sidebar:
+  order: 2
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Tolka returns two separate quality indicators: `confidence` and `risk`. They are related but serve different purposes.
+
+- **`confidence`** is a float for developers — a precise signal you can use to tune UI thresholds.
+- **`risk`** is an enum for clinicians — a human-readable safety level your UI should act on directly.
+
+**Use `risk` as your primary UI signal.** It already accounts for language-pair differences in confidence baselines, so you don't need to write per-language UI logic.
+
+---
+
+## Confidence (0.0–1.0)
+
+The confidence score combines three independent verification signals into a single quality measure. A score of `1.0` means all three signals agree that the translation faithfully preserves clinical meaning. A score near `0.0` means significant divergence was detected.
+
+### What confidence looks like in practice
+
+```json
+// Reliable translation — display normally
+{ "confidence": 0.9, "risk": "low", "flags": [] }
+
+// Minor ambiguity — consider a caution indicator
+{ "confidence": 0.8, "risk": "medium", "flags": [] }
+
+// Meaning drift detected — require clinician acknowledgment
+{ "confidence": 0.6, "risk": "high", "flags": ["keyword_mismatch"] }
+
+// Automatic safety rule fired — block display
+{ "confidence": 0.5, "risk": "critical", "flags": ["negation_flip"] }
+```
+
+These are illustrative examples — actual confidence values vary by language pair and domain. **Always use `risk` as your primary UI signal**, not raw `confidence`.
+
+:::note[Low-resource language pairs]
+For language pairs with limited training data (e.g., Somali→English), confidence baselines are adjusted to reflect data coverage differences. The `risk` field already normalises for these differences, so use it as your UI decision signal rather than raw `confidence`.
+:::
+
+---
+
+## Risk levels
+
+### `"low"` — Display normally
+
+The translation is highly reliable. No significant divergence between source and back-translation, and no safety flags were triggered.
+
+**UI guidance:** Display the translation without special treatment.
+
+---
+
+### `"medium"` — Subtle caution
+
+Minor ambiguity or slight semantic drift was detected. The translation is likely correct but has some uncertainty.
+
+**UI guidance:** Show a subtle indicator — an info icon, light amber badge, or "verify if uncertain" prompt. Do not block display.
+
+---
+
+### `"high"` — Clinician acknowledgment required
+
+Meaningful divergence was detected between the original text and the back-translation. The translation may be correct, but a clinician should acknowledge it before it is shown to the patient.
+
+**UI guidance:** Present the translation behind a confirmation step. Show both `translation` and `back_translation` so the clinician can compare.
+
+```tsx
+// Example acknowledgment prompt
+if (result.risk === 'high') {
+  return (
+    <ClinicianAcknowledgment
+      translation={result.translation}
+      backTranslation={result.back_translation}
+      flags={result.flags}
+      onConfirm={() => setApproved(true)}
+    />
+  );
+}
+```
+
+---
+
+### `"critical"` — Block display
+
+An automatic safety rule fired. At least one of the following deterministic checks triggered:
+
+| Flag | What happened |
+|------|--------------|
+| `negation_flip` | A negation was present in source but absent in translation, or vice versa. "No chest pain" → "Chest pain" is a critical clinical error. |
+| `numerical_change` | A number changed between source and translation. Dosage errors are the most dangerous category. |
+| `keyword_mismatch` | A clinically significant term present in the source (a diagnosis, medication, or anatomical term) is absent from the translation. |
+
+:::danger[Never display a critical-risk translation]
+Do not show the translation to the patient. Require the clinician to review the original source text and use a human interpreter or alternative translation method for this exchange.
+:::
+
+**UI guidance:**
+
+```typescript
+if (result.risk === 'critical') {
+  showCriticalAlert({
+    message: 'Translation safety check failed.',
+    flags: result.flags,
+    suggestion: 'Use a professional interpreter for this exchange.',
+  });
+  return; // never render result.translation
+}
+```
+
+---
+
+## `verified: false` — degraded confidence
+
+When `verified` is `false`, the back-translation verification step did not complete. In this case:
+- `confidence` may be lower than it would be with full verification
+- `risk` may not reflect all possible issues
+- Treat the translation with additional caution regardless of the `risk` value
+
+---
+
+## What's next
+
+- [Clinical Domains — how domain affects translation quality →](/concepts/clinical-domains/)
+- [Handling Refusals — what to do when safe mode withholds a translation →](/guides/handling-refusals/)
+- [Going to Production — clinician sign-off UI patterns →](/getting-started/going-to-production/)
+

@@ -1,0 +1,48 @@
+---
+title: iOS SDK
+description: Tolka iOS SDK for Swift and SwiftUI — coming soon.
+sidebar:
+  order: 2
+  label: iOS (Coming Soon)
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+<Aside type="note" title="Coming soon">
+  The Tolka iOS SDK is under development. Target availability: Q3 2026.
+
+  [Join the early access list →](https://tolka.health/contact)
+</Aside>
+
+The iOS SDK will provide:
+
+- **`TolkaClient` for Swift** — async/await native, Codable-typed responses
+- **SwiftUI views** — `TolkaTranslateView` and `TolkaVoiceView`
+- **Offline mode** — Emergency domain support with on-device inference (Emergency plan only)
+- **Keychain integration** — Secure API key storage using the iOS Keychain
+
+---
+
+## Planned API surface
+
+```swift
+// Planned — not yet available
+let tolka = TolkaClient(apiKey: ProcessInfo.processInfo.environment["TOLKA_API_KEY"]!)
+
+let result = try await tolka.translate(
+    text: "Har du smerter i brystet?",
+    sourceLang: "nb",
+    targetLang: "en",
+    domain: .emergency
+)
+
+print(result.translation) // "Do you have chest pain?"
+print(result.risk)        // .low
+```
+
+---
+
+## Get notified
+
+Register your interest at [tolka.health/contact](https://tolka.health/contact) to be notified when the iOS SDK enters beta.
+
