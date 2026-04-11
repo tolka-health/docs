@@ -56,10 +56,37 @@ export default defineConfig({
             href: 'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300..800;1,300..800&family=JetBrains+Mono:wght@400;500&display=swap',
           },
         },
+        // ── TOC drawer toggle ──
+        {
+          tag: 'script',
+          content: `
+            document.addEventListener('DOMContentLoaded', () => {
+              var html = document.documentElement;
+              if (!html.hasAttribute('data-has-toc')) return;
+
+              var tocBtn = document.createElement('button');
+              tocBtn.className = 'toc-toggle';
+              tocBtn.setAttribute('aria-label', 'Toggle table of contents');
+              tocBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" /></svg>';
+              document.body.appendChild(tocBtn);
+
+              var tocBackdrop = document.createElement('div');
+              tocBackdrop.className = 'toc-backdrop';
+              document.body.appendChild(tocBackdrop);
+
+              function toggleToc() {
+                html.classList.toggle('toc-open');
+              }
+              tocBtn.addEventListener('click', toggleToc);
+              tocBackdrop.addEventListener('click', toggleToc);
+            });
+          `,
+        },
       ],
       sidebar: [
         {
           label: 'Getting Started',
+          collapsed: false,
           items: [
             { label: 'Quickstart', slug: 'getting-started/quickstart' },
             {
@@ -77,6 +104,7 @@ export default defineConfig({
         },
         {
           label: 'Concepts',
+          collapsed: true,
           items: [
             {
               label: 'Translation Pipeline',
@@ -97,6 +125,7 @@ export default defineConfig({
         },
         {
           label: 'API Reference',
+          collapsed: true,
           items: [
             {
               label: 'Interactive Reference',
@@ -120,6 +149,7 @@ export default defineConfig({
         },
         {
           label: 'Web SDK',
+          collapsed: true,
           items: [
             { label: 'Installation', slug: 'sdks/web/installation' },
             { label: 'TolkaClient', slug: 'sdks/web/tolka-client' },
@@ -131,6 +161,7 @@ export default defineConfig({
         },
         {
           label: 'Mobile SDKs',
+          collapsed: true,
           items: [
             { label: 'Android (Coming Soon)', slug: 'sdks/android' },
             { label: 'iOS (Coming Soon)', slug: 'sdks/ios' },
@@ -138,6 +169,7 @@ export default defineConfig({
         },
         {
           label: 'Guides',
+          collapsed: true,
           items: [
             { label: 'First Integration', slug: 'guides/first-integration' },
             {
@@ -160,6 +192,7 @@ export default defineConfig({
         },
         {
           label: 'About',
+          collapsed: true,
           items: [
             { label: 'Pricing', slug: 'about/pricing' },
             { label: 'Compliance', slug: 'about/compliance' },

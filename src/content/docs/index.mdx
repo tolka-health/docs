@@ -16,13 +16,11 @@ hero:
       variant: secondary
 ---
 
-import { Card, CardGrid } from '@astrojs/starlight/components';
-
 <div class="code-teaser">
   <div class="code-teaser-label">Make your first call</div>
-  <pre class="code-teaser-pre">{`curl https://sandbox.tolka-api.fly.dev/v1/translate \\
+  <pre class="code-teaser-pre">{`curl https://sandbox.tolka-api.fly.dev/v1/medical/translate \\
   -H "Authorization: Bearer sk_sandbox_public_tolka_eval2026" \\
-  -d '{"text":"Har du smerter?","source":"nb","target":"en","domain":"gp"}'`}</pre>
+  -d '{"text":"Har du smerter?","source_lang":"nb","target_lang":"en","domain":"gp"}'`}</pre>
   <div class="code-teaser-response">
     <span class="resp-arrow">→</span>
     <span class="resp-body">{`{"translation":"Do you have pain?","confidence":0.97,"verified":true}`}</span>
@@ -68,20 +66,43 @@ import { Card, CardGrid } from '@astrojs/starlight/components';
 
 ## Explore by topic
 
-<CardGrid>
-  <Card title="Getting Started" icon="rocket">
-    [Quickstart](/getting-started/quickstart/) · [Authentication](/getting-started/authentication/) · [Rate Limits](/getting-started/rate-limits/) · [Going to Production](/getting-started/going-to-production/)
-  </Card>
-  <Card title="Concepts" icon="open-book">
-    [Translation Pipeline](/concepts/translation-pipeline/) · [Confidence & Risk](/concepts/confidence-and-risk/) · [Clinical Domains](/concepts/clinical-domains/) · [Privacy Architecture](/concepts/privacy-architecture/)
-  </Card>
-  <Card title="Guides" icon="document">
-    [First Integration](/guides/first-integration/) · [Migrate from Google Translate](/guides/migrating-from-google-translate/) · [Emergency Department](/guides/emergency-department/) · [Handling Refusals](/guides/handling-refusals/)
-  </Card>
-  <Card title="Compliance" icon="shield">
-    [Privacy Architecture](/concepts/privacy-architecture/) · [Compliance & Trust](/about/compliance/) · [Support & SLAs](/about/support/)
-  </Card>
-</CardGrid>
+<div class="topic-grid">
+  <div class="topic-group">
+    <h3 class="topic-heading">Getting Started</h3>
+    <ul>
+      <li><a href="/getting-started/quickstart/">Quickstart</a></li>
+      <li><a href="/getting-started/authentication/">Authentication</a></li>
+      <li><a href="/getting-started/rate-limits/">Rate Limits</a></li>
+      <li><a href="/getting-started/going-to-production/">Going to Production</a></li>
+    </ul>
+  </div>
+  <div class="topic-group">
+    <h3 class="topic-heading">Concepts</h3>
+    <ul>
+      <li><a href="/concepts/translation-pipeline/">Translation Pipeline</a></li>
+      <li><a href="/concepts/confidence-and-risk/">Confidence & Risk</a></li>
+      <li><a href="/concepts/clinical-domains/">Clinical Domains</a></li>
+      <li><a href="/concepts/privacy-architecture/">Privacy Architecture</a></li>
+    </ul>
+  </div>
+  <div class="topic-group">
+    <h3 class="topic-heading">Guides</h3>
+    <ul>
+      <li><a href="/guides/first-integration/">First Integration</a></li>
+      <li><a href="/guides/migrating-from-google-translate/">Migrate from Google Translate</a></li>
+      <li><a href="/guides/emergency-department/">Emergency Department</a></li>
+      <li><a href="/guides/handling-refusals/">Handling Refusals</a></li>
+    </ul>
+  </div>
+  <div class="topic-group">
+    <h3 class="topic-heading">Compliance</h3>
+    <ul>
+      <li><a href="/concepts/privacy-architecture/">Privacy Architecture</a></li>
+      <li><a href="/about/compliance/">Compliance & Trust</a></li>
+      <li><a href="/about/support/">Support & SLAs</a></li>
+    </ul>
+  </div>
+</div>
 
 <div class="trust-strip">
   <span>Zero PHI storage</span>
