@@ -61,6 +61,10 @@ This registers the web components globally and exposes `window.TolkaClient`. Pin
 
 ## Verify installation
 
+:::note[Environment variable access]
+`process.env` is a Node.js API. In browser apps (React, Vue, Svelte), use your bundler's equivalent: `import.meta.env.VITE_TOLKA_API_KEY` (Vite) or `process.env.NEXT_PUBLIC_TOLKA_API_KEY` (Next.js). Never expose `sk_live_` keys in client-side code — proxy calls through your backend.
+:::
+
 ```typescript
 import { TolkaClient } from '@tolka/web-sdk';
 

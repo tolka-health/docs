@@ -57,6 +57,19 @@ When the translation passes safety checks:
 ## Handling withheld translations in your UI
 
 <Tabs>
+<TabItem label="cURL">
+```bash
+curl -X POST https://sandbox.tolka-api.fly.dev/v1/medical/safe-translate \
+  -H "Authorization: Bearer sk_sandbox_public_tolka_eval2026" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "text": "Tar pasienten blodfortynnende?",
+    "source_lang": "nb",
+    "target_lang": "en",
+    "domain": "pharmacy"
+  }'
+```
+</TabItem>
 <TabItem label="TypeScript">
 ```typescript
 const result = await tolka.safeTranslate({
@@ -80,17 +93,26 @@ if (result.withheld) {
 return <TranslationDisplay text={result.translation} risk={result.risk} />;
 ```
 </TabItem>
-<TabItem label="cURL">
-```bash
-curl -X POST https://api.tolka.health/v1/medical/safe-translate \
-  -H "Authorization: Bearer $TOLKA_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "text": "Tar pasienten blodfortynnende?",
-    "source_lang": "nb",
-    "target_lang": "en",
-    "domain": "pharmacy"
-  }'
+<TabItem label="Python">
+```python
+import requests
+
+response = requests.post(
+    "https://sandbox.tolka-api.fly.dev/v1/medical/safe-translate",
+    headers={"Authorization": "Bearer sk_sandbox_public_tolka_eval2026"},
+    json={
+        "text": "Tar pasienten blodfortynnende?",
+        "source_lang": "nb",
+        "target_lang": "en",
+        "domain": "pharmacy",
+    },
+)
+data = response.json()
+
+if data.get("withheld"):
+    print(f"Translation withheld — flags: {data['flags']}")
+else:
+    print(data["translation"])
 ```
 </TabItem>
 </Tabs>

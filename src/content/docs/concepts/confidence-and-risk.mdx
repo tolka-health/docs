@@ -5,7 +5,7 @@ sidebar:
   order: 2
 ---
 
-import { Aside } from '@astrojs/starlight/components';
+import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
 
 Tolka returns two separate quality indicators: `confidence` and `risk`. They are related but serve different purposes.
 
@@ -68,8 +68,9 @@ Meaningful divergence was detected between the original text and the back-transl
 
 **UI guidance:** Present the translation behind a confirmation step. Show both `translation` and `back_translation` so the clinician can compare.
 
+<Tabs>
+<TabItem label="TypeScript (React)">
 ```tsx
-// Example acknowledgment prompt
 if (result.risk === 'high') {
   return (
     <ClinicianAcknowledgment
@@ -81,6 +82,20 @@ if (result.risk === 'high') {
   );
 }
 ```
+</TabItem>
+<TabItem label="Python">
+```python
+if data["risk"] == "high":
+    print("Clinician acknowledgment required")
+    print(f"  Translation:      {data['translation']}")
+    print(f"  Back-translation: {data['back_translation']}")
+    print(f"  Flags:            {data['flags']}")
+    approved = input("Approve this translation? (y/n): ")
+    if approved.lower() != "y":
+        raise SystemExit("Translation not approved by clinician")
+```
+</TabItem>
+</Tabs>
 
 ---
 
@@ -100,6 +115,8 @@ Do not show the translation to the patient. Require the clinician to review the 
 
 **UI guidance:**
 
+<Tabs>
+<TabItem label="TypeScript">
 ```typescript
 if (result.risk === 'critical') {
   showCriticalAlert({
@@ -110,6 +127,17 @@ if (result.risk === 'critical') {
   return; // never render result.translation
 }
 ```
+</TabItem>
+<TabItem label="Python">
+```python
+if data["risk"] == "critical":
+    print("CRITICAL: Translation safety check failed.")
+    print(f"  Flags: {data['flags']}")
+    print("  Use a professional interpreter for this exchange.")
+    # Never display data["translation"] to the patient
+```
+</TabItem>
+</Tabs>
 
 ---
 

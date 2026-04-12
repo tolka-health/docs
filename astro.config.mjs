@@ -36,24 +36,13 @@ export default defineConfig({
           tag: 'meta',
           attrs: { name: 'theme-color', content: '#0D9488' },
         },
-        // ── Fonts ──
-        {
-          tag: 'link',
-          attrs: { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
-        },
         {
           tag: 'link',
           attrs: {
-            rel: 'preconnect',
-            href: 'https://fonts.gstatic.com',
-            crossorigin: 'anonymous',
-          },
-        },
-        {
-          tag: 'link',
-          attrs: {
-            rel: 'stylesheet',
-            href: 'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300..800;1,300..800&family=JetBrains+Mono:wght@400;500&display=swap',
+            rel: 'alternate',
+            type: 'application/rss+xml',
+            title: 'Tolka Changelog',
+            href: '/changelog.xml',
           },
         },
         // ── TOC drawer toggle ──

@@ -1,3 +1,7 @@
+/* Self-hosted fonts (GDPR-compliant — no Google Fonts CDN) */
+@import '@fontsource-variable/plus-jakarta-sans';
+@import '@fontsource-variable/jetbrains-mono';
+
 /* ─────────────────────────────────────────────
    Tolka Docs — Custom CSS overrides
    Design reference: fly.io/docs
@@ -18,8 +22,8 @@
   --sl-color-black: #111827;
 
   /* Typography */
-  --sl-font: 'Plus Jakarta Sans', system-ui, sans-serif;
-  --sl-font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --sl-font: 'Plus Jakarta Sans Variable', 'Plus Jakarta Sans', system-ui, sans-serif;
+  --sl-font-mono: 'JetBrains Mono Variable', 'JetBrains Mono', 'Fira Code', monospace;
 
   /* Narrower left sidebar */
   --sl-sidebar-width: 15rem;

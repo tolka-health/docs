@@ -89,6 +89,33 @@ const translation = result.translation;
 
    Google Translate has no domain concept. Choose the domain that best matches your care context. If you serve multiple departments, use a per-request domain mapping (see [Clinical Domains](/concepts/clinical-domains/)).
 
+   <Tabs>
+   <TabItem label="TypeScript">
+   ```typescript
+   const result = await tolka.safeTranslate({
+     text,
+     sourceLang: 'nb',
+     targetLang: 'en',
+     domain: 'emergency', // match your care context
+   });
+   ```
+   </TabItem>
+   <TabItem label="Python">
+   ```python
+   response = requests.post(
+       "https://sandbox.tolka-api.fly.dev/v1/medical/safe-translate",
+       headers={"Authorization": f"Bearer {api_key}"},
+       json={
+           "text": text,
+           "source_lang": "nb",
+           "target_lang": "en",
+           "domain": "emergency",  # match your care context
+       },
+   )
+   ```
+   </TabItem>
+   </Tabs>
+
 4. **Handle the richer response**
 
    You now have `confidence`, `risk`, `flags`, and `back_translation`. At minimum, add:

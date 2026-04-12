@@ -5,7 +5,7 @@ sidebar:
   order: 6
 ---
 
-import { Aside } from '@astrojs/starlight/components';
+import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
 
 Before you go live with real patients, complete every item on this checklist.
 
@@ -48,6 +48,8 @@ Before you go live with real patients, complete every item on this checklist.
 
 Example sign-off flow:
 
+<Tabs>
+<TabItem label="TypeScript">
 ```typescript
 if (result.risk === 'critical') {
   await showCriticalAlert({
@@ -69,6 +71,30 @@ if (result.risk === 'high') {
 
 displayTranslation(result.translation);
 ```
+</TabItem>
+<TabItem label="Python">
+```python
+if data["risk"] == "critical":
+    show_critical_alert(
+        flags=data["flags"],
+        original=source_text,
+        back_translation=data["back_translation"],
+    )
+    return  # do not display translation
+
+if data["risk"] == "high":
+    acknowledged = require_clinician_acknowledgment(
+        translation=data["translation"],
+        back_translation=data["back_translation"],
+        flags=data["flags"],
+    )
+    if not acknowledged:
+        return
+
+display_translation(data["translation"])
+```
+</TabItem>
+</Tabs>
 
 ---
 

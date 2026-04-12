@@ -45,12 +45,73 @@ Use [`/safe-translate`](/api-reference/safe-translate/) when:
 
 ---
 
+## Basic request
+
+<Tabs>
+<TabItem label="cURL">
+```bash
+curl -X POST https://sandbox.tolka-api.fly.dev/v1/medical/translate \
+  -H "Authorization: Bearer sk_sandbox_public_tolka_eval2026" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "text": "Har du smerter i brystet?",
+    "source_lang": "nb",
+    "target_lang": "en",
+    "domain": "emergency"
+  }'
+```
+</TabItem>
+<TabItem label="TypeScript">
+```typescript
+import { TolkaClient } from '@tolka/web-sdk';
+
+const tolka = new TolkaClient({
+  apiKey: 'sk_sandbox_public_tolka_eval2026',
+  baseUrl: 'https://sandbox.tolka-api.fly.dev',
+});
+
+const result = await tolka.translate({
+  text: 'Har du smerter i brystet?',
+  sourceLang: 'nb',
+  targetLang: 'en',
+  domain: 'emergency',
+});
+
+console.log(result.translation);   // "Do you have chest pain?"
+console.log(result.confidence);    // 0.94
+```
+</TabItem>
+<TabItem label="Python">
+```python
+import requests
+
+response = requests.post(
+    "https://sandbox.tolka-api.fly.dev/v1/medical/translate",
+    headers={"Authorization": "Bearer sk_sandbox_public_tolka_eval2026"},
+    json={
+        "text": "Har du smerter i brystet?",
+        "source_lang": "nb",
+        "target_lang": "en",
+        "domain": "emergency",
+    },
+)
+data = response.json()
+print(data["translation"])   # "Do you have chest pain?"
+print(data["confidence"])    # 0.94
+```
+</TabItem>
+</Tabs>
+
+---
+
 ## Edge cases
 
 ### Text over 2,000 characters
 
 Split at **sentence boundaries**, not character limits. Mid-sentence splits create fragments that the safety verification treats as incomplete medical phrases, reducing confidence scores artificially.
 
+<Tabs>
+<TabItem label="TypeScript">
 ```typescript
 function splitMedicalText(text: string, maxLength = 1800): string[] {
   const sentences = text.match(/[^.!?]+[.!?]+/g) ?? [text];
@@ -68,6 +129,28 @@ function splitMedicalText(text: string, maxLength = 1800): string[] {
   return chunks;
 }
 ```
+</TabItem>
+<TabItem label="Python">
+```python
+import re
+
+def split_medical_text(text: str, max_length: int = 1800) -> list[str]:
+    sentences = re.findall(r'[^.!?]+[.!?]+', text) or [text]
+    chunks: list[str] = []
+    current = ''
+    for sentence in sentences:
+        if len(current + sentence) > max_length:
+            if current:
+                chunks.append(current.strip())
+            current = sentence
+        else:
+            current += sentence
+    if current:
+        chunks.append(current.strip())
+    return chunks
+```
+</TabItem>
+</Tabs>
 
 ### Ambiguous language input
 
@@ -81,6 +164,8 @@ A `400 INVALID_REQUEST` is returned for empty strings or strings containing only
 
 ## Integration pattern: batch translation
 
+<Tabs>
+<TabItem label="TypeScript">
 ```typescript
 async function translateBatch(
   texts: string[],
@@ -95,6 +180,37 @@ async function translateBatch(
   );
 }
 ```
+</TabItem>
+<TabItem label="Python">
+```python
+import asyncio
+import aiohttp
+
+async def translate_batch(
+    texts: list[str],
+    domain: str,
+    api_key: str,
+    max_concurrent: int = 5,
+) -> list[dict]:
+    semaphore = asyncio.Semaphore(max_concurrent)
+    async with aiohttp.ClientSession() as session:
+        async def translate_one(text: str) -> dict:
+            async with semaphore:
+                resp = await session.post(
+                    "https://sandbox.tolka-api.fly.dev/v1/medical/translate",
+                    headers={"Authorization": f"Bearer {api_key}"},
+                    json={
+                        "text": text,
+                        "source_lang": "nb",
+                        "target_lang": "en",
+                        "domain": domain,
+                    },
+                )
+                return await resp.json()
+        return await asyncio.gather(*[translate_one(t) for t in texts])
+```
+</TabItem>
+</Tabs>
 
 ---
 
