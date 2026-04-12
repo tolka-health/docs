@@ -1,10 +1,10 @@
 ---
 /**
  * ApiResponse.astro
- * Displays an annotated API JSON response with inline callouts.
+ * Displays an annotated API JSON response with syntax highlighting.
  * Props:
  *   - json: the JSON object to display
- *   - annotations: Record<string, string> — field path -> explanation
+ *   - title: optional figure caption
  */
 interface Props {
   json: Record<string, unknown>;
@@ -12,44 +12,79 @@ interface Props {
 }
 const { json, title = 'Example response' } = Astro.props;
 const formatted = JSON.stringify(json, null, 2);
+
+/** Highlight JSON keys and primitive values — leaves structure chars untouched */
+function highlightJson(raw: string): string {
+  return raw.replace(
+    /"([^"]+)"(?=\s*:)|:\s*("(?:[^"\\]|\\.)*"|[\d.]+|true|false|null)/g,
+    (match, key, value) => {
+      if (key !== undefined) {
+        return `<span class="field-key" data-field="${key}">"${key}"</span>`;
+      }
+      if (value !== undefined) {
+        return `: <span class="field-val">${value}</span>`;
+      }
+      return match;
+    },
+  );
+}
 ---
 
 <figure class="api-response">
   {title && <figcaption class="api-response__title">{title}</figcaption>}
-  <pre class="api-response__code"><code set:html={formatted.replace(
-    /"([^"]+)":\s*("[^"]*"|[\d.]+|true|false|null|\[.*?\])/g,
-    (match, key) => `<span class="field" data-field="${key}">${match}</span>`
-  )}></code></pre>
+  <pre class="api-response__code"><code set:html={highlightJson(formatted)}></code></pre>
 </figure>
 
 <style>
   .api-response {
     margin: 1.25rem 0;
-    border-radius: 0.5rem;
+    border-radius: 0.75rem;
     overflow: hidden;
     border: 1px solid var(--sl-color-gray-3);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   }
 
   .api-response__title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
     padding: 0.5rem 1rem;
     background: var(--sl-color-gray-2);
-    font-size: 0.8125rem;
+    font-size: 0.75rem;
     font-weight: 600;
     color: var(--sl-color-gray-5);
     border-bottom: 1px solid var(--sl-color-gray-3);
     font-style: normal;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-family: var(--sl-font-mono);
+  }
+
+  [data-theme='dark'] .api-response__title {
+    background: #1f2937;
+    border-bottom-color: #374151;
+    color: #9ca3af;
   }
 
   .api-response__code {
     margin: 0;
     padding: 1rem 1.25rem;
     font-size: 0.8125rem;
+    line-height: 1.75;
     overflow-x: auto;
     background: var(--sl-color-gray-1);
   }
 
-  .field {
-    position: relative;
+  [data-theme='dark'] .api-response__code {
+    background: #111827;
+    color: #f3f4f6;
+  }
+
+  .field-key {
+    color: var(--sl-color-accent);
+  }
+
+  .field-val {
+    color: var(--sl-color-white);
   }
 </style>
-

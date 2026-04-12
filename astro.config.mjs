@@ -7,7 +7,7 @@ export default defineConfig({
   site: 'https://docs.tolka.health',
   integrations: [
     starlight({
-      title: 'Tolka Docs',
+      title: '',
       description:
         'Developer documentation for the Tolka medical translation API. Zero PHI storage · EU-only deployment · Back-translation verified.',
       logo: {
@@ -35,6 +35,14 @@ export default defineConfig({
         {
           tag: 'meta',
           attrs: { name: 'theme-color', content: '#0D9488' },
+        },
+        {
+          tag: 'link',
+          attrs: {
+            rel: 'apple-touch-icon',
+            sizes: '180x180',
+            href: '/apple-touch-icon.png',
+          },
         },
         {
           tag: 'link',
@@ -137,23 +145,27 @@ export default defineConfig({
           ],
         },
         {
-          label: 'Web SDK',
+          label: 'SDKs',
           collapsed: true,
           items: [
-            { label: 'Installation', slug: 'sdks/web/installation' },
-            { label: 'TolkaClient', slug: 'sdks/web/tolka-client' },
-            { label: 'Web Components', slug: 'sdks/web/web-components' },
-            { label: 'Styling', slug: 'sdks/web/styling' },
-            { label: 'Localization', slug: 'sdks/web/localization' },
-            { label: 'Error Handling', slug: 'sdks/web/error-handling' },
-          ],
-        },
-        {
-          label: 'Mobile SDKs',
-          collapsed: true,
-          items: [
-            { label: 'Android (Coming Soon)', slug: 'sdks/android' },
-            { label: 'iOS (Coming Soon)', slug: 'sdks/ios' },
+            {
+              label: 'Web',
+              items: [
+                { label: 'Installation', slug: 'sdks/web/installation' },
+                { label: 'TolkaClient', slug: 'sdks/web/tolka-client' },
+                { label: 'Web Components', slug: 'sdks/web/web-components' },
+                { label: 'Styling', slug: 'sdks/web/styling' },
+                { label: 'Localization', slug: 'sdks/web/localization' },
+                { label: 'Error Handling', slug: 'sdks/web/error-handling' },
+              ],
+            },
+            {
+              label: 'Mobile',
+              items: [
+                { label: 'Android (Coming Soon)', slug: 'sdks/android' },
+                { label: 'iOS (Coming Soon)', slug: 'sdks/ios' },
+              ],
+            },
           ],
         },
         {

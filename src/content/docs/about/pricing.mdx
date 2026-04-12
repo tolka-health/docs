@@ -1,6 +1,6 @@
 ---
 title: Pricing
-description: Tolka API pricing tiers — Community, Starter, Pro, Enterprise, and Emergency plans.
+description: Tolka API pricing tiers — Starter, Pro, and Enterprise plans for medical translation.
 sidebar:
   order: 1
 ---
@@ -13,29 +13,87 @@ Full pricing details and a plan comparison are available at [tolka.health/pricin
 
 ## Plan overview
 
-| | Community | Starter | Pro | Enterprise | Emergency |
-|--|-----------|---------|-----|------------|-----------|
-| **Price** | Free / ~€50/mo | €50–100/mo | €500–2,000/mo | €20K–100K/yr | €1,000–3,000/mo |
-| **Target** | NGOs, refugee services | Individual GPs, small clinics | Municipal health services | Hospital systems, RHFs | Ambulance/ER services |
-| **Translations/mo** | 200 | 500 | 5,000 | Unlimited | Unlimited |
-| **Req/min** | 20 | 60 | 300 | Custom | 500 |
-| **Back-translation** | ✓ | ✓ | ✓ | ✓ | ✓ |
-| **Risk scoring** | ✓ | ✓ | ✓ | ✓ | ✓ |
-| **SDK** | Web | Web | Web + Mobile | All + Custom | All + Offline |
-| **Support** | Community | Email | Dedicated | 24/7 + SLA | 24/7 + SLA |
-| **Deployment** | Cloud | Cloud | Cloud | Cloud or On-Prem | Cloud + Offline |
+<div class="pricing-grid">
+  <div class="pricing-card">
+    <div class="pricing-card__header">
+      <h3>Starter</h3>
+      <div class="pricing-card__price">€75<span>/mo</span></div>
+      <p>Small clinics getting started with medical translation.</p>
+    </div>
+    <ul class="pricing-card__features">
+      <li>5,000 translations/mo</li>
+      <li>Full API access</li>
+      <li>All 6 clinical domains</li>
+      <li>Email support</li>
+    </ul>
+    <a href="https://tolka.health/contact" class="pricing-card__cta">Get started</a>
+  </div>
+  <div class="pricing-card pricing-card--recommended">
+    <div class="pricing-card__badge">Recommended</div>
+    <div class="pricing-card__header">
+      <h3>Pro</h3>
+      <div class="pricing-card__price">€500<span>/mo</span></div>
+      <p>Hospitals and large clinics needing priority access and SDK support.</p>
+    </div>
+    <ul class="pricing-card__features">
+      <li>50,000 translations/mo</li>
+      <li>Priority API access</li>
+      <li>All 6 clinical domains</li>
+      <li>Web SDK included</li>
+      <li>Custom domain</li>
+      <li>Priority support</li>
+    </ul>
+    <a href="https://tolka.health/contact" class="pricing-card__cta pricing-card__cta--primary">Get started</a>
+  </div>
+  <div class="pricing-card">
+    <div class="pricing-card__header">
+      <h3>Enterprise</h3>
+      <div class="pricing-card__price">Custom</div>
+      <p>Hospital networks and health regions with dedicated infrastructure needs.</p>
+    </div>
+    <ul class="pricing-card__features">
+      <li>Unlimited translations</li>
+      <li>Dedicated infrastructure</li>
+      <li>All 6 clinical domains</li>
+      <li>Web SDK included</li>
+      <li>Custom domain</li>
+      <li>24/7 support + SLA</li>
+      <li>On-premise option</li>
+      <li>Custom integrations</li>
+    </ul>
+    <a href="https://tolka.health/contact" class="pricing-card__cta">Contact sales</a>
+  </div>
+</div>
 
 ---
 
-## Platform tier
+## What counts as a translation?
 
-For telehealth platforms integrating Tolka into their product (e.g., video consultation platforms, EHR vendors), a revenue-share Platform tier is available. Contact [sales@tolka.health](mailto:sales@tolka.health).
+Each call to [`/v1/medical/translate`](/api-reference/translate/) or [`/v1/medical/safe-translate`](/api-reference/safe-translate/) counts as **one translation**, regardless of text length.
+
+---
+
+## Overages
+
+You'll receive a warning at **80% usage**. Overage is billed at the per-translation rate for your tier. Tolka never cuts off access mid-request.
+
+---
+
+## Switching plans
+
+You can upgrade or downgrade at any time. Changes take effect at the start of your next billing cycle.
+
+---
+
+## Platform partners
+
+Building a telehealth or EHR platform? A **revenue-share model** is available for deep integrations. Contact [sales@tolka.health](mailto:sales@tolka.health).
 
 ---
 
 ## Pilot programme
 
-Norwegian municipalities, clinics, and hospitals can apply for a **3-month free pilot** on Pro-tier access with dedicated onboarding. Apply at [tolka.health/pilot](https://tolka.health/pilot).
+We offer a **3-month pilot** with Pro-tier access at no cost. Community health organizations can contact us for discounted Starter pricing. Apply at [tolka.health/pilot](https://tolka.health/pilot).
 
 ---
 
@@ -44,4 +102,3 @@ Norwegian municipalities, clinics, and hospitals can apply for a **3-month free 
 - [Contact sales →](https://tolka.health/contact)
 - [Full pricing page with FAQ →](https://tolka.health/pricing)
 - [Support channels →](/about/support/)
-

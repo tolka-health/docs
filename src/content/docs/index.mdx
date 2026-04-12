@@ -4,8 +4,6 @@ description: Medical translation API for healthcare providers. Zero PHI storage,
 template: splash
 hero:
   tagline: The medical translation API built for healthcare. Translate without storing. Understand without risk.
-  image:
-    file: ../../assets/tolka-logo.svg
   actions:
     - text: Quickstart — 5 minutes
       link: /getting-started/quickstart/
@@ -16,7 +14,7 @@ hero:
       variant: secondary
 ---
 
-<div class="code-teaser">
+<figure class="code-teaser" role="group" aria-label="Example API call and response">
   <div class="code-teaser-label">Make your first call</div>
   <pre class="code-teaser-pre">{`curl https://sandbox.tolka-api.fly.dev/v1/medical/translate \\
   -H "Authorization: Bearer sk_sandbox_public_tolka_eval2026" \\
@@ -25,7 +23,7 @@ hero:
     <span class="resp-arrow">→</span>
     <span class="resp-body">{`{"translation":"Do you have pain?","confidence":0.97,"verified":true}`}</span>
   </div>
-</div>
+</figure>
 
 ## Start here
 
@@ -72,7 +70,7 @@ hero:
     <ul>
       <li><a href="/getting-started/quickstart/">Quickstart</a></li>
       <li><a href="/getting-started/authentication/">Authentication</a></li>
-      <li><a href="/getting-started/rate-limits/">Rate Limits</a></li>
+      <li><a href="/getting-started/environments/">Environments</a></li>
       <li><a href="/getting-started/going-to-production/">Going to Production</a></li>
     </ul>
   </div>
@@ -82,7 +80,7 @@ hero:
       <li><a href="/concepts/translation-pipeline/">Translation Pipeline</a></li>
       <li><a href="/concepts/confidence-and-risk/">Confidence & Risk</a></li>
       <li><a href="/concepts/clinical-domains/">Clinical Domains</a></li>
-      <li><a href="/concepts/privacy-architecture/">Privacy Architecture</a></li>
+      <li><a href="/concepts/safe-mode/">Safe Mode</a></li>
     </ul>
   </div>
   <div class="topic-group">
@@ -95,11 +93,12 @@ hero:
     </ul>
   </div>
   <div class="topic-group">
-    <h3 class="topic-heading">Compliance</h3>
+    <h3 class="topic-heading">About</h3>
     <ul>
-      <li><a href="/concepts/privacy-architecture/">Privacy Architecture</a></li>
+      <li><a href="/about/pricing/">Pricing</a></li>
       <li><a href="/about/compliance/">Compliance & Trust</a></li>
       <li><a href="/about/support/">Support & SLAs</a></li>
+      <li><a href="/about/status/">Status</a></li>
     </ul>
   </div>
 </div>
