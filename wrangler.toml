@@ -1,0 +1,9 @@
+name = "docs"
+compatibility_date = "2026-05-22"
+
+# Pure static-assets deploy: the entire site is pre-built into ./dist by
+# `pnpm build` (Starlight / Astro 5). No Worker entry point — Workers
+# Static Assets serves directly from the asset binding.
+[assets]
+directory = "./dist"
+not_found_handling = "404-page"

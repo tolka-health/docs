@@ -2,79 +2,72 @@ openapi: 3.1.0
 info:
   title: Tolka Medical Translation API
   version: 1.0.0
-  description: |
-    Domain-aware medical translation with back-translation verification, 
-    multi-signal safety scoring, and clinician-facing risk levels.
-
-    **Base URL (sandbox):** `https://sandbox.tolka-api.fly.dev`
-
-    Authentication: Bearer token — pass your API key in `Authorization: Bearer <key>`.
-    Test and production base URLs are provided when you create an account.
-  license:
-    name: Apache-2.0
-    url: https://www.apache.org/licenses/LICENSE-2.0
+  description: >
+    Privacy-first medical translation API with back-translation validation,
+    risk scoring, and clinical context awareness. No patient data is stored.
   contact:
-    name: Tolka Health Support
-    email: support@tolka.health
-    url: https://docs.tolka.health
+    name: Tolka Engineering
+  license:
+    name: Proprietary
 
 servers:
-  - url: https://sandbox.tolka-api.fly.dev
-    description: Sandbox — shared evaluation environment (rate-limited, simplified scoring)
+  - url: http://localhost:3000
+    description: Local development
+  - url: https://tolka-api.fly.dev
+    description: Production (EU — Frankfurt)
+
+security:
+  - BearerAuth: []
 
 tags:
   - name: Translation
-    description: Medical translation endpoints
-  - name: Sessions
-    description: Encrypted client-side session management
-  - name: Admin — Keys
-    description: API key lifecycle management
-  - name: Admin — Usage
-    description: Usage statistics and quality metrics
+    description: Medical translation  with back-translation verification
+  - name: Session
+    description: Conversation session management
+  - name: Admin
+    description: API key management and usage statistics
+  - name: Health
+    description: Server health and readiness checks
+
+# ──────────────────────────────────────────
+# Paths
+# ──────────────────────────────────────────
 
 paths:
   /v1/medical/translate:
     post:
       operationId: translate
-      summary: Translate medical text
-      description: |
-        Translates source text to the target language using domain-aware inference.
-        Always returns a translation regardless of confidence or risk level.
-        For patient-facing output, use `/v1/medical/safe-translate` instead.
       tags: [Translation]
-      security:
-        - bearerAuth: []
+      summary: Translate medical text with back-translation verification
+      description: >
+        Core translation endpoint. Runs the full 5-step pipeline: forward translation,
+        back-translation, semantic comparison, risk scoring, and enriched response.
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
         required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/TranslateRequest'
-            example:
-              text: "Har du smerter i brystet?"
-              source_lang: "nb"
-              target_lang: "en"
-              domain: "emergency"
       responses:
         '200':
-          description: Translation completed
+          description: Translation completed (may be verified or unverified)
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+            X-RateLimit-Limit:
+              $ref: '#/components/headers/X-RateLimit-Limit'
+            X-RateLimit-Remaining:
+              $ref: '#/components/headers/X-RateLimit-Remaining'
+            X-RateLimit-Reset:
+              $ref: '#/components/headers/X-RateLimit-Reset'
+            Idempotent-Replay:
+              $ref: '#/components/headers/Idempotent-Replay'
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/TranslateResponse'
-              example:
-                translation: "Do you have chest pain?"
-                back_translation: "Har du brystsmerter?"
-                confidence: 0.94
-                risk: "low"
-                flags: []
-                verified: true
-                metadata:
-                  domain: "emergency"
-                  source_lang: "nb"
-                  target_lang: "en"
-                  model: "tolka-v1"
-                  request_id: "req_01HX4K2MN7VPTJ8X9ZQR3W5YB6"
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -82,73 +75,44 @@ paths:
         '429':
           $ref: '#/components/responses/RateLimited'
         '500':
-          $ref: '#/components/responses/ServerError'
+          $ref: '#/components/responses/InternalError'
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
 
   /v1/medical/safe-translate:
     post:
       operationId: safeTranslate
-      summary: Translate with automatic safety withholding
-      description: |
-        Behaves identically to `/v1/medical/translate` but **withholds the translation**
-        when risk is `high` or `critical`. Returns `withheld: true` with `translation: null`.
-
-        Recommended for all patient-facing output.
       tags: [Translation]
-      security:
-        - bearerAuth: []
+      summary: Translate with forced safe mode
+      description: >
+        Same as /translate but forces safe mode regardless of the request body's mode field.
+        Low-confidence translations are withheld with a suggestion to rephrase.
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
         required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/TranslateRequest'
-            example:
-              text: "Ta tabletten to ganger daglig med mat."
-              source_lang: "nb"
-              target_lang: "ar"
-              domain: "pharmacy"
       responses:
         '200':
-          description: Translation completed or withheld
+          description: Translation completed or refused (safe mode)
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+            X-RateLimit-Limit:
+              $ref: '#/components/headers/X-RateLimit-Limit'
+            X-RateLimit-Remaining:
+              $ref: '#/components/headers/X-RateLimit-Remaining'
+            X-RateLimit-Reset:
+              $ref: '#/components/headers/X-RateLimit-Reset'
+            Idempotent-Replay:
+              $ref: '#/components/headers/Idempotent-Replay'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SafeTranslateResponse'
-              examples:
-                success:
-                  summary: Translation passed safety check
-                  value:
-                    translation: "خُذ الحبة مرتين يومياً مع الطعام."
-                    back_translation: "Ta tabletten to ganger daglig med mat."
-                    confidence: 0.96
-                    risk: "low"
-                    flags: []
-                    verified: true
-                    withheld: false
-                    metadata:
-                      domain: "pharmacy"
-                      source_lang: "nb"
-                      target_lang: "ar"
-                      model: "tolka-v1"
-                      request_id: "req_01HX4K2MN7VPTJ8X9ZQR3W5YC7"
-                withheld:
-                  summary: Translation withheld due to safety failure
-                  value:
-                    translation: null
-                    back_translation: null
-                    confidence: 0.42
-                    risk: "critical"
-                    flags: ["negation_flip"]
-                    verified: true
-                    withheld: true
-                    metadata:
-                      domain: "pharmacy"
-                      source_lang: "nb"
-                      target_lang: "ar"
-                      model: "tolka-v1"
-                      request_id: "req_01HX4K2MN7VPTJ8X9ZQR3W5YD8"
+                $ref: '#/components/schemas/TranslateResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -156,558 +120,633 @@ paths:
         '429':
           $ref: '#/components/responses/RateLimited'
         '500':
-          $ref: '#/components/responses/ServerError'
+          $ref: '#/components/responses/InternalError'
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
 
   /v1/medical/session:
     post:
       operationId: createSession
-      summary: Create a translation session
-      description: |
-        Creates an encrypted session token for use across multiple translation calls 
-        in a single clinical encounter. The token encodes domain, language pair, and TTL.
-        
-        Session state is encrypted client-side — Tolka servers are stateless.
-      tags: [Sessions]
-      security:
-        - bearerAuth: []
+      tags: [Session]
+      summary: Create a conversation session
+      description: >
+        Creates an encrypted client-side session token with clinical context.
+        Token has a 15-minute idle TTL and 60-minute hard maximum.
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateSessionRequest'
-            example:
-              domain: "gp"
-              source_lang: "ar"
-              target_lang: "nb"
-              ttl_minutes: 45
+              $ref: '#/components/schemas/SessionCreateRequest'
       responses:
         '200':
           description: Session created
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+            X-RateLimit-Limit:
+              $ref: '#/components/headers/X-RateLimit-Limit'
+            X-RateLimit-Remaining:
+              $ref: '#/components/headers/X-RateLimit-Remaining'
+            X-RateLimit-Reset:
+              $ref: '#/components/headers/X-RateLimit-Reset'
+            Idempotent-Replay:
+              $ref: '#/components/headers/Idempotent-Replay'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SessionResponse'
-              example:
-                token: "stk_enc_01HX4K2MN7VPTJ8X9ZQR3W5YB6"
-                expires_at: "2026-04-11T15:30:00Z"
-                session_id: "sess_01HX4K2MN7VPTJ8X9ZQR3W5YB6"
+                $ref: '#/components/schemas/SessionCreateResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
 
   /v1/admin/keys:
     get:
-      operationId: listKeys
-      summary: List API keys
-      tags: [Admin — Keys]
-      security:
-        - bearerAuth: []
+      operationId: listApiKeys
+      tags: [Admin]
+      summary: List API keys for the authenticated organization
+      description: Returns key metadata only — full keys are never retrievable after creation.
       responses:
         '200':
-          description: List of keys
+          description: List of API key metadata
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
           content:
             application/json:
               schema:
                 type: object
+                required: [keys]
                 properties:
                   keys:
                     type: array
                     items:
-                      $ref: '#/components/schemas/ApiKey'
-                  total:
-                    type: integer
+                      $ref: '#/components/schemas/ApiKeyMetadata'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
     post:
-      operationId: createKey
-      summary: Create an API key
-      tags: [Admin — Keys]
-      security:
-        - bearerAuth: []
+      operationId: createApiKey
+      tags: [Admin]
+      summary: Create a new API key
+      description: >
+        The full key is returned exactly once in this response.
+        Store it securely — it cannot be retrieved again.
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
-        required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateKeyRequest'
+              type: object
+              properties:
+                label:
+                  type: string
+                  maxLength: 100
+                  description: Optional human-readable label for the key
+              additionalProperties: false
       responses:
         '201':
-          description: Key created — secret returned only once
+          description: API key created
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+            Idempotent-Replay:
+              $ref: '#/components/headers/Idempotent-Replay'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiKeyWithSecret'
-
-  /v1/admin/keys/{id}:
-    get:
-      operationId: getKey
-      summary: Get a single API key
-      tags: [Admin — Keys]
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Key details
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiKey'
-    delete:
-      operationId: revokeKey
-      summary: Revoke an API key
-      description: Revocation is immediate and irreversible.
-      tags: [Admin — Keys]
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '204':
-          description: Key revoked
+                $ref: '#/components/schemas/ApiKeyCreateResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
 
   /v1/admin/keys/{id}/rotate:
     post:
-      operationId: rotateKey
+      operationId: rotateApiKey
+      tags: [Admin]
       summary: Rotate an API key
-      description: |
-        Generates a new secret. Both old and new secrets are valid for a 5-minute overlap window,
-        then the old secret is automatically revoked.
-        
-        The new secret is returned **once only** — store it immediately.
-      tags: [Admin — Keys]
-      security:
-        - bearerAuth: []
+      description: >
+        Creates a new key. The old key remains active until explicitly revoked
+        via DELETE, enabling zero-downtime rotation.
       parameters:
         - name: id
           in: path
           required: true
           schema:
             type: string
+          description: ID of the key to rotate
+        - $ref: '#/components/parameters/IdempotencyKey'
       responses:
-        '200':
-          description: New secret — store immediately
+        '201':
+          description: New key created, old key still active
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+            Idempotent-Replay:
+              $ref: '#/components/headers/Idempotent-Replay'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiKeyWithSecret'
+                allOf:
+                  - $ref: '#/components/schemas/ApiKeyCreateResponse'
+                  - type: object
+                    required: [old_key_id, message]
+                    properties:
+                      old_key_id:
+                        type: string
+                        description: ID of the key being rotated
+                      message:
+                        type: string
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Key not found or does not belong to this organization
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TolkaErrorResponse'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /v1/admin/keys/{id}:
+    delete:
+      operationId: revokeApiKey
+      tags: [Admin]
+      summary: Revoke an API key
+      description: >
+        Permanently revokes the key. Cannot revoke the last active key for
+        an organization — at least one must remain active.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID of the key to revoke
+        - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '204':
+          description: Key revoked successfully
+          headers:
+            Idempotent-Replay:
+              $ref: '#/components/headers/Idempotent-Replay'
+        '400':
+          description: Cannot revoke the last active key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TolkaErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
 
   /v1/admin/usage:
     get:
       operationId: getUsage
-      summary: Query usage statistics
-      description: Returns aggregated translation counts, risk distributions, and confidence metrics. No source text is included.
-      tags: [Admin — Usage]
-      security:
-        - bearerAuth: []
+      tags: [Admin]
+      summary: Get usage statistics for the organization
       parameters:
         - name: from
           in: query
-          required: true
           schema:
             type: string
             format: date
-          example: "2026-04-01"
+          description: Start date (ISO format, e.g. 2024-01-01). Defaults to 30 days ago.
         - name: to
           in: query
-          required: true
           schema:
             type: string
             format: date
-          example: "2026-04-11"
-        - name: granularity
-          in: query
-          schema:
-            type: string
-            enum: [day, week, month]
-            default: day
-        - name: domain
-          in: query
-          schema:
-            $ref: '#/components/schemas/Domain'
-        - name: source_lang
-          in: query
-          schema:
-            type: string
-        - name: target_lang
-          in: query
-          schema:
-            type: string
+          description: End date (ISO format). Defaults to today.
       responses:
         '200':
-          description: Usage statistics
+          description: Usage records for the date range
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UsageResponse'
+                type: object
+                required: [usage]
+                properties:
+                  usage:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/UsageRecord'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /health:
+    get:
+      operationId: healthCheck
+      tags: [Health]
+      summary: Basic health check
+      security: []
+      responses:
+        '200':
+          description: Server is running
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status:
+                    type: string
+                    const: ok
+
+  /ready:
+    get:
+      operationId: readinessCheck
+      tags: [Health]
+      summary: Readiness check including database connectivity
+      security: []
+      responses:
+        '200':
+          description: Server is ready to accept requests
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, database]
+                properties:
+                  status:
+                    type: string
+                    const: ready
+                  database:
+                    type: boolean
+        '503':
+          description: Server is not ready (database unavailable)
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, database]
+                properties:
+                  status:
+                    type: string
+                    const: unavailable
+                  database:
+                    type: boolean
+
+# ──────────────────────────────────────────
+# Components
+# ──────────────────────────────────────────
 
 components:
   securitySchemes:
-    bearerAuth:
+    BearerAuth:
       type: http
       scheme: bearer
-      description: Pass your Tolka API key as a Bearer token.
+      description: >
+        API key with `sk_live_` (production) or `sk_test_` (development) prefix.
+        Pass as `Authorization: Bearer sk_live_...`
+
+  headers:
+    X-Request-Id:
+      description: Unique request identifier for tracing
+      schema:
+        type: string
+        format: uuid
+    X-RateLimit-Limit:
+      description: Maximum requests per minute for this organization
+      schema:
+        type: integer
+    X-RateLimit-Remaining:
+      description: Remaining requests in the current window
+      schema:
+        type: integer
+    X-RateLimit-Reset:
+      description: Unix timestamp (seconds) when the rate limit window resets
+      schema:
+        type: integer
+    Idempotent-Replay:
+      description: >
+        Present only on responses replayed from the idempotency cache. Value
+        is always `"true"`. Absent on a freshly-computed response.
+      schema:
+        type: string
+        enum: [true]
+
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: false
+      schema:
+        type: string
+        maxLength: 256
+      description: >
+        Optional client-generated idempotency key (UUIDv4 recommended).
+        Repeating the same key within 24 hours, scoped to your organization,
+        replays the original 2xx response verbatim and stamps
+        `Idempotent-Replay: true` on the response. 4xx and 5xx responses are
+        NOT cached — clients may safely retry transient failures with the
+        same key.
+
+        Honored only when the server is configured with shared-store Redis
+        (UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN). When Redis is
+        absent the header is silently ignored and every request processes
+        normally.
+
+  responses:
+    BadRequest:
+      description: >
+        Invalid request. Possible `error_code` values include
+        `invalid_request` (Ajv validation failure),
+        `invalid_language_pair` (source equals target),
+        `session_invalid` / `session_expired` (bad / aged session token),
+        `text_too_long` (estimated token count exceeds the per-language
+        budget — Latin inputs fit comfortably at the 2000-character schema
+        cap; Cyrillic and Arabic may be rejected earlier).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TolkaErrorResponse'
+    Unauthorized:
+      description: Missing or invalid API key
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TolkaErrorResponse'
+    RateLimited:
+      description: Rate limit exceeded
+      headers:
+        Retry-After:
+          description: Seconds until the rate limit resets
+          schema:
+            type: integer
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TolkaErrorResponse'
+    InternalError:
+      description: Unexpected server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TolkaErrorResponse'
+    ServiceUnavailable:
+      description: Translation service temporarily unavailable (LLM provider down)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TolkaErrorResponse'
 
   schemas:
-    Domain:
+    # ── Enums ────────────────────────────────
+
+    LanguageCode:
       type: string
-      enum: [emergency, gp, mental_health, pediatric, pharmacy]
-      description: Clinical domain for translation context.
+      enum: [no, ar, so, pl, uk, en]
+      description: 'Supported language codes: Norwegian, Arabic, Somali, Polish, Ukrainian, English'
+
+    ClinicalDomain:
+      type: string
+      enum: [emergency, gp, specialist, mental_health, physical_therapy]
+
+    Speaker:
+      type: string
+      enum: [doctor, nurse, patient, paramedic]
+
+    Intent:
+      type: string
+      enum: [diagnosis_question, instruction, history_taking, consent]
+
+    TranslateMode:
+      type: string
+      enum: [safe, standard]
 
     RiskLevel:
       type: string
-      enum: [low, medium, high, critical]
-      description: |
-        Clinical risk level of the translation.
-        - `low` — translation is highly reliable
-        - `medium` — minor ambiguity detected
-        - `high` — clinician acknowledgment required before showing to patient
-        - `critical` — automatic safety rule fired; translation must not be shown to patient
+      enum: [low, medium, high, critical, unknown]
 
-    SafetyFlag:
+    RiskFlagType:
       type: string
-      enum: [negation_flip, numerical_change, keyword_mismatch]
-      description: |
-        Safety flags indicating why risk is elevated.
-        - `negation_flip` — a negation was added or removed during translation
-        - `numerical_change` — a number changed between source and translation
-        - `keyword_mismatch` — a clinical term in the source is absent from the translation
+      enum: [keyword_mismatch, negation_flip, numerical_change, ambiguity]
+
+    RiskFlagSeverity:
+      type: string
+      enum: [warning, critical]
+
+    # ── Clinical Context ─────────────────────
+
+    ClinicalContext:
+      type: object
+      properties:
+        domain:
+          $ref: '#/components/schemas/ClinicalDomain'
+        speaker:
+          $ref: '#/components/schemas/Speaker'
+        intent:
+          $ref: '#/components/schemas/Intent'
+      additionalProperties: false
+
+    # ── Translation ──────────────────────────
 
     TranslateRequest:
       type: object
-      required: [text, source_lang, target_lang, domain]
+      required: [source_language, target_language, text, mode]
       properties:
+        source_language:
+          $ref: '#/components/schemas/LanguageCode'
+        target_language:
+          $ref: '#/components/schemas/LanguageCode'
         text:
           type: string
+          minLength: 1
           maxLength: 2000
-          description: Source text to translate.
-          example: "Har du smerter i brystet?"
-        source_lang:
-          type: string
-          description: BCP 47 source language code.
-          example: "nb"
-        target_lang:
-          type: string
-          description: BCP 47 target language code.
-          example: "en"
-        domain:
-          $ref: '#/components/schemas/Domain'
+        mode:
+          $ref: '#/components/schemas/TranslateMode'
+        context:
+          $ref: '#/components/schemas/ClinicalContext'
         session_token:
           type: string
-          description: |
-            Active session token from `POST /v1/medical/session`. 
-            When provided, `source_lang`, `target_lang`, and `domain` are inferred from the session.
-          example: "stk_enc_01HX..."
+          description: Encrypted session token from POST /v1/medical/session
+      additionalProperties: false
+
+    RiskFlag:
+      type: object
+      required: [type, detail, severity]
+      properties:
+        type:
+          $ref: '#/components/schemas/RiskFlagType'
+        detail:
+          type: string
+        severity:
+          $ref: '#/components/schemas/RiskFlagSeverity'
+
+    ResponseMetadata:
+      type: object
+      required: [latency_ms, model, request_id]
+      properties:
+        latency_ms:
+          type: number
+          description: Total pipeline latency in milliseconds
+        model:
+          type: string
+          description: LLM model used for forward translation (or "phrase-library")
+        request_id:
+          type: string
+          description: Matches the X-Request-Id response header
 
     TranslateResponse:
       type: object
-      required: [translation, back_translation, confidence, risk, flags, verified, metadata]
+      required:
+        [translation, back_translation, confidence, risk, flags, alternatives, verified, metadata]
       properties:
         translation:
-          type: string
-          description: Translated text in the target language.
-          example: "Do you have chest pain?"
+          type: ['string', 'null']
+          description: Forward translation, or null if refused in safe mode
         back_translation:
-          type: string
-          description: Independent back-translation from target to source language for verification.
-          example: "Har du brystsmerter?"
+          type: ['string', 'null']
+          description: Back-translation to source language, or null if unavailable
         confidence:
           type: number
-          format: float
           minimum: 0
           maximum: 1
-          description: Quality score from 0 (unreliable) to 1 (highly reliable).
-          example: 0.94
+          description: 'Weighted confidence score combining lexical, semantic, and keyword preservation analysis. Range 0.0–1.0. Higher is better.'
         risk:
           $ref: '#/components/schemas/RiskLevel'
         flags:
           type: array
           items:
-            $ref: '#/components/schemas/SafetyFlag'
-          description: Safety flags — empty array if no issues detected.
+            $ref: '#/components/schemas/RiskFlag'
+          description: Risk flags detected during safety evaluation
+        alternatives:
+          type: array
+          items:
+            type: string
+          description: Reserved for future simplified alternatives
+        suggestion:
+          type: string
+          description: Present on safe-mode refusals — guidance for rephrasing
         verified:
           type: boolean
-          description: Whether back-translation verification completed successfully.
-          example: true
+          description: Whether the translation was verified via back-translation
         metadata:
-          $ref: '#/components/schemas/TranslationMetadata'
+          $ref: '#/components/schemas/ResponseMetadata'
 
-    SafeTranslateResponse:
-      allOf:
-        - $ref: '#/components/schemas/TranslateResponse'
-        - type: object
-          required: [withheld]
-          properties:
-            translation:
-              type: string
-              nullable: true
-              description: Translated text, or `null` if withheld.
-            back_translation:
-              type: string
-              nullable: true
-              description: Back-translation, or `null` if withheld.
-            withheld:
-              type: boolean
-              description: |
-                `true` when the translation was withheld because risk exceeded the safe threshold.
-                This is a safety outcome, not an error — HTTP 200 is still returned.
-              example: false
+    # ── Session ──────────────────────────────
 
-    TranslationMetadata:
+    SessionCreateRequest:
       type: object
-      required: [domain, source_lang, target_lang, model, request_id]
+      required: [context]
       properties:
-        domain:
-          $ref: '#/components/schemas/Domain'
-        source_lang:
-          type: string
-          example: "nb"
-        target_lang:
-          type: string
-          example: "en"
-        model:
-          type: string
-          description: Tolka model version identifier. Use this for debugging and regression tracking.
-          example: "tolka-v1"
-        request_id:
-          type: string
-          description: Unique request identifier. Include in support tickets.
-          example: "req_01HX4K2MN7VPTJ8X9ZQR3W5YB6"
+        context:
+          allOf:
+            - $ref: '#/components/schemas/ClinicalContext'
+            - required: [domain, speaker]
+      additionalProperties: false
 
-    CreateSessionRequest:
+    SessionCreateResponse:
       type: object
-      required: [domain, source_lang, target_lang]
+      required: [session_token, expires_at]
       properties:
-        domain:
-          $ref: '#/components/schemas/Domain'
-        source_lang:
+        session_token:
           type: string
-          example: "ar"
-        target_lang:
-          type: string
-          example: "nb"
-        ttl_minutes:
-          type: integer
-          minimum: 15
-          maximum: 480
-          default: 60
-          description: Session duration in minutes.
-
-    SessionResponse:
-      type: object
-      required: [token, expires_at, session_id]
-      properties:
-        token:
-          type: string
-          description: Encrypted session token. Store in memory only — not in localStorage or cookies.
-          example: "stk_enc_01HX4K2MN7VPTJ8X9ZQR3W5YB6"
+          description: Encrypted session token (base64url). Pass to translate endpoints.
         expires_at:
           type: string
           format: date-time
-          example: "2026-04-11T15:30:00Z"
-        session_id:
-          type: string
-          description: Opaque identifier for logging and support.
-          example: "sess_01HX4K2MN7VPTJ8X9ZQR3W5YB6"
+          description: ISO 8601 timestamp when the session expires (hard TTL — 60 minutes)
 
-    ApiKey:
+    # ── Admin ────────────────────────────────
+
+    ApiKeyMetadata:
       type: object
+      required: [id, org_id, key_prefix, label, is_active, created_at, revoked_at]
       properties:
         id:
           type: string
-          example: "key_01HX4K2MN7VPTJ8X9ZQR3W5YB6"
-        name:
+        org_id:
           type: string
-          example: "Production — EHR integration"
-        prefix:
+        key_prefix:
           type: string
-          enum: [sk_sandbox_public_, sk_test_, sk_live_]
-          example: "sk_live_"
+          description: First 12 characters of the key for identification
+        label:
+          type: ['string', 'null']
+        is_active:
+          type: boolean
         created_at:
           type: string
           format: date-time
-        last_used_at:
-          type: string
+        revoked_at:
+          type: ['string', 'null']
           format: date-time
-          nullable: true
-        expires_at:
-          type: string
-          format: date-time
-          nullable: true
 
-    ApiKeyWithSecret:
-      allOf:
-        - $ref: '#/components/schemas/ApiKey'
-        - type: object
-          required: [secret]
-          properties:
-            secret:
-              type: string
-              description: Full API key secret — returned only once at creation or rotation. Store immediately.
-              example: "sk_live_..."
-
-    CreateKeyRequest:
+    ApiKeyCreateResponse:
       type: object
-      required: [name, type]
+      required: [key, id, key_prefix, label]
       properties:
-        name:
+        key:
           type: string
-          example: "CI pipeline key"
-        type:
+          description: Full API key — returned exactly once at creation. Store securely.
+        id:
           type: string
-          enum: [test, live]
-        expires_in_days:
-          type: integer
-          nullable: true
-          description: Key expiry in days from now. Null for no expiry.
+        key_prefix:
+          type: string
+        label:
+          type: ['string', 'null']
 
-    UsageResponse:
+    UsageRecord:
       type: object
+      required: [org_id, date, request_count, error_count, avg_confidence, avg_latency_ms]
       properties:
-        period:
-          type: object
-          properties:
-            from:
-              type: string
-              format: date
-            to:
-              type: string
-              format: date
-        total_requests:
+        org_id:
+          type: string
+        date:
+          type: string
+          format: date
+        request_count:
           type: integer
-        by_risk:
-          type: object
-          properties:
-            low:
-              type: integer
-            medium:
-              type: integer
-            high:
-              type: integer
-            critical:
-              type: integer
-        by_domain:
-          type: object
-          additionalProperties:
-            type: integer
-        confidence_p50:
-          type: number
-          format: float
-        confidence_p10:
-          type: number
-          format: float
-        withheld_count:
+        error_count:
           type: integer
-        buckets:
-          type: array
-          items:
-            type: object
-            properties:
-              date:
-                type: string
-                format: date
-              requests:
-                type: integer
-              withheld:
-                type: integer
+        avg_confidence:
+          type: ['number', 'null']
+        avg_latency_ms:
+          type: ['number', 'null']
 
-    ErrorResponse:
+    # ── Errors ───────────────────────────────
+
+    TolkaErrorResponse:
       type: object
-      required: [error]
+      required: [error_code, message]
       properties:
-        error:
-          type: object
-          required: [code, message, request_id]
-          properties:
-            code:
-              type: string
-              enum:
-                - INVALID_API_KEY
-                - EXPIRED_API_KEY
-                - INVALID_SESSION_TOKEN
-                - SESSION_EXPIRED
-                - INSUFFICIENT_PERMISSIONS
-                - INVALID_REQUEST
-                - TEXT_TOO_LONG
-                - UNSUPPORTED_LANGUAGE_PAIR
-                - INVALID_DOMAIN
-                - RATE_LIMIT_EXCEEDED
-                - TRANSLATION_FAILED
-                - BACK_TRANSLATION_FAILED
-                - SAFETY_CHECK_FAILED
-                - SERVICE_UNAVAILABLE
-                - GATEWAY_TIMEOUT
-            message:
-              type: string
-              description: Human-readable error description. Do not parse — use `code` for logic.
-            request_id:
-              type: string
-            retry_after:
-              type: integer
-              nullable: true
-              description: Seconds to wait before retrying. Present only on 429 responses.
-
-  responses:
-    BadRequest:
-      description: Invalid request
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          example:
-            error:
-              code: INVALID_REQUEST
-              message: "Missing required field: domain"
-              request_id: "req_01HX..."
-    Unauthorized:
-      description: Authentication failed
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          example:
-            error:
-              code: INVALID_API_KEY
-              message: "The provided API key is invalid or has been revoked."
-              request_id: "req_01HX..."
-    RateLimited:
-      description: Rate limit exceeded
-      headers:
-        Retry-After:
-          schema:
-            type: integer
-          description: Seconds to wait before retrying.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          example:
-            error:
-              code: RATE_LIMIT_EXCEEDED
-              message: "Rate limit exceeded. Retry after 23 seconds."
-              request_id: "req_01HX..."
-              retry_after: 23
-    ServerError:
-      description: Internal server error
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-    ServiceUnavailable:
-      description: Service temporarily unavailable
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-
+        error_code:
+          type: string
+          description: Machine-readable error code (e.g. unauthorized, rate_limited, invalid_request)
+        message:
+          type: string
+          description: Human-readable error description
+        suggestion:
+          type: string
+          description: Optional guidance for resolving the error
+        fields:
+          type: string
+          description: Comma-separated list of invalid fields (present on validation errors only)

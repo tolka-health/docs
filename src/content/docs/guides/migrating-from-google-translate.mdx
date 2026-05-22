@@ -103,12 +103,12 @@ const translation = result.translation;
    <TabItem label="Python">
    ```python
    response = requests.post(
-       "https://sandbox.tolka-api.fly.dev/v1/medical/safe-translate",
+       "https://api.tolka.health/v1/medical/safe-translate",
        headers={"Authorization": f"Bearer {api_key}"},
        json={
            "text": text,
-           "source_lang": "nb",
-           "target_lang": "en",
+           "source_language": "nb",
+           "target_language": "en",
            "domain": "emergency",  # match your care context
        },
    )

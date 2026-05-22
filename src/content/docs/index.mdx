@@ -16,9 +16,9 @@ hero:
 
 <figure class="code-teaser" role="group" aria-label="Example API call and response">
   <div class="code-teaser-label">Make your first call</div>
-  <pre class="code-teaser-pre">{`curl https://sandbox.tolka-api.fly.dev/v1/medical/translate \\
-  -H "Authorization: Bearer sk_sandbox_public_tolka_eval2026" \\
-  -d '{"text":"Har du smerter?","source_lang":"nb","target_lang":"en","domain":"gp"}'`}</pre>
+  <pre class="code-teaser-pre">{`curl https://api.tolka.health/v1/medical/translate \\
+  -H "Authorization: Bearer sk_test_YOUR_KEY_HERE" \\
+  -d '{"text":"Har du smerter?","source_language":"no","target_language":"en","mode":"standard","context":{"domain":"gp"}}'`}</pre>
   <div class="code-teaser-response">
     <span class="resp-arrow">→</span>
     <span class="resp-body">{`{"translation":"Do you have pain?","confidence":0.97,"verified":true}`}</span>

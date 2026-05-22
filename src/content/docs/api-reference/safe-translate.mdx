@@ -59,13 +59,13 @@ When the translation passes safety checks:
 <Tabs>
 <TabItem label="cURL">
 ```bash
-curl -X POST https://sandbox.tolka-api.fly.dev/v1/medical/safe-translate \
-  -H "Authorization: Bearer sk_sandbox_public_tolka_eval2026" \
+curl -X POST https://api.tolka.health/v1/medical/safe-translate \
+  -H "Authorization: Bearer sk_test_YOUR_KEY_HERE" \
   -H "Content-Type: application/json" \
   -d '{
     "text": "Tar pasienten blodfortynnende?",
-    "source_lang": "nb",
-    "target_lang": "en",
+    "source_language": "nb",
+    "target_language": "en",
     "domain": "pharmacy"
   }'
 ```
@@ -98,12 +98,12 @@ return <TranslationDisplay text={result.translation} risk={result.risk} />;
 import requests
 
 response = requests.post(
-    "https://sandbox.tolka-api.fly.dev/v1/medical/safe-translate",
-    headers={"Authorization": "Bearer sk_sandbox_public_tolka_eval2026"},
+    "https://api.tolka.health/v1/medical/safe-translate",
+    headers={"Authorization": "Bearer sk_test_YOUR_KEY_HERE"},
     json={
         "text": "Tar pasienten blodfortynnende?",
-        "source_lang": "nb",
-        "target_lang": "en",
+        "source_language": "nb",
+        "target_language": "en",
         "domain": "pharmacy",
     },
 )

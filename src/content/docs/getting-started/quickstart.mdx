@@ -1,17 +1,20 @@
 ---
 title: Quickstart
-description: Translate your first medical text with the Tolka API in 5 minutes using the public sandbox key.
+description: Translate your first medical text with the Tolka API in 5 minutes.
 sidebar:
   order: 1
 ---
 
 import { Tabs, TabItem, Aside, Steps } from '@astrojs/starlight/components';
 
-Get a working medical translation in **5 minutes**. No account required — use the shared sandbox key.
+Get a working medical translation in **5 minutes**.
 
-:::note[Sandbox key limitations]
-`sk_sandbox_public_tolka_eval2026` is rate-limited to 10 requests/minute, 50/day per IP.
-Responses include a `"sandbox": true` flag and simplified scoring. For full fidelity, [get a test key](/getting-started/authentication/).
+:::note[You'll need a test API key]
+Tolka is in private launch. Request a test key (`sk_test_...`) via the early-access form at **[tolka.health](https://tolka.health)** — keys are issued the same day during business hours (Europe/Oslo).
+
+Throughout this guide, replace `sk_test_YOUR_KEY_HERE` with your real key.
+
+Test keys are rate-limited (see [Rate limits](/getting-started/rate-limits/)) and process the same translation pipeline as production keys — no behavioral differences.
 :::
 
 ## Choose your path
@@ -32,7 +35,7 @@ Create `index.html` and open it in your browser:
 <head><meta charset="UTF-8"><title>Tolka test</title></head>
 <body>
   <tolka-translate
-    api-key="sk_sandbox_public_tolka_eval2026"
+    api-key="sk_test_YOUR_KEY_HERE"
     source-lang="nb"
     target-lang="en"
     domain="gp">
@@ -68,15 +71,16 @@ You should see the `<tolka-translate>` widget render with a text input and trans
    import { TolkaClient } from '@tolka/web-sdk';
 
    const tolka = new TolkaClient({
-     apiKey: 'sk_sandbox_public_tolka_eval2026',
-     baseUrl: 'https://sandbox.tolka-api.fly.dev',
+     apiKey: 'sk_test_YOUR_KEY_HERE',
+     baseUrl: 'https://api.tolka.health',
    });
 
    const result = await tolka.translate({
      text: 'Har du smerter i brystet?',
-     sourceLang: 'nb',
-     targetLang: 'en',
-     domain: 'emergency',
+     source_language: 'no',
+     target_language: 'en',
+     mode: 'standard',
+     context: { domain: 'emergency' },
    });
 
    console.log(result.translation);   // "Do you have chest pain?"
@@ -86,14 +90,15 @@ You should see the `<tolka-translate>` widget render with a text input and trans
    </TabItem>
    <TabItem label="cURL">
    ```bash
-   curl -X POST https://sandbox.tolka-api.fly.dev/v1/medical/translate \
-     -H "Authorization: Bearer sk_sandbox_public_tolka_eval2026" \
+   curl -X POST https://api.tolka.health/v1/medical/translate \
+     -H "Authorization: Bearer sk_test_YOUR_KEY_HERE" \
      -H "Content-Type: application/json" \
      -d '{
        "text": "Har du smerter i brystet?",
-       "source_lang": "nb",
-       "target_lang": "en",
-       "domain": "emergency"
+       "source_language": "no",
+       "target_language": "en",
+       "mode": "standard",
+       "context": { "domain": "emergency" }
      }'
    ```
    </TabItem>
@@ -102,13 +107,14 @@ You should see the `<tolka-translate>` widget render with a text input and trans
    import requests
 
    response = requests.post(
-       "https://sandbox.tolka-api.fly.dev/v1/medical/translate",
-       headers={"Authorization": "Bearer sk_sandbox_public_tolka_eval2026"},
+       "https://api.tolka.health/v1/medical/translate",
+       headers={"Authorization": "Bearer sk_test_YOUR_KEY_HERE"},
        json={
            "text": "Har du smerter i brystet?",
-           "source_lang": "nb",
-           "target_lang": "en",
-           "domain": "emergency",
+           "source_language": "no",
+           "target_language": "en",
+           "mode": "standard",
+           "context": {"domain": "emergency"},
        },
    )
    data = response.json()
@@ -130,13 +136,11 @@ You should see the `<tolka-translate>` widget render with a text input and trans
      "confidence": 0.94,
      "risk": "low",
      "flags": [],
+     "alternatives": [],
      "verified": true,
-     "sandbox": true,
      "metadata": {
-       "domain": "emergency",
-       "source_lang": "nb",
-       "target_lang": "en",
-       "model": "tolka-v1",
+       "latency_ms": 2840,
+       "model": "gpt-4-turbo-2024-04-09",
        "request_id": "req_01HX..."
      }
    }

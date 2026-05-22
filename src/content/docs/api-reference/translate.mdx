@@ -50,13 +50,13 @@ Use [`/safe-translate`](/api-reference/safe-translate/) when:
 <Tabs>
 <TabItem label="cURL">
 ```bash
-curl -X POST https://sandbox.tolka-api.fly.dev/v1/medical/translate \
-  -H "Authorization: Bearer sk_sandbox_public_tolka_eval2026" \
+curl -X POST https://api.tolka.health/v1/medical/translate \
+  -H "Authorization: Bearer sk_test_YOUR_KEY_HERE" \
   -H "Content-Type: application/json" \
   -d '{
     "text": "Har du smerter i brystet?",
-    "source_lang": "nb",
-    "target_lang": "en",
+    "source_language": "nb",
+    "target_language": "en",
     "domain": "emergency"
   }'
 ```
@@ -66,8 +66,8 @@ curl -X POST https://sandbox.tolka-api.fly.dev/v1/medical/translate \
 import { TolkaClient } from '@tolka/web-sdk';
 
 const tolka = new TolkaClient({
-  apiKey: 'sk_sandbox_public_tolka_eval2026',
-  baseUrl: 'https://sandbox.tolka-api.fly.dev',
+  apiKey: 'sk_test_YOUR_KEY_HERE',
+  baseUrl: 'https://api.tolka.health',
 });
 
 const result = await tolka.translate({
@@ -86,12 +86,12 @@ console.log(result.confidence);    // 0.94
 import requests
 
 response = requests.post(
-    "https://sandbox.tolka-api.fly.dev/v1/medical/translate",
-    headers={"Authorization": "Bearer sk_sandbox_public_tolka_eval2026"},
+    "https://api.tolka.health/v1/medical/translate",
+    headers={"Authorization": "Bearer sk_test_YOUR_KEY_HERE"},
     json={
         "text": "Har du smerter i brystet?",
-        "source_lang": "nb",
-        "target_lang": "en",
+        "source_language": "nb",
+        "target_language": "en",
         "domain": "emergency",
     },
 )
@@ -197,12 +197,12 @@ async def translate_batch(
         async def translate_one(text: str) -> dict:
             async with semaphore:
                 resp = await session.post(
-                    "https://sandbox.tolka-api.fly.dev/v1/medical/translate",
+                    "https://api.tolka.health/v1/medical/translate",
                     headers={"Authorization": f"Bearer {api_key}"},
                     json={
                         "text": text,
-                        "source_lang": "nb",
-                        "target_lang": "en",
+                        "source_language": "nb",
+                        "target_language": "en",
                         "domain": domain,
                     },
                 )
