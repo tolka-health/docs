@@ -703,3 +703,28 @@ html:not([data-has-toc]) .main-pane {
   margin-inline: auto;
   font-weight: 500;
 }
+
+/* ───────────────────────────────────────────────────────────────────────
+   Wider content area — Starlight defaults to ~45rem (720 px) which feels
+   narrow on a modern monitor. Widen to ~60rem (960 px) and keep the
+   horizontal padding so content doesn't touch screen edges.
+   On pages WITHOUT a right-rail TOC (set elsewhere via data-has-toc), we
+   already override to 100 % below; this block only affects TOC pages.
+   ─────────────────────────────────────────────────────────────────────── */
+
+:root {
+  --sl-content-width: 60rem;
+}
+
+html[data-has-toc] .main-pane > .sl-container {
+  max-width: var(--sl-content-width);
+  margin-inline: auto;
+  padding-inline: clamp(1rem, 3vw, 2.5rem);
+}
+
+/* Mobile: keep generous side padding even when the viewport is small */
+@media (max-width: 640px) {
+  html[data-has-toc] .main-pane > .sl-container {
+    padding-inline: 1rem;
+  }
+}
