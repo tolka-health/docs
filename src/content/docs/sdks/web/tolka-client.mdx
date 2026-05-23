@@ -32,9 +32,9 @@ const tolka = new TolkaClient({
 ```typescript
 const result = await tolka.translate({
   text: 'Har du hodepine?',
-  sourceLang: 'nb',
-  targetLang: 'en',
-  domain: 'gp',
+  source_language: 'no',
+  target_language: 'en',
+  context: { domain: 'gp' },
   // sessionToken: session.token, // optional
 });
 
@@ -44,7 +44,7 @@ result.confidence       // number (0–1)
 result.risk             // 'low' | 'medium' | 'high' | 'critical'
 result.flags            // string[]
 result.verified         // boolean
-result.metadata         // { domain, sourceLang, targetLang, model, requestId }
+result.metadata         // { domain, source_language, target_language, model, requestId }
 ```
 
 ---
@@ -54,7 +54,7 @@ result.metadata         // { domain, sourceLang, targetLang, model, requestId }
 Same signature as `translate`. When the translation is withheld:
 
 ```typescript
-const result = await tolka.safeTranslate({ text, sourceLang, targetLang, domain });
+const result = await tolka.safeTranslate({ text, source_language, target_language, domain });
 
 if (result.withheld) {
   // result.translation === null
@@ -68,9 +68,9 @@ if (result.withheld) {
 
 ```typescript
 const session = await tolka.sessions.create({
-  domain: 'gp',
-  sourceLang: 'ar',
-  targetLang: 'nb',
+  context: { domain: 'gp' },
+  source_language: 'ar',
+  target_language: 'no',
   ttlMinutes: 45, // optional, default 60
 });
 

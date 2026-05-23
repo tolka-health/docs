@@ -36,7 +36,7 @@ Create `index.html` and open it in your browser:
 <body>
   <tolka-translate
     api-key="sk_test_YOUR_KEY_HERE"
-    source-lang="nb"
+    source-lang="no"
     target-lang="en"
     domain="gp">
   </tolka-translate>
@@ -156,9 +156,9 @@ You should see the `<tolka-translate>` widget render with a text input and trans
 
 | Error | Code | Fix |
 |-------|------|-----|
-| `INVALID_API_KEY` | `401` | Verify the key is prefixed `sk_sandbox_`, `sk_test_`, or `sk_live_`. No extra whitespace. |
-| `RATE_LIMIT_EXCEEDED` | `429` | Sandbox allows 10 req/min. Wait for the `Retry-After` header value (seconds) before retrying. |
-| `SERVICE_UNAVAILABLE` | `503` | Tolka is temporarily down. Check [status.tolka.health](https://status.tolka.health) and retry with exponential backoff. |
+| `INVALID_API_KEY` | `401` | Verify the key is prefixed `sk_test_` or `sk_live_`. No extra whitespace. |
+| `RATE_LIMIT_EXCEEDED` | `429` | Wait for the `Retry-After` header value (seconds) before retrying. Test keys default to 60 req/min. |
+| `SERVICE_UNAVAILABLE` | `503` | Tolka is temporarily down. Check [the support page](/about/support/) and retry with exponential backoff. |
 | `TEXT_TOO_LONG` | `400` | Text exceeds 2,000 characters. Split into shorter segments at sentence boundaries. |
 
 ---

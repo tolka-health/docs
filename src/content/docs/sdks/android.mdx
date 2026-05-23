@@ -31,8 +31,8 @@ val tolka = TolkaClient(apiKey = BuildConfig.TOLKA_API_KEY)
 
 val result = tolka.translate(
     text = "Har du smerter i brystet?",
-    sourceLang = "nb",
-    targetLang = "en",
+    source_language = "no",
+    target_language = "en",
     domain = TolkaDomain.EMERGENCY,
 )
 

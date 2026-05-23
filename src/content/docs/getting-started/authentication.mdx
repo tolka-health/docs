@@ -19,9 +19,8 @@ Authorization: Bearer sk_test_your_key_here
 
 | Prefix | Name | Rate limit | Use case |
 |--------|------|------------|----------|
-| `sk_sandbox_public_...` | Shared sandbox | 10 req/min · 50 req/day per IP | Evaluate the API with no sign-up. Shared across all evaluators. |
-| `sk_test_...` | Personal test key | 60 req/min (Starter tier) | Development and integration testing. Full response fidelity. |
-| `sk_live_...` | Production key | Per-plan limit | Production deployments only. |
+| `sk_test_...` | Test key | 60 req/min (Starter tier) | Development and integration testing. Request via the early-access form at [tolka.health](https://tolka.health). |
+| `sk_live_...` | Production key | Per-plan limit | Production deployments only. Issued after a pilot agreement. |
 
 :::danger[Never commit keys to source control]
 Always load keys from environment variables. Use `.env` files locally and your CI/CD secret manager in production. See the [key rotation guide](/guides/key-rotation/) for zero-downtime rotation.
@@ -54,7 +53,7 @@ const tolka = new TolkaClient({
 curl -X POST https://api.tolka.health/v1/medical/translate \
   -H "Authorization: Bearer $TOLKA_API_KEY" \
   -H "Content-Type: application/json" \
-  -d '{ "text": "...", "source_lang": "nb", "target_lang": "en", "domain": "gp" }'
+  -d '{ "text": "...", "source_language": "no", "target_language": "en", "mode": "standard", "context": { "domain": "gp" } }'
 ```
 </TabItem>
 <TabItem label="Python">

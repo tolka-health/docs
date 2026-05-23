@@ -5,15 +5,59 @@ sidebar:
   order: 1
 ---
 
-import { Tabs, TabItem } from '@astrojs/starlight/components';
+import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
 
 The Tolka Web SDK (`@tolka/web-sdk`) provides:
 - **`TolkaClient`** — a typed JavaScript/TypeScript API client
 - **Web Components** — drop-in `<tolka-translate>` and `<tolka-voice>` elements
 
+<Aside type="caution" title="Private launch — npm publish pending">
+Tolka is in private launch. The `@tolka/web-sdk` npm package is not yet
+published. Two ways to consume the SDK today:
+
+1. **CDN script tag** (below) — recommended for early adopters.
+2. **Direct ES module** — fetch `https://tolka.health/tolka-sdk.js` and bundle.
+   Pin the integrity hash from the docs site's network tab.
+
+npm publish lands with the public 1.0 release. The package will be
+`@tolka/web-sdk` and the imports below will work unchanged.
+</Aside>
+
 ---
 
-## Package manager
+## CDN (works today)
+
+For prototyping or embedding in systems without a build pipeline:
+
+```html
+<script type="module" src="https://tolka.health/tolka-sdk.js"></script>
+```
+
+This registers the web components globally so `<tolka-translate>` and
+`<tolka-voice>` become valid HTML elements. `TolkaClient` is also exported.
+
+```html
+<!doctype html>
+<html lang="en">
+  <head><script type="module" src="https://tolka.health/tolka-sdk.js"></script></head>
+  <body>
+    <tolka-translate
+      api-key="sk_test_YOUR_KEY_HERE"
+      base-url="https://api.tolka.health"
+      source-lang="no"
+      target-lang="en"
+      mode="standard"
+      domain="gp">
+    </tolka-translate>
+  </body>
+</html>
+```
+
+---
+
+## Package manager (after 1.0 launch)
+
+Once `@tolka/web-sdk` is published to npm, these will work:
 
 <Tabs>
 <TabItem label="pnpm">
@@ -37,28 +81,6 @@ yarn add @tolka/web-sdk
 
 ---
 
-## CDN (no build step)
-
-For prototyping or embedding in systems without a build pipeline:
-
-```html
-<script
-  src="https://cdn.tolka.health/sdk/web/latest/tolka.min.js"
-  crossorigin="anonymous">
-</script>
-```
-
-This registers the web components globally and exposes `window.TolkaClient`. Pin to a specific version in production:
-
-```html
-<script
-  src="https://cdn.tolka.health/sdk/web/1.0.0/tolka.min.js"
-  crossorigin="anonymous">
-</script>
-```
-
----
-
 ## Verify installation
 
 :::note[Environment variable access]
@@ -66,18 +88,23 @@ This registers the web components globally and exposes `window.TolkaClient`. Pin
 :::
 
 ```typescript
-import { TolkaClient } from '@tolka/web-sdk';
+// Once 1.0 ships:
+//   import { TolkaClient } from '@tolka/web-sdk';
+// During private launch, use the CDN script tag (see above) — TolkaClient
+// is exposed as `window.TolkaClient` after the script loads.
 
-const tolka = new TolkaClient({
+const tolka = new window.TolkaClient({
   apiKey: process.env.TOLKA_API_KEY!,
+  baseUrl: 'https://api.tolka.health',
 });
 
 // Should resolve without error
 const result = await tolka.translate({
   text: 'Har du smerter?',
-  sourceLang: 'nb',
-  targetLang: 'en',
-  domain: 'gp',
+  source_language: 'no',
+  target_language: 'en',
+  mode: 'standard',
+  context: { domain: 'gp' },
 });
 
 console.log(result.translation); // "Do you have pain?"

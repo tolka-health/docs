@@ -21,7 +21,7 @@ Sessions allow you to maintain context across multiple translation exchanges in 
 sequenceDiagram
   participant App
   participant Tolka API
-  App->>Tolka API: POST /v1/medical/session {domain, source_lang, target_lang}
+  App->>Tolka API: POST /v1/medical/session {domain, source_language, target_language}
   Tolka API-->>App: {session_token: "stk_enc_..."}
   App->>Tolka API: POST /v1/medical/translate {text, session_token}
   Tolka API-->>App: {translation, confidence, risk, ...}
@@ -37,10 +37,7 @@ sequenceDiagram
 <TabItem label="TypeScript">
 ```typescript
 const session = await tolka.sessions.create({
-  domain: 'gp',
-  sourceLang: 'ar',
-  targetLang: 'nb',
-  ttlMinutes: 45,
+  context: { domain: 'gp', speaker: 'doctor' },
 });
 
 // session.token — store this in your app state, not in the URL or localStorage
@@ -53,10 +50,7 @@ curl -X POST https://api.tolka.health/v1/medical/session \
   -H "Authorization: Bearer $TOLKA_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-    "domain": "gp",
-    "source_lang": "ar",
-    "target_lang": "nb",
-    "ttl_minutes": 45
+    "context": { "domain": "gp", "speaker": "doctor" }
   }'
 ```
 </TabItem>
@@ -70,7 +64,7 @@ curl -X POST https://api.tolka.health/v1/medical/session \
 const result = await tolka.translate({
   text: 'كيف حالك اليوم؟',
   sessionToken: session.token,
-  // source_lang and target_lang are optional when session_token is present
+  // source_language and target_language are optional when session_token is present
   // — they are inferred from the session
 });
 ```

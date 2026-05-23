@@ -18,7 +18,7 @@ Every call to the Tolka API passes through a five-step pipeline designed specifi
 
 The pipeline receives:
 - **`text`** — the source text to translate (max 2,000 characters)
-- **`source_lang`** / **`target_lang`** — BCP 47 language codes
+- **`source_language`** / **`target_language`** — ISO 639-1 language codes
 - **`domain`** — the clinical context (`emergency`, `gp`, `mental_health`, `pediatric`, or `pharmacy`)
 
 The domain is not cosmetic. It changes how the translation is produced — emergency translations prioritise unambiguous, clinically precise phrasing, while `gp` allows more conversational register.

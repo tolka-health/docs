@@ -18,7 +18,7 @@ A complete translation UI: text input, language selector, translated output, and
 ```html
 <tolka-translate
   api-key="sk_test_..."
-  source-lang="nb"
+  source-lang="no"
   target-lang="en"
   domain="gp"
   safe-mode="true">
@@ -30,8 +30,8 @@ A complete translation UI: text input, language selector, translated output, and
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `api-key` | string | — | Required. Your Tolka API key. |
-| `source-lang` | string | — | Required. BCP 47 source language. |
-| `target-lang` | string | — | Required. BCP 47 target language. |
+| `source-lang` | string | — | Required. ISO 639-1 source language. |
+| `target-lang` | string | — | Required. ISO 639-1 target language. |
 | `domain` | string | `"gp"` | Clinical domain. |
 | `safe-mode` | boolean | `false` | When `true`, uses `/safe-translate` and withholds the output on high/critical risk. |
 | `session-token` | string | — | Active session token from `TolkaClient.sessions.create()`. |
@@ -70,7 +70,7 @@ Voice input variant — records audio, transcribes, and translates. Requires mic
 <tolka-voice
   api-key="sk_test_..."
   source-lang="so"
-  target-lang="nb"
+  target-lang="no"
   domain="emergency"
   safe-mode="true">
 </tolka-voice>

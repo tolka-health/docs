@@ -7,21 +7,16 @@ sidebar:
 
 import { Aside } from '@astrojs/starlight/components';
 
-Tolka has three environments. Each has a separate base URL and requires the matching key type.
+Tolka serves test and production traffic from the same base URL. The key prefix on each request determines which path it takes through the pipeline.
 
 ## Environment summary
 
 | Environment | Base URL | Key prefix | Suitable for |
 |-------------|----------|-----------|--------------|
-| **Sandbox** | `https://api.tolka.health` | `sk_sandbox_public_...` | Quick evaluation, no sign-up |
-| **Test** | `https://api.tolka.health` | `sk_test_...` | Integration development, CI pipelines |
-| **Production** | `https://api.tolka.health` | `sk_live_...` | Live patient-facing deployments |
+| **Test** | `https://api.tolka.health` | `sk_test_...` | Integration development, CI pipelines. Request via [tolka.health](https://tolka.health). |
+| **Production** | `https://api.tolka.health` | `sk_live_...` | Live patient-facing deployments. Issued after a pilot agreement. |
 
-Test and production share the same API base URL — the key prefix determines which environment your request is routed to.
-
-:::note[Sandbox output is simplified]
-Sandbox responses include `"sandbox": true` and return simplified scoring. Domain-specific behaviour is identical across all domains in sandbox mode. Use a `sk_test_` key for full fidelity.
-:::
+Test and production responses go through the same translation pipeline — only billing, quota, and `key_prefix` audit attribution differ. There is no quality-of-output difference between key types.
 
 ---
 
@@ -40,7 +35,7 @@ Sandbox responses include `"sandbox": true` and return simplified scoring. Domai
 | Tigrinya | Norwegian Bokmål | `ti → nb` | |
 | Dari | English | `prs → en` | |
 
-Language codes follow **BCP 47**. Pass them in `source_lang` and `target_lang`.
+Language codes follow **ISO 639-1**. Pass them in `source_language` and `target_language`.
 
 :::caution[Low-resource language pairs]
 Some language pairs have adjusted confidence baselines. Always rely on `risk` as your primary UI signal rather than the raw `confidence` float.

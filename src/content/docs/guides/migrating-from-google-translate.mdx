@@ -28,7 +28,7 @@ const [response] = await client.translateText({
   parent: `projects/${projectId}/locations/global`,
   contents: [text],
   mimeType: 'text/plain',
-  sourceLanguageCode: 'nb',
+  sourceLanguageCode: 'no',
   targetLanguageCode: 'en',
 });
 
@@ -44,9 +44,10 @@ const tolka = new TolkaClient({ apiKey: process.env.TOLKA_API_KEY! });
 
 const result = await tolka.safeTranslate({
   text,
-  sourceLang: 'nb',
-  targetLang: 'en',
-  domain: 'gp', // match your care context
+  source_language: 'no',
+  target_language: 'en',
+  mode: 'safe',
+  context: { domain: 'gp' }, // match your care context
 });
 
 if (result.withheld) {
@@ -72,17 +73,18 @@ const translation = result.translation;
 
 2. **Replace the translation call**
 
-   Find every call to `translateText` (or equivalent) and replace it with `tolka.safeTranslate()`. Map your language codes — Google uses `nb-NO`, Tolka uses BCP 47 short form `nb`.
+   Find every call to `translateText` (or equivalent) and replace it with `tolka.safeTranslate()`. Map your language codes — Google uses `nb-NO`, Tolka uses ISO 639-1 short form `no`.
 
    ```typescript
    // Language code mapping if needed
    const langMap: Record<string, string> = {
-     'nb-NO': 'nb',
+     'nb-NO': 'no',
      'ar-SA': 'ar',
      'so-SO': 'so',
      'pl-PL': 'pl',
+     'uk-UA': 'uk',
    };
-   const sourceLang = langMap[googleLangCode] ?? googleLangCode;
+   const sourceLanguage = langMap[googleLangCode] ?? googleLangCode;
    ```
 
 3. **Add a domain**
@@ -94,9 +96,10 @@ const translation = result.translation;
    ```typescript
    const result = await tolka.safeTranslate({
      text,
-     sourceLang: 'nb',
-     targetLang: 'en',
-     domain: 'emergency', // match your care context
+     source_language: 'no',
+     target_language: 'en',
+     mode: 'safe',
+     context: { domain: 'emergency' }, // match your care context
    });
    ```
    </TabItem>
@@ -107,9 +110,10 @@ const translation = result.translation;
        headers={"Authorization": f"Bearer {api_key}"},
        json={
            "text": text,
-           "source_language": "nb",
+           "source_language": "no",
            "target_language": "en",
-           "domain": "emergency",  # match your care context
+           "mode": "safe",
+           "context": {"domain": "emergency"},  # match your care context
        },
    )
    ```

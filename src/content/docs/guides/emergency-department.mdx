@@ -27,12 +27,12 @@ import { TolkaClient } from '@tolka/web-sdk';
 
 const tolka = new TolkaClient({ apiKey: process.env.TOLKA_API_KEY! });
 
-async function translateEmergency(text: string, sourceLang: string) {
+async function translateEmergency(text: string, source_language: string) {
   const result = await tolka.safeTranslate({
     text,
-    sourceLang,
-    targetLang: 'nb', // or 'en' depending on your setup
-    domain: 'emergency',
+    source_language,
+    target_language: 'no', // or 'en' depending on your setup
+    context: { domain: 'emergency' },
   });
 
   if (result.withheld) {
@@ -40,7 +40,7 @@ async function translateEmergency(text: string, sourceLang: string) {
     triggerInterpreterAlert({
       reason: result.flags,
       urgency: 'immediate',
-      patientLang: sourceLang,
+      patientLang: source_language,
     });
     return null;
   }
@@ -57,7 +57,7 @@ async function translateEmergency(text: string, sourceLang: string) {
 <tolka-voice
   api-key="sk_live_..."
   source-lang="so"
-  target-lang="nb"
+  target-lang="no"
   domain="emergency"
   safe-mode="true"
   auto-submit="true"
@@ -76,7 +76,7 @@ Microphone access may be blocked on hospital network policies. Always co-locate 
 
 ## Latency expectations
 
-The `emergency` domain is optimised for speed. Check [status.tolka.health](https://status.tolka.health) for current latency percentiles.
+The `emergency` domain is optimised for speed. Check [the support page](/about/support/) for current latency percentiles.
 
 All response times include full safety verification. If `verified: false` is returned, verification could not be completed — the forward translation is still available but treat with additional caution.
 

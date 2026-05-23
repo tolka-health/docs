@@ -87,7 +87,7 @@ The `text` field exceeds 2,000 characters.
 
 ### `UNSUPPORTED_LANGUAGE_PAIR` — 400
 
-The `source_lang` / `target_lang` combination is not supported.
+The `source_language` / `target_language` combination is not supported.
 
 **Fix:** Check the [supported language pairs table](/getting-started/environments/).
 
@@ -124,7 +124,7 @@ You have exceeded your plan's requests-per-minute limit.
 ## Server errors (5xx)
 
 :::note[5xx errors are always retryable]
-All 5xx errors are transient. Retry with exponential backoff. If the error persists, check [status.tolka.health](https://status.tolka.health).
+All 5xx errors are transient. Retry with exponential backoff. If the error persists, check [the support page](/about/support/).
 :::
 
 ### `TRANSLATION_FAILED` — 500
@@ -155,7 +155,7 @@ The safety verification step failed unexpectedly. Not to be confused with `risk:
 
 The API is temporarily unavailable — typically during a deployment or an infrastructure incident.
 
-**Fix:** Check [status.tolka.health](https://status.tolka.health). Implement exponential backoff with jitter starting at 1 second.
+**Fix:** Check [the support page](/about/support/). Implement exponential backoff with jitter starting at 1 second.
 
 ---
 

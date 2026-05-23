@@ -64,9 +64,10 @@ curl -X POST https://api.tolka.health/v1/medical/safe-translate \
   -H "Content-Type: application/json" \
   -d '{
     "text": "Tar pasienten blodfortynnende?",
-    "source_language": "nb",
+    "source_language": "no",
     "target_language": "en",
-    "domain": "pharmacy"
+    "mode": "safe",
+    "context": { "domain": "pharmacy" }
   }'
 ```
 </TabItem>
@@ -74,9 +75,10 @@ curl -X POST https://api.tolka.health/v1/medical/safe-translate \
 ```typescript
 const result = await tolka.safeTranslate({
   text: sourceText,
-  sourceLang: 'so',
-  targetLang: 'nb',
-  domain: 'emergency',
+  source_language: 'so',
+  target_language: 'no',
+  mode: 'safe',
+  context: { domain: 'emergency' },
 });
 
 if (result.withheld) {
@@ -102,9 +104,10 @@ response = requests.post(
     headers={"Authorization": "Bearer sk_test_YOUR_KEY_HERE"},
     json={
         "text": "Tar pasienten blodfortynnende?",
-        "source_language": "nb",
+        "source_language": "no",
         "target_language": "en",
-        "domain": "pharmacy",
+        "mode": "safe",
+        "context": {"domain": "pharmacy"},
     },
 )
 data = response.json()

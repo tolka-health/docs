@@ -69,12 +69,12 @@ This guide walks through a complete integration: from obtaining a key to a produ
 
    async function translateForPatient(
      text: string,
-     sourceLang: string,
-     targetLang: string,
+     source_language: string,
+     target_language: string,
      domain: TolkaDomain,
    ) {
      try {
-       const result = await tolka.safeTranslate({ text, sourceLang, targetLang, domain });
+       const result = await tolka.safeTranslate({ text, source_language, target_language, domain });
 
        if (result.withheld) {
          return { status: 'withheld', flags: result.flags };
@@ -100,7 +100,7 @@ This guide walks through a complete integration: from obtaining a key to a produ
 6. **Handle each outcome in your UI**
 
    ```tsx
-   const outcome = await translateForPatient(text, 'nb', 'en', domain);
+   const outcome = await translateForPatient(text, 'no', 'en', domain);
 
    switch (outcome.status) {
      case 'ready':

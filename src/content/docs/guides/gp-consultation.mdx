@@ -7,7 +7,7 @@ sidebar:
 
 import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
 
-GP consultations involve multiple back-and-forth exchanges. Using sessions ensures each exchange benefits from conversation context, and avoids passing `domain`, `source_lang`, and `target_lang` on every call.
+GP consultations involve multiple back-and-forth exchanges. Using sessions ensures each exchange benefits from conversation context, and avoids passing `domain`, `source_language`, and `target_language` on every call.
 
 ---
 
@@ -23,9 +23,9 @@ GP consultations involve multiple back-and-forth exchanges. Using sessions ensur
 
    // Called when the GP opens the patient consultation screen
    const session = await tolka.sessions.create({
-     domain: 'gp',
-     sourceLang: 'ar',  // patient's language
-     targetLang: 'nb',  // clinician's language
+     context: { domain: 'gp' },
+     source_language: 'ar',  // patient's language
+     target_language: 'no',  // clinician's language
      ttlMinutes: 60,
    });
 
@@ -40,7 +40,7 @@ GP consultations involve multiple back-and-forth exchanges. Using sessions ensur
    const result = await tolka.safeTranslate({
      text: 'Har du hatt feber de siste dagene?',
      sessionToken,
-     // source_lang, target_lang, domain inferred from session
+     // source_language, target_language, domain inferred from session
    });
    ```
 

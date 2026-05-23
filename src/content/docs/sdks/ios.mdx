@@ -31,8 +31,8 @@ let tolka = TolkaClient(apiKey: ProcessInfo.processInfo.environment["TOLKA_API_K
 
 let result = try await tolka.translate(
     text: "Har du smerter i brystet?",
-    sourceLang: "nb",
-    targetLang: "en",
+    source_language: "no",
+    target_language: "en",
     domain: .emergency
 )
 

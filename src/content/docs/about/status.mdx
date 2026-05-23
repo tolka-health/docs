@@ -1,28 +1,38 @@
 ---
 title: Status
-description: Tolka API service status and uptime information.
+description: Tolka API service status, health checks, and uptime targets.
 sidebar:
   order: 4
 ---
 
-## Current status
+## Health endpoints
 
-Live API status is available at **[status.tolka.health](https://status.tolka.health)**.
+The API exposes two unauthenticated health endpoints suitable for monitoring tools:
 
-The status page shows:
-- Current operational status for each API region
-- Active and resolved incidents
-- Scheduled maintenance windows
-- Historical uptime metrics
+| Endpoint | Purpose | 200 means |
+|----------|---------|-----------|
+| `GET https://api.tolka.health/health` | Liveness | The API process is running and serving traffic |
+| `GET https://api.tolka.health/readyz` | Readiness | Liveness + Supabase metadata store is reachable |
+
+Both endpoints return `{"status":"ok"}` (or `{"status":"ready","database":true}`) on success and HTTP `503` on failure. Probe `/health` aggressively (1–5 s) and `/readyz` more sparingly (5–10 s) — `/readyz` makes a real database call that is cached for 3 s.
+
+```bash
+curl -s https://api.tolka.health/health
+# {"status":"ok"}
+
+curl -s https://api.tolka.health/readyz
+# {"status":"ready","database":true}
+```
 
 ---
 
-## Subscribe to updates
+## Incident notifications during private launch
 
-Subscribe on the status page to receive incident notifications by:
-- Email
-- RSS feed
-- Webhook (Enterprise plan)
+Tolka is currently in private launch. A public status dashboard is on the roadmap. Until then:
+
+- Incident notices for active customers go to the email used in your early-access request.
+- For confirmed outages, contact support — see [Support](/about/support/).
+- If you've integrated the SDK in `safe` mode, your fallback UI will already handle 5xx errors gracefully (see [Error Handling](/sdks/web/error-handling/)).
 
 ---
 
@@ -40,8 +50,8 @@ SLA credits are defined in the Terms of Service at [tolka.health/legal/terms](ht
 
 ## What to do during an outage
 
-1. Check [status.tolka.health](https://status.tolka.health) — confirm whether there is an active incident.
+1. Confirm the symptom with `curl https://api.tolka.health/health` — if it returns 5xx, the API is down.
 2. Implement your fallback UI (see [Error Handling](/sdks/web/error-handling/)) — never show an empty translation to a patient.
 3. Use exponential backoff with jitter for retries — do not hammer the API during recovery.
-4. For Enterprise plans, use the dedicated support channel for incident updates.
+4. Reach out to [Support](/about/support/) for incident updates.
 

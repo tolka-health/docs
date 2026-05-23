@@ -42,9 +42,9 @@ When `risk` is `"high"` or `"critical"`, a safe mode response **withholds** the 
   "verified": true,
   "withheld": true,
   "metadata": {
-    "domain": "emergency",
-    "source_lang": "so",
-    "target_lang": "nb",
+    "context": { "domain": "emergency" },
+    "source_language": "so",
+    "target_language": "no",
     "model": "tolka-v1",
     "request_id": "req_01HX..."
   }
@@ -62,7 +62,7 @@ A `200` status code is still returned. `withheld: true` is a safety outcome, not
 ## UI pattern for withheld translations
 
 ```typescript
-const result = await tolka.safeTranslate({ text, sourceLang, targetLang, domain });
+const result = await tolka.safeTranslate({ text, source_language, target_language, domain });
 
 if (result.withheld) {
   return showRefusalMessage({
@@ -82,9 +82,9 @@ import { TolkaClient, TolkaApiError } from '@tolka/web-sdk';
 
 const result = await tolka.safeTranslate({
   text: 'Tar du medisiner for hjertet?',
-  sourceLang: 'nb',
-  targetLang: 'en',
-  domain: 'pharmacy',
+  source_language: 'no',
+  target_language: 'en',
+  context: { domain: 'pharmacy' },
 });
 
 if (result.withheld) {
@@ -102,9 +102,9 @@ curl -X POST https://api.tolka.health/v1/medical/safe-translate \
   -H "Content-Type: application/json" \
   -d '{
     "text": "Tar du medisiner for hjertet?",
-    "source_lang": "nb",
-    "target_lang": "en",
-    "domain": "pharmacy"
+    "source_language": "no",
+    "target_language": "en",
+    "context": { "domain": "pharmacy" }
   }'
 ```
 </TabItem>

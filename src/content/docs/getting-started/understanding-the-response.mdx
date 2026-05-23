@@ -17,12 +17,11 @@ Every call to `/v1/medical/translate` or `/v1/medical/safe-translate` returns th
   "confidence": 0.91,
   "risk": "low",
   "flags": [],
+  "alternatives": [],
   "verified": true,
   "metadata": {
-    "domain": "emergency",
-    "source_lang": "nb",
-    "target_lang": "en",
-    "model": "tolka-v1",
+    "latency_ms": 2840,
+    "model": "gpt-4-turbo-2024-04-09",
     "request_id": "req_01HX4K2MN7VPTJ8X9ZQR3W5YB6"
   }
 }
@@ -103,10 +102,8 @@ Multiple flags can be present simultaneously.
 
 | Field | Description |
 |-------|-------------|
-| `domain` | The clinical domain used for this translation (echoes your request) |
-| `source_lang` | BCP 47 language code of the source text |
-| `target_lang` | BCP 47 language code of the translation |
-| `model` | Tolka model version identifier (use this for debugging and regression tracking) |
+| `latency_ms` | End-to-end pipeline latency in milliseconds (includes forward translation, back-translation, and scoring) |
+| `model` | Underlying LLM identifier (e.g. `gpt-4-turbo-2024-04-09`). Use for debugging and regression tracking. |
 | `request_id` | Unique request identifier. Include this in support tickets. |
 
 ---

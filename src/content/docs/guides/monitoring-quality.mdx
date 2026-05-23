@@ -60,18 +60,18 @@ Aggregate metrics can mask problems in specific language pairs. Always break dow
 ```typescript
 // Check each supported language pair separately
 const pairs = [
-  { source: 'nb', target: 'en' },
-  { source: 'ar', target: 'nb' },
-  { source: 'so', target: 'nb' },
-  { source: 'pl', target: 'nb' },
+  { source: 'no', target: 'en' },
+  { source: 'ar', target: 'no' },
+  { source: 'so', target: 'no' },
+  { source: 'pl', target: 'no' },
 ];
 
 for (const pair of pairs) {
   const usage = await tolka.admin.usage.query({
     from: weekAgo,
     to: today,
-    sourceLang: pair.source,
-    targetLang: pair.target,
+    source_language: pair.source,
+    target_language: pair.target,
   });
 
   if (usage.total_requests > 10) { // only alert if there's meaningful volume
@@ -91,7 +91,7 @@ for (const pair of pairs) {
 |-------------|--------------|--------|
 | Rising critical rate for a specific language pair | Domain mismatch (wrong domain being passed) | Audit which `domain` your integration uses for this pair |
 | Falling `confidence_p50` across all pairs | Model update (check `metadata.model` in logs) | Monitor for 48h; contact support if it continues |
-| Spike in `verified: false` | Upstream verification issues | Check [status.tolka.health](https://status.tolka.health); contact support |
+| Spike in `verified: false` | Upstream verification issues | Check [the support page](/about/support/); contact support |
 | Rising withheld rate for low-resource pairs | Expected — low-resource pairs have adjusted baselines | Ensure clinician escalation paths are working |
 
 ---

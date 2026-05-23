@@ -16,7 +16,7 @@ For the full schema, see the [Interactive Reference](/api-reference/index/).
 
 Create a session when:
 - You are starting a new clinical consultation that will involve multiple translated exchanges
-- You want to simplify repeated calls (no need to pass `domain`, `source_lang`, `target_lang` each time)
+- You want to simplify repeated calls (no need to pass `domain`, `source_language`, `target_language` each time)
 - You need conversation continuity (the model is aware of previous exchanges in the session)
 
 ---
@@ -41,8 +41,8 @@ Create new session for next encounter
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
 | `domain` | string | Yes | — | Clinical domain for all translations in this session |
-| `source_lang` | string | Yes | — | BCP 47 source language |
-| `target_lang` | string | Yes | — | BCP 47 target language |
+| `source_language` | string | Yes | — | ISO 639-1 source language |
+| `target_language` | string | Yes | — | ISO 639-1 target language |
 | `ttl_minutes` | integer | No | 60 | Session duration: 15–480 |
 
 ## Response fields

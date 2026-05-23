@@ -79,7 +79,7 @@ The new secret is returned once in the rotation response and never shown again. 
    curl -X POST https://api.tolka.health/v1/medical/translate \
      -H "Authorization: Bearer $NEW_SECRET" \
      -H "Content-Type: application/json" \
-     -d '{"text":"test","source_lang":"nb","target_lang":"en","domain":"gp"}'
+     -d '{"text":"test","source_language":"no","target_language":"en","mode":"standard","context":{"domain":"gp"}}'
    # Should return 200
    ```
 
