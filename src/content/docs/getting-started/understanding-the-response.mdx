@@ -21,7 +21,7 @@ Every call to `/v1/medical/translate` or `/v1/medical/safe-translate` returns th
   "verified": true,
   "metadata": {
     "latency_ms": 2840,
-    "model": "gpt-4-turbo-2024-04-09",
+    "model": "tolka-v1",
     "request_id": "req_01HX4K2MN7VPTJ8X9ZQR3W5YB6"
   }
 }
@@ -103,7 +103,7 @@ Multiple flags can be present simultaneously.
 | Field | Description |
 |-------|-------------|
 | `latency_ms` | End-to-end pipeline latency in milliseconds (includes forward translation, back-translation, and scoring) |
-| `model` | Underlying LLM identifier (e.g. `gpt-4-turbo-2024-04-09`). Use for debugging and regression tracking. |
+| `model` | Stable Tolka model identifier (e.g. `tolka-v1`). Use for debugging and regression tracking; the underlying language model is versioned and abstracted by this identifier. |
 | `request_id` | Unique request identifier. Include this in support tickets. |
 
 ---

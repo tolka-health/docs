@@ -48,22 +48,22 @@ Contact [compliance@tolka.health](mailto:compliance@tolka.health) for the curren
 
 Tolka is a **documentation and communication tool**, not a clinical decision support system. It translates what a clinician or patient says — it does not diagnose, prescribe, or recommend treatment.
 
-Tolka's position: the API is **not a medical device** under MDR Article 2(1). The safety engine that flags translation quality issues is a quality control mechanism for the communication tool, not a diagnostic algorithm.
+Tolka's current assessment is that the API does not meet the definition of a medical device under MDR Article 2(1) — the safety engine that flags translation quality issues is a quality control mechanism for the communication tool, not a diagnostic algorithm. **This is informational only and not legal advice; integrators in regulated contexts should obtain their own independent legal review.**
 
-If your use case requires a formal MDR Article 22 opinion letter, contact [compliance@tolka.health](mailto:compliance@tolka.health).
+If your use case requires a formal MDR opinion letter or a written confirmation of Tolka's regulatory position, request one via [signup](https://docs.tolka.health/signup) and we will respond with the current documentation.
 
 ---
 
 ## EU AI Act
 
-Tolka's safety engine falls under the EU AI Act's consideration for **high-risk AI systems** in the healthcare sector (Annex III). Tolka's risk management measures include:
+The EU AI Act's risk-tier obligations are still being clarified by national authorities. Tolka is assessing applicability and operates under the precautionary assumption that the safety engine sits within Annex III healthcare-sector considerations. The risk management measures we have implemented today include:
 
 - **Back-translation verification** — every translation is independently verified before being returned
-- **Multi-signal safety scoring** — three independent signals catch different categories of translation failure
+- **Multi-signal safety scoring** — independent signals catch different categories of translation failure
 - **Deterministic critical overrides** — negation flips, numerical changes, and keyword mismatches always produce `risk: "critical"`, regardless of confidence
 - **Human oversight by design** — the API requires integrators to implement clinician acknowledgment for high-risk translations; Tolka cannot be used as a fully autonomous clinical translation system
 
-Full EU AI Act conformity documentation is available for Enterprise customers.
+Conformity assessment work is ongoing. Documentation reflecting the current state can be requested via [signup](https://docs.tolka.health/signup).
 
 ---
 
