@@ -1,0 +1,319 @@
+---
+const title = 'Request a Tolka test API key';
+const description =
+  'Request a test API key for the Tolka medical translation API. Same-day issuance during business hours (Europe/Oslo).';
+const canonical = 'https://docs.tolka.health/signup';
+---
+
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="robots" content="index, follow" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content="https://docs.tolka.health/og-image.png" />
+
+    <style is:global>
+      :root {
+        --bg: #ffffff;
+        --bg-alt: #f9fafb;
+        --text: #111827;
+        --text-secondary: #6b7280;
+        --border: #e5e7eb;
+        --border-light: #f3f4f6;
+        --primary: #0d9488;
+        --primary-dark: #0b7a70;
+        --surface-info: #f0fdfa;
+        --error: #dc2626;
+      }
+      * { box-sizing: border-box; }
+      html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); }
+      body {
+        font-family: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      header { border-bottom: 1px solid var(--border-light); padding: 18px 0; }
+      .container { max-width: 580px; margin: 0 auto; padding: 0 24px; width: 100%; }
+      header .row { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+      header .logo svg { display: block; height: 26px; width: auto; }
+      header .back { font-size: 13px; color: var(--text-secondary); text-decoration: none; }
+      header .back:hover { color: var(--text); }
+
+      main { flex: 1; padding: 48px 0 64px; }
+
+      .eyebrow {
+        font-size: 12px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase;
+        color: var(--primary); margin: 0 0 12px;
+      }
+      h1 { font-size: 32px; line-height: 1.15; letter-spacing: -0.02em; margin: 0 0 16px; }
+      .lede { font-size: 17px; color: var(--text-secondary); margin: 0 0 28px; }
+      ul.bullets { list-style: none; padding: 0; margin: 0 0 32px; display: grid; gap: 10px; font-size: 14px; color: var(--text-secondary); }
+      ul.bullets li { display: flex; gap: 10px; }
+      ul.bullets li::before {
+        content: ''; width: 16px; height: 16px; flex-shrink: 0; margin-top: 3px;
+        background-color: var(--primary); mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'><path fill-rule='evenodd' d='M16.704 5.296a1 1 0 0 1 0 1.414l-7.5 7.5a1 1 0 0 1-1.414 0l-3.5-3.5a1 1 0 1 1 1.414-1.414L8.5 12.086l6.79-6.79a1 1 0 0 1 1.414 0Z' clip-rule='evenodd'/></svg>") center/contain no-repeat;
+        -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'><path fill-rule='evenodd' d='M16.704 5.296a1 1 0 0 1 0 1.414l-7.5 7.5a1 1 0 0 1-1.414 0l-3.5-3.5a1 1 0 1 1 1.414-1.414L8.5 12.086l6.79-6.79a1 1 0 0 1 1.414 0Z' clip-rule='evenodd'/></svg>") center/contain no-repeat;
+      }
+
+      /* Form */
+      form { display: grid; gap: 12px; margin-bottom: 24px; }
+      label { display: block; }
+      .sr-only { position: absolute; left: -9999px; }
+      .input, .textarea {
+        display: block; width: 100%;
+        padding: 11px 14px;
+        border: 1px solid var(--border); border-radius: 8px;
+        background: var(--bg); color: var(--text);
+        font-family: inherit; font-size: 15px;
+      }
+      .textarea { min-height: 88px; resize: vertical; line-height: 1.5; }
+      .input:focus, .textarea:focus, .select:focus {
+        outline: 2px solid var(--primary); outline-offset: 1px; border-color: transparent;
+      }
+      .select {
+        display: block; width: 100%;
+        padding: 11px 14px;
+        border: 1px solid var(--border); border-radius: 8px;
+        background: var(--bg); color: var(--text);
+        font-family: inherit; font-size: 15px;
+      }
+
+      .consent {
+        display: flex; align-items: flex-start; gap: 10px;
+        font-size: 13px; color: var(--text-secondary);
+        padding-top: 4px;
+      }
+      .consent input { margin-top: 3px; width: 16px; height: 16px; accent-color: var(--primary); flex-shrink: 0; }
+
+      .button {
+        display: inline-flex; align-items: center; justify-content: center;
+        min-height: 46px; padding: 0 22px;
+        background: var(--primary); color: #fff;
+        border: none; border-radius: 8px;
+        font-family: inherit; font-size: 15px; font-weight: 600;
+        cursor: pointer; transition: background 0.15s;
+      }
+      .button:hover { background: var(--primary-dark); }
+      .button:disabled { opacity: 0.6; cursor: not-allowed; }
+
+      .error {
+        margin-top: 4px; font-size: 13px; color: var(--error);
+        display: none;
+      }
+      .error.is-visible { display: block; }
+
+      .success {
+        padding: 20px 22px; border-radius: 10px;
+        background: var(--surface-info); border: 1px solid var(--border);
+        display: none;
+      }
+      .success.is-visible { display: block; }
+      .success h2 { margin: 0 0 8px; font-size: 18px; }
+      .success p { margin: 0; color: var(--text-secondary); font-size: 14px; }
+
+      /* Honeypot */
+      .honeypot { position: absolute; left: -9999px; }
+
+      /* Footer */
+      footer { border-top: 1px solid var(--border-light); background: var(--bg-alt); padding: 16px 0; font-size: 13px; color: var(--text-secondary); }
+      footer .row { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+      footer a { color: var(--text-secondary); text-decoration: none; }
+      footer a:hover { color: var(--text); }
+      .footer-privacy { margin-top: 6px; text-align: center; font-size: 12px; }
+
+      @media (max-width: 540px) {
+        h1 { font-size: 26px; }
+        footer .row { flex-direction: column; align-items: flex-start; }
+      }
+    </style>
+  </head>
+
+  <body>
+    <header>
+      <div class="container row">
+        <a class="logo" href="https://docs.tolka.health" aria-label="Tolka Health Docs">
+          <svg viewBox="0 0 140 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Tolka Health" role="img">
+            <rect x="2" y="13" width="3.5" height="14" rx="1.75" fill="#0D9488"></rect>
+            <rect x="8.5" y="8" width="3.5" height="24" rx="1.75" fill="#0D9488"></rect>
+            <rect x="15" y="13" width="3.5" height="14" rx="1.75" fill="#0D9488"></rect>
+            <text
+              x="25"
+              y="28"
+              style="font-family:'Plus Jakarta Sans',system-ui,sans-serif;font-weight:700;font-size:27px;letter-spacing:-0.3px;"
+              fill="#111827">tolka</text>
+          </svg>
+        </a>
+        <a class="back" href="https://docs.tolka.health">← Back to docs</a>
+      </div>
+    </header>
+
+    <main>
+      <div class="container">
+        <p class="eyebrow">Private launch</p>
+        <h1>Request a Tolka test API key</h1>
+        <p class="lede">
+          We issue test keys (<code>sk_test_…</code>) same-day during business hours (Europe/Oslo).
+          You'll receive your key by email along with a quickstart link.
+        </p>
+
+        <ul class="bullets">
+          <li>Same translation pipeline as production — no behavioral differences</li>
+          <li>Rate-limited to 60 requests / minute (more on request)</li>
+          <li>No payment details required for evaluation</li>
+        </ul>
+
+        <form id="signup-form" novalidate>
+          <label class="block">
+            <span class="sr-only">Work email</span>
+            <input type="email" name="email" required autocomplete="email"
+              placeholder="Work email" class="input" />
+          </label>
+
+          <label class="block">
+            <span class="sr-only">Organization</span>
+            <input type="text" name="organization" autocomplete="organization" maxlength="200"
+              placeholder="Organization (hospital, clinic, healthtech company)" class="input" />
+          </label>
+
+          <label class="block">
+            <span class="sr-only">Primary use case</span>
+            <select name="use_case" class="select" required>
+              <option value="" disabled selected>Primary use case…</option>
+              <option value="hospital-evaluation">Hospital / clinic evaluation</option>
+              <option value="ehr-integration">EHR / clinical software integration</option>
+              <option value="telehealth">Telehealth / remote consultation</option>
+              <option value="research">Research / academic project</option>
+              <option value="other">Other (tell us in the note)</option>
+            </select>
+          </label>
+
+          <label class="block">
+            <span class="sr-only">A short note (optional)</span>
+            <textarea name="note" maxlength="500" class="textarea"
+              placeholder="(Optional) Briefly — which clinical domain, which languages, target deployment timeline?"></textarea>
+          </label>
+
+          <!-- honeypot -->
+          <label class="honeypot" aria-hidden="true" tabindex="-1">
+            Website
+            <input type="text" name="website" tabindex="-1" autocomplete="off" />
+          </label>
+
+          <label class="consent">
+            <input type="checkbox" name="consent" required />
+            <span>
+              I agree to be contacted about Tolka Health early access. Your email isn't used for anything else and isn't shared.
+            </span>
+          </label>
+
+          <p data-form-error class="error" role="alert"></p>
+
+          <button type="submit" class="button">
+            <span data-form-label>Request test key</span>
+          </button>
+        </form>
+
+        <div id="signup-success" class="success" role="status">
+          <h2>Request received.</h2>
+          <p>
+            We'll email your test key within one business day. While you wait, the
+            <a href="/getting-started/quickstart/">quickstart</a> walks through what to do once it arrives.
+          </p>
+        </div>
+
+        <p style="margin-top: 32px; font-size: 13px; color: var(--text-secondary);">
+          Already a customer needing key rotation or quota changes? Email
+          the address on your onboarding ticket — self-service dashboard is on the roadmap for Q3.
+        </p>
+      </div>
+    </main>
+
+    <footer>
+      <div class="container row">
+        <span>Tolka Health</span>
+        <span>
+          <a href="https://tolka.health">tolka.health</a> ·
+          <a href="https://docs.tolka.health">docs</a> ·
+          <a href="https://status.tolka.health">status</a>
+        </span>
+      </div>
+      <div class="container footer-privacy">
+        No tracking. No analytics. No third-party scripts. (Theme preference stored locally.)
+      </div>
+    </footer>
+
+    <script>
+      const form = document.getElementById('signup-form') as HTMLFormElement | null;
+      const success = document.getElementById('signup-success');
+      if (form && success) {
+        const errorEl = form.querySelector('[data-form-error]') as HTMLElement;
+        const labelEl = form.querySelector('[data-form-label]') as HTMLElement;
+        const submitBtn = form.querySelector('button[type="submit"]') as HTMLButtonElement;
+
+        form.addEventListener('submit', async (event) => {
+          event.preventDefault();
+          errorEl.textContent = '';
+          errorEl.classList.remove('is-visible');
+
+          const data = new FormData(form);
+          const payload = {
+            email: String(data.get('email') || '').trim(),
+            organization: String(data.get('organization') || '').trim(),
+            use_case: String(data.get('use_case') || ''),
+            note: String(data.get('note') || '').trim(),
+            consent: data.get('consent') === 'on',
+            website: String(data.get('website') || ''),
+            locale: 'en',
+            source: 'docs/signup',
+          };
+
+          if (!payload.email || !payload.consent || !payload.use_case) {
+            errorEl.textContent = 'Please fill in email, primary use case, and check the consent box.';
+            errorEl.classList.add('is-visible');
+            return;
+          }
+
+          submitBtn.disabled = true;
+          labelEl.textContent = 'Submitting…';
+
+          try {
+            const res = await fetch('https://tolka.health/api/early-access', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload),
+            });
+            if (res.ok) {
+              form.style.display = 'none';
+              success.classList.add('is-visible');
+              success.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            } else {
+              const body = (await res.json().catch(() => ({}))) as { error?: string };
+              errorEl.textContent = body.error || 'Something went wrong. Please try again in a moment.';
+              errorEl.classList.add('is-visible');
+            }
+          } catch {
+            errorEl.textContent = 'Network error. Please check your connection and try again.';
+            errorEl.classList.add('is-visible');
+          } finally {
+            submitBtn.disabled = false;
+            labelEl.textContent = 'Request test key';
+          }
+        });
+      }
+    </script>
+  </body>
+</html>
