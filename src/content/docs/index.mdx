@@ -3,25 +3,49 @@ title: Tolka Developer Documentation
 description: Medical translation API for healthcare providers. Zero PHI storage, EU-only deployment, back-translation verified.
 template: splash
 hero:
-  tagline: The medical translation API built for healthcare. Translate without storing. Understand without risk.
+  tagline: Medical translation API for healthcare. Back-translation verified. EU-hosted. Zero PHI storage.
   actions:
     - text: Quickstart — 5 minutes
       link: /getting-started/quickstart/
       icon: right-arrow
       variant: primary
-    - text: Interactive API Reference
-      link: /api-reference/
-      variant: secondary
+    - text: Request test key
+      link: /signup
+      variant: minimal
 ---
 
-<figure class="code-teaser" role="group" aria-label="Example API call and response">
-  <div class="code-teaser-label">Make your first call</div>
-  <pre class="code-teaser-pre">{`curl https://api.tolka.health/v1/medical/translate \\
-  -H "Authorization: Bearer sk_test_YOUR_KEY_HERE" \\
-  -d '{"text":"Har du smerter?","source_language":"no","target_language":"en","mode":"standard","context":{"domain":"gp"}}'`}</pre>
-  <div class="code-teaser-response">
-    <span class="resp-arrow">→</span>
-    <span class="resp-body">{`{"translation":"Do you have pain?","confidence":0.97,"verified":true}`}</span>
+<figure class="code-teaser code-teaser-split" role="group" aria-label="Example API call and response">
+  <div class="code-teaser-pane code-teaser-request">
+    <div class="code-teaser-label">
+      <span class="dot dot-request"></span>
+      Request
+      <span class="code-teaser-method">POST</span>
+      <span class="code-teaser-path">/v1/medical/translate</span>
+    </div>
+<pre class="code-teaser-pre"><code>{`curl https://api.tolka.health/v1/medical/translate \\
+  -H "Authorization: Bearer sk_test_…" \\
+  -d '{
+    "text": "Har du smerter?",
+    "source_language": "no",
+    "target_language": "en",
+    "mode": "standard",
+    "context": { "domain": "gp" }
+  }'`}</code></pre>
+  </div>
+  <div class="code-teaser-pane code-teaser-response-pane">
+    <div class="code-teaser-label">
+      <span class="dot dot-response"></span>
+      Response
+      <span class="code-teaser-status">200 OK</span>
+    </div>
+<pre class="code-teaser-pre"><code>{`{
+  "translation": "Do you have pain?",
+  "back_translation": "Har du smerter?",
+  "confidence": 0.97,
+  "risk": "low",
+  "verified": true,
+  "flags": []
+}`}</code></pre>
   </div>
 </figure>
 
@@ -32,7 +56,7 @@ hero:
     <div class="card-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m3.75 13.5 10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z" /></svg></div>
     <div class="card-body">
       <div class="card-title">Quickstart</div>
-      <div class="card-desc">Translate your first medical text in 5 minutes using the sandbox key — no sign-up required.</div>
+      <div class="card-desc">Translate your first medical text in 5 minutes — curl, TypeScript, or Python. Request a test key in one click.</div>
     </div>
 
   </a>
@@ -107,7 +131,7 @@ hero:
   <span>Zero PHI storage</span>
   <span>EU-only deployment</span>
   <span>Back-translation verified</span>
-  <span>GDPR compliant</span>
-  <span>550+ tests</span>
+  <span>GDPR by design</span>
+  <span>680+ tests</span>
 </div>
 
