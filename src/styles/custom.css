@@ -523,6 +523,12 @@ html:not([data-has-toc]) .main-pane {
   color: var(--sl-color-gray-4);
 }
 
+.pricing-card__price--text {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--sl-color-gray-2);
+}
+
 .pricing-card__header p {
   font-size: 0.8125rem;
   color: var(--sl-color-gray-3);
