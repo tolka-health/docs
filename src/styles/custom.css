@@ -422,6 +422,29 @@ html:not([data-has-toc]) .main-pane {
   max-width: 100%;
 }
 
+/* ── Scalar embed container (used on /api-reference/) ──
+   The default Starlight content column has horizontal padding clamped
+   between 1rem and 2.5rem, which squeezes Scalar's 2-pane layout.
+   Break out of that padding while keeping a 1rem safety gutter, and
+   let the embed grow with its content (no fixed height + nested scroll). */
+.scalar-container {
+  width: calc(100% + 2 * clamp(1rem, 3vw, 2.5rem) - 2rem);
+  margin-inline: calc(-1 * clamp(1rem, 3vw, 2.5rem) + 1rem);
+  min-height: 80vh;
+  border: 1px solid var(--sl-color-gray-5);
+  border-radius: 0.5rem;
+  background: var(--sl-color-bg);
+}
+
+@media (max-width: 640px) {
+  .scalar-container {
+    width: 100%;
+    margin-inline: 0;
+    border-radius: 0;
+    border-inline: none;
+  }
+}
+
 /* ── Checklist styling — matching website ComplianceCard list pattern ── */
 .checklist {
   list-style: none;
