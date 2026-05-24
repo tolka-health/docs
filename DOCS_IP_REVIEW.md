@@ -204,6 +204,22 @@ Pass 1 + Pass 2 together touched **5 files** with auto-applied IP / accuracy fix
 
 ---
 
+## Pass 3 (principal decisions applied — 2026-05-24, later)
+
+Principal reviewed F1-F5 and authorised F1, F2, F3 for application. F4 resolved out-of-band (CF Email Routing catch-all live; no doc edits needed). F5 deferred (PDF still doesn't exist).
+
+| Item | Decision | Change applied |
+|---|---|---|
+| F1 | Reword | `concepts/translation-pipeline.mdx` — replaced the two concrete glossary pairs (`pressure`/`discharge` with Norwegian targets) with a generic principle paragraph + explicit statement that specific routing rules are not enumerated in docs |
+| F2 | Reword | `about/compliance.mdx` — security table row changed from `Fly.io (SOC 2 Type II) on dedicated instances` to `Hosting provider | Hosted in Frankfurt on a SOC 2 Type II audited provider. Tolka inherits the provider's operational controls...` (vendor name dropped; inheritance made explicit) |
+| F3 | Reword | `about/compliance.mdx` — DIPA summary availability changed from `Available for Enterprise customers` to `[Available on request](https://docs.tolka.health/signup)` |
+| F4 | Resolved out-of-band | CF Email Routing catch-all forwards `*@tolka.health` to destination inbox; `compliance@`, `legal@`, `security@` references in docs remain valid |
+| F5 | Deferred | Architecture overview PDF still not produced; signup-CTA remains honest |
+
+Build re-verified: 45 pages, ~7 s, no errors. Diff stat: 2 files changed, 6 insertions, 5 deletions.
+
+---
+
 ## Principal review checklist (your morning task)
 
 When you wake up:

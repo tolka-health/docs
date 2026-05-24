@@ -29,10 +29,11 @@ The domain is not cosmetic. It changes how the translation is produced — emerg
 
 The source text is translated to the target language by a large language model. The domain context is applied at this step to adjust phrasing, vocabulary, and register.
 
-Two disambiguation examples of how domain changes output:
+How domain changes output, illustratively:
 
-- The phrase **"pressure"** is translated as *blodtrykk* (blood pressure) in `emergency` domain but *press* (emotional stress) in `mental_health` domain.
-- The phrase **"discharge"** is translated as *utskrivning* (hospital discharge) in `gp` domain but *utflod* (discharge/secretion) in a relevant clinical sub-context.
+A general-purpose translator handles a polysemous clinical term — for example, a verb like "check" or a noun like "pressure" — with whichever sense is most common in everyday text. A domain-aware system instead routes the term to the sense appropriate for the clinical context: vital-sign measurement in `emergency`, an emotional or interpersonal sense in `mental_health`, a discharge / outflow distinction between an administrative `gp` context and a relevant clinical sub-context, and so on.
+
+The specific routing rules — which source terms trigger which target translations under which domain — are part of Tolka's safety configuration and are not enumerated here.
 
 :::note[Domain is required]
 Always pass an explicit `domain`. Omitting it defaults to `gp`, which may produce sub-optimal results for specialised clinical contexts.
