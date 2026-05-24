@@ -13,7 +13,7 @@ info:
 servers:
   - url: http://localhost:3000
     description: Local development
-  - url: https://tolka-api.fly.dev
+  - url: https://api.tolka.health
     description: Production (EU — Frankfurt)
 
 security:
@@ -512,7 +512,7 @@ components:
           schema:
             $ref: '#/components/schemas/TolkaErrorResponse'
     ServiceUnavailable:
-      description: Translation service temporarily unavailable (LLM provider down)
+      description: Translation service temporarily unavailable
       content:
         application/json:
           schema:
@@ -610,7 +610,8 @@ components:
           description: Total pipeline latency in milliseconds
         model:
           type: string
-          description: LLM model used for forward translation (or "phrase-library")
+          description: Stable Tolka model identifier (e.g. tolka-v1) used for debugging and regression tracking. Returns "phrase-library" when the response was served from the curated phrase library rather than the translation pipeline.
+          example: tolka-v1
         request_id:
           type: string
           description: Matches the X-Request-Id response header

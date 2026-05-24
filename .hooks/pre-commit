@@ -123,11 +123,12 @@ scan_staged 'token-overlap\.ts'        "IP: internal file reference"    "$CONTEN
 scan_staged 'tolka-forward-v'          "IP: model architecture name"    "$CONTENT" ""
 
 # ─────────────────────────────────────────────
-# 5. Production URL in OpenAPI spec (spec must be sandbox-only)
+# 5. (Removed) The "production URL in OpenAPI spec" rule was retired
+# in Pass 6 of DOCS_IP_REVIEW.md. The customer-facing URL appears in
+# ~10 narrative docs pages already; hiding it only from the spec
+# bought nothing while creating sync friction between the canonical
+# spec and the docs mirror.
 # ─────────────────────────────────────────────
-echo -e "  ${YELLOW}Checking${NC} production URLs in OpenAPI spec..."
-
-scan_staged 'api\.tolka\.health' "IP: production URL in public spec" "public/openapi/*" ""
 
 # ─────────────────────────────────────────────
 # 6. Confidence threshold calibration values

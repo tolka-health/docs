@@ -277,6 +277,45 @@ Build re-verified: 45 pages, ~7 s, no errors. Diff stat: 4 files changed, 15 ins
 
 ---
 
+## Pass 6 (OpenAPI spec drift — 2026-05-24, evening)
+
+Surfaced while fixing the Scalar embed scaling. The hand-written `openapi/tolka-v1.yaml` (mirrored from the API repo's canonical spec) had three positioning leaks not caught by earlier passes — they aren't part of any docs page text, so the keyword scans missed them.
+
+| Line | Field | Before | After |
+|---|---|---|---|
+| 16 | `servers[1].url` | `https://tolka-api.fly.dev` | `https://api.tolka.health` |
+| 515 | `503` response description | `Translation service temporarily unavailable (LLM provider down)` | `Translation service temporarily unavailable` |
+| 613 | `ResponseMetadata.model` description | `LLM model used for forward translation (or "phrase-library")` | Tolka-abstracted phrasing matching what Pass 1+2 already applied in `understanding-the-response.mdx`; added explicit `example: tolka-v1` |
+
+Verified: `api.tolka.health` responds 200 on `/health` with proper CORS — safe to land the server URL change.
+
+Verified: Fastify runtime spec at `/openapi.json` does not generate these descriptions (no LLM-leaking text in `gateway/validator.ts` or `packages/shared/src/index.ts`), so only the hand-written YAML needed patching.
+
+Verified: parity test passes — 653/653 tests green. The parity test only compares route registration, not descriptions, so the YAML edits don't risk false-positives.
+
+The fix landed in both repos:
+- API repo (canonical source) — committed locally
+- `tolka-health-docs/public/openapi/tolka-v1.yaml` (published mirror) — synced and committed
+
+Additionally, the pre-commit rule "production URL in public spec" (which blocked `api.tolka.health` in `public/openapi/*`) was retired. Rationale: the customer-facing URL is already in roughly ten narrative docs pages (quickstart, every endpoint reference, SDK installation, homepage code teaser), so removing it only from the YAML was security-by-omission with no real benefit, while creating manual sync friction between the canonical spec and the docs mirror. Pass 1+2's direction (drop vendor names) is the stronger principle and is upheld by the new YAML wording.
+
+### Related issue flagged (not auto-fixed)
+
+`src/components/ScalarApiReference.astro` line 41 hardcodes a try-it-out target URL:
+
+```js
+servers: [{ url: 'https://sandbox.tolka-api.fly.dev', description: 'Sandbox (evaluation only)' }],
+```
+
+That subdomain doesn't currently resolve (`curl --max-time 5` times out), so the embed's "Try it out" button is silently broken AND it leaks the Fly.io vendor name. Two ways to fix:
+
+1. **Drop the override entirely** — let Scalar use the spec's production server (`api.tolka.health`). Visitors with a test API key can actually try the API from the docs. PHI disclaimer banner remains the safety net.
+2. **Stand up a real sandbox** — `sandbox.tolka.health` as a separate Fly app with a different rate limit and synthetic-only data. Higher ongoing cost.
+
+Recommendation: option 1 for now. Defer #2 until pilot volume justifies a separate environment.
+
+---
+
 ## Principal review checklist (your morning task)
 
 When you wake up:
