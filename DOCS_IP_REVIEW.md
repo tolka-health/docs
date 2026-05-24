@@ -244,6 +244,39 @@ Considered but rejected: removing quotas as well (option C from the principal de
 
 ---
 
+## Pass 5 (CTA routing — 2026-05-24, evening)
+
+UX bug surfaced after Pass 4: **most CTAs across the docs pointed to `/signup`, but `/signup` is strictly a developer test-API-key form** (title: "Request a Tolka test API key"; success message: "We'll email your test key within one business day"). A procurement officer clicking "Request DPA" landed on a developer form — wrong inbox and wrong promise.
+
+Decision: route each CTA to the inbox that matches its intent via `mailto:` with a prefilled subject line. CF Email Routing's catch-all already forwards every `*@tolka.health` address to the destination inbox, so no new infra is needed.
+
+| File | CTA | Old | New |
+|---|---|---|---|
+| `about/compliance.mdx` | DPA prose | `/signup` | `mailto:legal@tolka.health?subject=DPA%20request` |
+| `about/compliance.mdx` | MDR opinion | `/signup` | `mailto:compliance@tolka.health?subject=MDR%20opinion%20request` |
+| `about/compliance.mdx` | AI Act docs | `/signup` | `mailto:compliance@tolka.health?subject=AI%20Act%20documentation` |
+| `about/compliance.mdx` | DPA table row | `/signup` | `mailto:legal@tolka.health?subject=DPA%20request` |
+| `about/compliance.mdx` | DIPA table row | `/signup` | `mailto:compliance@tolka.health?subject=DIPA%20summary%20request` |
+| `about/compliance.mdx` | Security whitepaper | `/signup` | `mailto:security@tolka.health?subject=Security%20whitepaper%20request` |
+| `about/compliance.mdx` | Architecture overview | `/signup` | `mailto:compliance@tolka.health?subject=Architecture%20overview%20request` |
+| `about/pricing.mdx` | Intro "reach out" | `/signup` | `mailto:sales@tolka.health?subject=Pricing%20inquiry` |
+| `about/pricing.mdx` | Enterprise card "Contact sales" | `/signup` | `mailto:sales@tolka.health?subject=Enterprise%20quote` |
+| `about/pricing.mdx` | Pilot programme | `/signup` | `mailto:sales@tolka.health?subject=Pilot%20programme` |
+| `about/pricing.mdx` | Questions "Contact sales" | `/signup` | `mailto:sales@tolka.health?subject=Pricing%20inquiry` |
+| `sdks/android.mdx` ×2 | SDK waitlist | `/signup` | `mailto:hello@tolka.health?subject=Android%20SDK%20waitlist` |
+| `sdks/ios.mdx` ×2 | SDK waitlist | `/signup` | `mailto:hello@tolka.health?subject=iOS%20SDK%20waitlist` |
+
+**Kept on `/signup` (dev test-key flow):**
+- Starter and Pro pricing cards "Get started" buttons (developer evaluation)
+- `getting-started/authentication.mdx` step 1
+- `guides/first-integration.mdx` step 1
+- Quickstart page references
+- Changelog descriptive mention
+
+Build re-verified: 45 pages, ~7 s, no errors. Diff stat: 4 files changed, 15 insertions, 15 deletions.
+
+---
+
 ## Principal review checklist (your morning task)
 
 When you wake up:
