@@ -220,6 +220,30 @@ Build re-verified: 45 pages, ~7 s, no errors. Diff stat: 2 files changed, 6 inse
 
 ---
 
+## Pass 4 (pricing positioning — 2026-05-24, evening)
+
+New IP / positioning concern surfaced after Pass 3: **`about/pricing.mdx` published specific monthly prices (€75 Starter, €500 Pro, Custom Enterprise) before final pricing was set.** This is not an IP leak per se, but a commercial-positioning leak: every prospect / competitor anchors on those numbers, and changing them later reads as a price hike.
+
+Decision: apply **Mabel-style** hide — keep tier names, descriptions, feature lists, and quotas; replace prices with "Talk to us"; rephrase the Overages section to point to the customer quote rather than a published per-translation rate.
+
+| File | Change |
+|---|---|
+| `about/pricing.mdx` | `€75/mo` / `€500/mo` / `Custom` → `Talk to us` across all three tier cards. Intro paragraph rewritten to acknowledge per-customer pricing during private launch. Overages section rephrased — public per-translation rate language removed. Self-referential `/about/pricing/` link in the Questions section removed. |
+| `src/styles/custom.css` | Added `.pricing-card__price--text` modifier (1.25rem, weight 700) so non-numeric values don't render at the 2rem price-shouty size. |
+
+Build re-verified: 45 pages, ~7 s, no errors. Diff stat: 2 files changed, 12 insertions, 7 deletions.
+
+Items not touched (kept intentionally):
+- Tier names (Starter / Pro / Enterprise)
+- Quota strings (`5,000 translations/mo`, `50,000 translations/mo`, `Unlimited translations`)
+- Pilot programme reference ("3-month pilot with Pro-tier access at no cost")
+- Platform partner revenue-share copy
+- `Recommended` badge on the Pro tier
+
+Considered but rejected: removing quotas as well (option C from the principal decision). Rationale: quotas tell a prospect what scale each tier serves without exposing price; removing them would harm the developer-evaluation use case the page exists for.
+
+---
+
 ## Principal review checklist (your morning task)
 
 When you wake up:
