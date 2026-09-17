@@ -19,7 +19,7 @@ Every call to the Tolka API passes through a five-step pipeline designed specifi
 The pipeline receives:
 - **`text`** — the source text to translate (max 2,000 characters)
 - **`source_language`** / **`target_language`** — ISO 639-1 language codes
-- **`domain`** — the clinical context (`emergency`, `gp`, `mental_health`, `pediatric`, or `pharmacy`)
+- **`domain`** — the clinical context (`emergency`, `gp`, `specialist`, `mental_health`, or `physical_therapy`)
 
 The domain is not cosmetic. It changes how the translation is produced — emergency translations prioritise unambiguous, clinically precise phrasing, while `gp` allows more conversational register.
 
@@ -75,7 +75,7 @@ If any step fails:
 |---------|--------------------|
 | Back-translation step fails | `verified: false`, `confidence` may be lower, `risk` may be elevated |
 | Safety verification fails | Response still returned; `verified: false` |
-| Forward translation fails | `503 SERVICE_UNAVAILABLE` — no partial response |
+| Forward translation fails | `503 translation_unavailable` — no partial response |
 
 ---
 

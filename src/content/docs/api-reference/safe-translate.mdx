@@ -67,7 +67,7 @@ curl -X POST https://api.tolka.health/v1/medical/safe-translate \
     "source_language": "no",
     "target_language": "en",
     "mode": "safe",
-    "context": { "domain": "pharmacy" }
+    "context": { "domain": "gp" }
   }'
 ```
 </TabItem>
@@ -107,7 +107,7 @@ response = requests.post(
         "source_language": "no",
         "target_language": "en",
         "mode": "safe",
-        "context": {"domain": "pharmacy"},
+        "context": {"domain": "gp"},
     },
 )
 data = response.json()

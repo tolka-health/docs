@@ -106,7 +106,7 @@ curl -X DELETE https://api.tolka.health/v1/admin/keys/key_01HX... \
   -H "Authorization: Bearer $TOLKA_API_KEY"
 ```
 
-Revocation is immediate and irreversible. Any request using the revoked key returns `401 INVALID_API_KEY`.
+Revocation is immediate and irreversible. Any request using the revoked key returns `401 unauthorized`.
 
 ---
 

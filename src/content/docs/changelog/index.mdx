@@ -26,8 +26,8 @@ Initial public release of the Tolka medical translation API and Web SDK.
 - `POST /v1/medical/session` — encrypted client-side session tokens for multi-turn consultations
 - `GET /v1/admin/keys` · `POST /v1/admin/keys` · `GET /v1/admin/keys/:id` · `POST /v1/admin/keys/:id/rotate` · `DELETE /v1/admin/keys/:id` — full key lifecycle management
 - `GET /v1/admin/usage` — aggregated usage statistics with risk and domain breakdowns
-- Five clinical domains: `emergency`, `gp`, `mental_health`, `pediatric`, `pharmacy`
-- Ten supported language pairs across Norwegian Bokmål, English, Arabic, Somali, Polish, Tigrinya, and Dari
+- Five clinical domains: `emergency`, `gp`, `specialist`, `mental_health`, `physical_therapy`
+- Six supported languages — Norwegian Bokmål, English, Arabic, Somali, Polish, Ukrainian — translatable in any direction
 - Risk levels: `low`, `medium`, `high`, `critical`
 - Safety flags: `negation_flip`, `numerical_change`, `keyword_mismatch`
 - `X-RateLimit-*` response headers on all endpoints

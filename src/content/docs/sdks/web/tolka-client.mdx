@@ -123,10 +123,10 @@ try {
   const result = await tolka.translate({ ... });
 } catch (err) {
   if (err instanceof TolkaApiError) {
-    console.error(err.code);       // 'RATE_LIMIT_EXCEEDED'
+    console.error(err.errorCode);  // e.g. 'rate_limited'
     console.error(err.message);    // human-readable
-    console.error(err.requestId);  // for support tickets
-    console.error(err.retryAfter); // number | undefined
+    console.error(err.requestId);  // for support tickets, may be undefined
+    console.error(err.status);     // HTTP status, or 0 for network-level failures
   }
 }
 ```

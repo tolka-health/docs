@@ -42,19 +42,20 @@ X-RateLimit-Reset: 1744375260
 
 ## Handling 429 responses
 
-When you exceed your limit, the API returns `429 RATE_LIMIT_EXCEEDED`:
+When you exceed your limit, the API returns `429 rate_limited`:
 
 ```json
 {
-  "error": {
-    "code": "RATE_LIMIT_EXCEEDED",
-    "message": "Rate limit exceeded. Retry after 23 seconds.",
-    "retry_after": 23
-  }
+  "error_code": "rate_limited",
+  "message": "Rate limit exceeded"
 }
 ```
 
-**Always use `Retry-After`** — do not hardcode wait times.
+The wait time is in the `Retry-After` response header (seconds), not the JSON body. **Always read it from the header** — do not hardcode wait times.
+
+:::note[Header not exposed on `TolkaApiError`]
+The current SDK doesn't surface `Retry-After` as a typed field — it only captures `X-Request-Id`. Fall back to exponential backoff, or read the header yourself if you're calling the HTTP API directly rather than through the SDK.
+:::
 
 <Tabs>
 <TabItem label="TypeScript">
@@ -68,8 +69,8 @@ async function translateWithRetry(
     try {
       return await client.translate(params);
     } catch (err) {
-      if (err instanceof TolkaApiError && err.code === 'RATE_LIMIT_EXCEEDED') {
-        const wait = (err.retryAfter ?? Math.pow(2, attempt)) * 1000;
+      if (err instanceof TolkaApiError && err.errorCode === 'rate_limited') {
+        const wait = Math.min(1000 * Math.pow(2, attempt) + Math.random() * 500, 30_000);
         if (attempt < maxRetries) await new Promise((r) => setTimeout(r, wait));
         else throw err;
       } else {
@@ -83,15 +84,15 @@ async function translateWithRetry(
 </TabItem>
 <TabItem label="Python">
 ```python
-import time
+import time, random
 
 def translate_with_retry(client, params, max_retries=3):
     for attempt in range(max_retries + 1):
         try:
             return client.translate(**params)
         except TolkaApiError as e:
-            if e.code == "RATE_LIMIT_EXCEEDED" and attempt < max_retries:
-                wait = e.retry_after or (2 ** attempt)
+            if e.error_code == "rate_limited" and attempt < max_retries:
+                wait = min(2 ** attempt + random.random(), 30)
                 time.sleep(wait)
             else:
                 raise

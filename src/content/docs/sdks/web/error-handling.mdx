@@ -20,16 +20,20 @@ try {
   const result = await tolka.translate({ ... });
 } catch (err) {
   if (err instanceof TolkaApiError) {
-    err.code        // string — machine-readable, see Error Catalog
+    err.errorCode   // string — machine-readable, see Error Catalog
     err.message     // string — human-readable, may change between releases
-    err.statusCode  // number — HTTP status code
-    err.requestId   // string — include in support tickets
-    err.retryAfter  // number | undefined — seconds to wait before retry (429 only)
+    err.status      // number — HTTP status, or 0 for network-level failures
+    err.suggestion  // string | undefined — human-readable next step
+    err.requestId   // string | undefined — include in support tickets
   }
   // Re-throw unknown errors
   throw err;
 }
 ```
+
+:::note[No typed `retryAfter`]
+The server sends the `Retry-After` header on `rate_limited` responses, but the current SDK doesn't surface it as a field on `TolkaApiError`. Read the header yourself if you need the exact wait time, or use exponential backoff as shown below.
+:::
 
 ---
 
@@ -51,15 +55,10 @@ async function translateWithRetry(
     } catch (err) {
       if (!(err instanceof TolkaApiError)) throw err;
 
-      const isRetryable =
-        err.statusCode === 429 ||
-        err.statusCode === 503 ||
-        err.statusCode === 504;
+      const isRetryable = err.status === 429 || err.status === 503;
 
       if (isRetryable && attempt < maxRetries) {
-        const delay = err.retryAfter
-          ? err.retryAfter * 1000
-          : Math.min(1000 * Math.pow(2, attempt) + Math.random() * 500, 30_000);
+        const delay = Math.min(1000 * Math.pow(2, attempt) + Math.random() * 500, 30_000);
         await new Promise((r) => setTimeout(r, delay));
       } else {
         throw err;
@@ -79,9 +78,9 @@ def translate_with_retry(client, params, max_retries=3):
         try:
             return client.translate(**params)
         except TolkaApiError as e:
-            retryable = e.status_code in (429, 503, 504)
+            retryable = e.status in (429, 503)
             if retryable and attempt < max_retries:
-                delay = e.retry_after or min(2**attempt + random.random(), 30)
+                delay = min(2**attempt + random.random(), 30)
                 time.sleep(delay)
             else:
                 raise
@@ -93,23 +92,23 @@ def translate_with_retry(client, params, max_retries=3):
 
 ## Error handling per code
 
-| `code` | Retryable | Recommended action |
-|--------|-----------|--------------------|
-| `INVALID_API_KEY` | No | Check key configuration; alert ops |
-| `EXPIRED_API_KEY` | No | Rotate key; alert ops |
-| `INVALID_SESSION_TOKEN` | No | Create a new session |
-| `SESSION_EXPIRED` | No | Create a new session; continue encounter |
-| `INSUFFICIENT_PERMISSIONS` | No | Use admin-scoped key |
-| `INVALID_REQUEST` | No | Fix request fields; log and alert |
-| `TEXT_TOO_LONG` | No | Split text at sentence boundaries |
-| `UNSUPPORTED_LANGUAGE_PAIR` | No | Check supported pairs |
-| `INVALID_DOMAIN` | No | Fix domain value |
-| `RATE_LIMIT_EXCEEDED` | Yes | Wait `retryAfter` seconds |
-| `TRANSLATION_FAILED` | Yes | Exponential backoff |
-| `BACK_TRANSLATION_FAILED` | Yes | Exponential backoff |
-| `SAFETY_CHECK_FAILED` | Yes | Exponential backoff |
-| `SERVICE_UNAVAILABLE` | Yes | Exponential backoff; check status page |
-| `GATEWAY_TIMEOUT` | Yes | Exponential backoff |
+| `error_code` | Retryable | Recommended action |
+|--------------|-----------|--------------------|
+| `unauthorized` | No | Check key configuration; alert ops |
+| `session_invalid` | No | Create a new session |
+| `session_expired` | No | Create a new session; continue encounter |
+| `invalid_request` | No | Fix request fields (see `fields` in the response); log and alert |
+| `text_too_long` | No | Split text at sentence boundaries |
+| `key_not_found` | No | Check the key ID; refresh your key list |
+| `org_not_found` | No | Check org configuration; alert ops |
+| `rate_limited` | Yes | Read the `Retry-After` header; back off |
+| `translation_unavailable` | Yes | Exponential backoff; check status page |
+| `provider_unavailable` | Yes | Exponential backoff |
+| `provider_rate_limited` | Yes | Exponential backoff |
+| `audit_log_unavailable` | Yes | Exponential backoff; alert ops if persistent |
+| `storage_error` | Yes | Exponential backoff |
+| `internal_error` | Yes | Exponential backoff; report `requestId` if persistent |
+| `not_found` | No | Check the request path and method |
 
 ---
 
@@ -138,6 +137,6 @@ Never display an empty translation box to a patient. Always explain what happene
 
 ## What's next
 
-- [Error Catalog — all 14 codes →](/api-reference/errors/)
+- [Error Catalog →](/api-reference/errors/)
 - [Rate Limits →](/getting-started/rate-limits/)
 

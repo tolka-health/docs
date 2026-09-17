@@ -173,7 +173,7 @@ A `400 INVALID_REQUEST` is returned for empty strings or strings containing only
 ```typescript
 async function translateBatch(
   texts: string[],
-  domain: TolkaDomain,
+  domain: ClinicalDomain,
 ): Promise<TranslateResponse[]> {
   // Tolka is not a batch API — translate in parallel with concurrency limiting
   const limit = pLimit(5); // max 5 concurrent requests
