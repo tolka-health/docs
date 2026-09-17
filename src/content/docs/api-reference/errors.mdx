@@ -8,26 +8,29 @@ sidebar:
 
 import { Aside } from '@astrojs/starlight/components';
 
-All Tolka API errors follow a consistent envelope:
+All Tolka API errors follow a consistent, flat envelope:
 
 ```json
 {
-  "error": {
-    "code": "RATE_LIMIT_EXCEEDED",
-    "message": "Rate limit exceeded. Retry after 23 seconds.",
-    "request_id": "req_01HX4K2MN7...",
-    "retry_after": 23
-  }
+  "error_code": "rate_limited",
+  "message": "Rate limit exceeded",
+  "suggestion": "Please rephrase using simpler language"
 }
 ```
 
-Always check `error.code` in your code — `message` is for humans and may change between releases.
+`suggestion` is only present on the handful of error codes where a human-readable next step applies. Metadata like the request ID and rate-limit counters are delivered as response **headers**, not in the JSON body — see [Headers](/api-reference/headers/):
+
+- `X-Request-Id` — on every response; include this when contacting support.
+- `X-RateLimit-Limit` / `X-RateLimit-Remaining` / `X-RateLimit-Reset` — on every response once rate limiting applies.
+- `Retry-After` — seconds to wait, present on `rate_limited` responses.
+
+Always check `error_code` in your code — `message` is for humans and may change between releases.
 
 ---
 
 ## Authentication errors (4xx)
 
-### `INVALID_API_KEY` — 401
+### `unauthorized` — 401
 
 The key in the `Authorization` header is malformed, revoked, or does not exist.
 
@@ -35,15 +38,15 @@ The key in the `Authorization` header is malformed, revoked, or does not exist.
 
 ---
 
-### `EXPIRED_API_KEY` — 401
+### `session_expired` — 400
 
-The key was created with an expiry date and that date has passed.
+The session token's TTL has elapsed (15 min idle, 60 min hard max).
 
-**Fix:** Create a new key or use the rotate endpoint before expiry.
+**Fix:** Create a new session (`POST /v1/medical/session`) and continue the encounter with the new token.
 
 ---
 
-### `INVALID_SESSION_TOKEN` — 401
+### `session_invalid` — 400
 
 The `session_token` field contains a token that is malformed, tampered with, or was issued to a different API key.
 
@@ -51,73 +54,51 @@ The `session_token` field contains a token that is malformed, tampered with, or 
 
 ---
 
-### `SESSION_EXPIRED` — 401
-
-The session token's TTL has elapsed.
-
-**Fix:** Create a new session (`POST /v1/medical/session`) and continue the encounter with the new token.
-
----
-
-### `INSUFFICIENT_PERMISSIONS` — 403
-
-The API key does not have the scope required for this operation (e.g., using a non-admin key to access `/v1/admin/*`).
-
-**Fix:** Use an admin-scoped key for admin endpoints.
-
----
-
 ## Request errors (4xx)
 
-### `INVALID_REQUEST` — 400
+### `invalid_request` — 400
 
-The request body is malformed — missing a required field, wrong type, or invalid JSON.
+The request body failed schema validation (missing a required field, wrong type, an unsupported `source_language`/`target_language`/`domain` value, or `source_language` equal to `target_language`), or the request otherwise can't be fulfilled as specified (e.g. attempting to revoke the last active API key). The response includes a `fields` value naming the offending field(s) when the failure is a schema violation.
 
-**Fix:** Check the request against the [Interactive Reference](/api-reference/index/). The `message` field will identify the offending field.
+**Fix:** Check the request against the [Interactive Reference](/api-reference/index/). For supported values, see the [language pairs table](/getting-started/environments/) and the [clinical domains](/concepts/clinical-domains/) list.
 
 ---
 
-### `TEXT_TOO_LONG` — 400
+### `text_too_long` — 400
 
-The `text` field exceeds 2,000 characters.
+The `text` field's estimated token count exceeds the input budget for the given source language.
 
 **Fix:** Split the text at sentence boundaries before calling the API. See [POST /translate edge cases](/api-reference/translate/).
 
 ---
 
-### `UNSUPPORTED_LANGUAGE_PAIR` — 400
-
-The `source_language` / `target_language` combination is not supported.
-
-**Fix:** Check the [supported language pairs table](/getting-started/environments/).
-
----
-
-### `INVALID_DOMAIN` — 400
-
-The `domain` value is not one of the five supported values.
-
-**Fix:** Use one of: `emergency`, `gp`, `mental_health`, `pediatric`, `pharmacy`.
-
----
-
 ## Rate limiting (4xx)
 
-### `RATE_LIMIT_EXCEEDED` — 429
+### `rate_limited` — 429
 
 You have exceeded your plan's requests-per-minute limit.
 
-**Fix:** Read the `Retry-After` response header (seconds to wait). Implement exponential backoff. See [Rate Limits](/getting-started/rate-limits/).
+**Fix:** Read the `Retry-After` response header (seconds to wait) and the `X-RateLimit-*` headers. Implement exponential backoff. See [Rate Limits](/getting-started/rate-limits/).
 
-```json
-{
-  "error": {
-    "code": "RATE_LIMIT_EXCEEDED",
-    "message": "Rate limit exceeded. Retry after 23 seconds.",
-    "retry_after": 23
-  }
-}
-```
+---
+
+## Key & org management errors (404)
+
+### `key_not_found` — 404
+
+The API key ID in the URL path does not exist for this org.
+
+---
+
+### `org_not_found` — 404
+
+The organization referenced by the request could not be found.
+
+---
+
+### `not_found` — 404
+
+The route itself does not exist. Check the path and method against the [Interactive Reference](/api-reference/index/).
 
 ---
 
@@ -127,48 +108,59 @@ You have exceeded your plan's requests-per-minute limit.
 All 5xx errors are transient. Retry with exponential backoff. If the error persists, check [the support page](/about/support/).
 :::
 
-### `TRANSLATION_FAILED` — 500
+### `translation_unavailable` — 503
 
-The forward translation step failed unexpectedly.
+The translation pipeline is temporarily unavailable — typically during a deployment or an infrastructure incident.
 
-**Fix:** Retry. If the error persists for the same text, check whether the input contains unusual characters or encoding issues.
-
----
-
-### `BACK_TRANSLATION_FAILED` — 500
-
-The back-translation step failed. The forward translation may have completed but could not be verified.
-
-**Behaviour:** This error is returned instead of a partial response. Retry — back-translation failures are typically transient.
+**Fix:** Implement exponential backoff with jitter starting at 1 second.
 
 ---
 
-### `SAFETY_CHECK_FAILED` — 500
+### `provider_unavailable` — 503
 
-The safety verification step failed unexpectedly. Not to be confused with `risk: "critical"` — this error means the check itself could not run.
+The underlying LLM or embedding provider is unreachable or returned a fatal error.
 
-**Fix:** Retry. Log the `request_id` for support if it persists.
-
----
-
-### `SERVICE_UNAVAILABLE` — 503
-
-The API is temporarily unavailable — typically during a deployment or an infrastructure incident.
-
-**Fix:** Check [the support page](/about/support/). Implement exponential backoff with jitter starting at 1 second.
+**Fix:** Retry. If the error persists across multiple requests, check [the support page](/about/support/).
 
 ---
 
-### `GATEWAY_TIMEOUT` — 504
+### `provider_rate_limited` — 503
 
-The upstream LLM inference service did not respond within the timeout window.
+The underlying LLM or embedding provider's own rate limit was hit — not yours.
 
-**Fix:** Retry. Inference latency occasionally spikes under load.
+**Fix:** Retry with backoff. This is independent of your own `X-RateLimit-*` headers.
 
 ---
+
+### `audit_log_unavailable` — 503
+
+The durable audit-log store is not configured for this environment. Returned only on audit-dependent admin operations.
+
+**Fix:** Contact your Tolka administrator — this is an environment configuration issue, not a client-side bug.
+
+---
+
+### `storage_error` — 500
+
+A storage operation (e.g. API key persistence) failed unexpectedly.
+
+**Fix:** Retry. Log the `X-Request-Id` header for support if it persists.
+
+---
+
+### `internal_error` — 500
+
+An unexpected, uncategorized server error.
+
+**Fix:** Retry. Log the `X-Request-Id` header for support if it persists.
+
+---
+
+## Not an error: safe-mode refusals
+
+`POST /v1/medical/safe-translate` never returns an error code for a low-confidence result. Instead it returns a normal `200` response with `translation: null`, `verified: false`, a `reason_class`, and `escalation_options` describing what to do next (e.g. rephrase, or escalate to a human interpreter). See [POST /safe-translate](/api-reference/translate/) for the full response shape.
 
 ## What's next
 
 - [Rate Limits →](/getting-started/rate-limits/)
 - [Headers — X-RateLimit-*, X-Request-Id →](/api-reference/headers/)
-

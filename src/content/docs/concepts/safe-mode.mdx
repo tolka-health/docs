@@ -84,7 +84,7 @@ const result = await tolka.safeTranslate({
   text: 'Tar du medisiner for hjertet?',
   source_language: 'no',
   target_language: 'en',
-  context: { domain: 'pharmacy' },
+  context: { domain: 'gp' },
 });
 
 if (result.withheld) {
@@ -104,7 +104,7 @@ curl -X POST https://api.tolka.health/v1/medical/safe-translate \
     "text": "Tar du medisiner for hjertet?",
     "source_language": "no",
     "target_language": "en",
-    "context": { "domain": "pharmacy" }
+    "context": { "domain": "gp" }
   }'
 ```
 </TabItem>

@@ -7,20 +7,23 @@ sidebar:
 
 import { Steps, Tabs, TabItem, Aside } from '@astrojs/starlight/components';
 
-Rotate your Tolka API key regularly (recommended: every 90 days) and immediately if a key is suspected to be compromised. The rotate endpoint provides a brief overlap window so running services are never interrupted.
+Rotate your Tolka API key regularly (recommended: every 90 days) and immediately if a key is suspected to be compromised. The rotate endpoint creates a new key while leaving the old one active, so running services are never interrupted.
 
 ---
 
 ## How rotation works
 
 1. You call `POST /v1/admin/keys/:id/rotate`
-2. Tolka generates a new key secret
-3. **Both the old and new key are valid for 5 minutes** (the overlap window)
-4. After 5 minutes, the old key is automatically revoked
-5. During the overlap, deploy your new key secret to all services
+2. Tolka generates a new key and returns its secret once, along with the old key's ID
+3. **The old key stays active with no automatic expiry** — both keys work simultaneously until you explicitly revoke one
+4. Deploy the new key secret to all services, then revoke the old key yourself once you've confirmed the rollout
 
 :::danger[Store the new secret immediately]
-The new secret is returned once in the rotation response and never shown again. Store it in your secret manager immediately before doing anything else.
+The new secret is returned once in the rotation response (`key`) and never shown again. Store it in your secret manager immediately before doing anything else.
+:::
+
+:::caution[No automatic overlap expiry]
+Unlike some API key systems, Tolka does not auto-revoke the old key after a time window. If you skip step 5 below, the old key remains valid indefinitely — treat "revoke the old key" as a required step, not a cleanup nicety.
 :::
 
 ---
@@ -41,8 +44,11 @@ The new secret is returned once in the rotation response and never shown again. 
    <Tabs>
    <TabItem label="cURL">
    ```bash
-   NEW_SECRET=$(curl -s -X POST https://api.tolka.health/v1/admin/keys/key_01HX.../rotate \
-     -H "Authorization: Bearer $TOLKA_API_KEY" | jq -r '.secret')
+   RESPONSE=$(curl -s -X POST https://api.tolka.health/v1/admin/keys/key_01HX.../rotate \
+     -H "Authorization: Bearer $TOLKA_API_KEY")
+
+   NEW_SECRET=$(echo "$RESPONSE" | jq -r '.key')
+   OLD_KEY_ID=$(echo "$RESPONSE" | jq -r '.old_key_id')
 
    echo "New secret: $NEW_SECRET"
    # Store this immediately — do not let the shell session close without saving it
@@ -51,15 +57,16 @@ The new secret is returned once in the rotation response and never shown again. 
    <TabItem label="TypeScript">
    ```typescript
    const rotated = await tolka.admin.keys.rotate('key_01HX...');
-   // rotated.secret — store in your secret manager NOW
-   await secretManager.update('TOLKA_API_KEY', rotated.secret);
+   // rotated.key — store in your secret manager NOW
+   // rotated.old_key_id — the key you'll revoke in step 5
+   await secretManager.update('TOLKA_API_KEY', rotated.key);
    ```
    </TabItem>
    </Tabs>
 
 3. **Deploy the new secret to all services**
 
-   You have **5 minutes** from the rotation call. Update every environment that uses this key:
+   Update every environment that uses this key before moving on — the old key keeps working in the meantime, so there's no strict time pressure, but don't leave two live keys around longer than it takes to roll out:
 
    ```bash
    # Example: AWS Systems Manager Parameter Store
@@ -83,15 +90,16 @@ The new secret is returned once in the rotation response and never shown again. 
    # Should return 200
    ```
 
-5. **Confirm old key is revoked after overlap**
+5. **Revoke the old key**
 
-   After 5 minutes, the old key should return `401 EXPIRED_API_KEY`:
+   Once every service is confirmed on the new key, revoke the old one explicitly — it will not expire on its own:
 
    ```bash
-   curl https://api.tolka.health/v1/admin/keys \
-     -H "Authorization: Bearer $OLD_SECRET"
-   # Should return 401
+   curl -X DELETE https://api.tolka.health/v1/admin/keys/$OLD_KEY_ID \
+     -H "Authorization: Bearer $TOLKA_API_KEY"
    ```
+
+   Requests using the old key now return `401 unauthorized`.
 
 </Steps>
 
@@ -99,7 +107,7 @@ The new secret is returned once in the rotation response and never shown again. 
 
 ## Automated rotation (recommended)
 
-Set up automated rotation on a 90-day schedule using a CI/CD pipeline or cron job:
+Set up automated rotation on a 90-day schedule using a CI/CD pipeline or cron job. Because there's no auto-expiry, an automated job must also revoke the previous key — track the last-issued key ID somewhere the job can read it back.
 
 ```yaml
 # GitHub Actions example — runs quarterly
@@ -112,25 +120,32 @@ jobs:
   rotate:
     runs-on: ubuntu-latest
     steps:
-      - name: Rotate key
+      - name: Rotate key and revoke the previous one
         run: |
-          NEW_SECRET=$(curl -s -X POST \
+          RESPONSE=$(curl -s -X POST \
             "https://api.tolka.health/v1/admin/keys/${{ vars.TOLKA_KEY_ID }}/rotate" \
-            -H "Authorization: Bearer ${{ secrets.TOLKA_API_KEY }}" | jq -r '.secret')
+            -H "Authorization: Bearer ${{ secrets.TOLKA_API_KEY }}")
+          NEW_SECRET=$(echo "$RESPONSE" | jq -r '.key')
           echo "::add-mask::$NEW_SECRET"
-          # Update your secret store here
+          # Update your secret store here, confirm the rollout, THEN:
+          curl -X DELETE "https://api.tolka.health/v1/admin/keys/${{ vars.TOLKA_KEY_ID }}" \
+            -H "Authorization: Bearer ${{ secrets.TOLKA_API_KEY }}"
 ```
 
 ---
 
 ## Emergency rotation (key compromise)
 
-If a key is suspected to be compromised, revoke it immediately — do not use the rotation overlap:
+If a key is suspected to be compromised, revoke it immediately:
 
 ```bash
 curl -X DELETE https://api.tolka.health/v1/admin/keys/key_01HX... \
   -H "Authorization: Bearer $TOLKA_ADMIN_KEY"
 ```
+
+:::note[Can't revoke your last active key]
+The revoke endpoint returns `400 invalid_request` if this would leave your org with zero active keys. Create the replacement key first, then revoke the compromised one.
+:::
 
 Then create a new key:
 
@@ -138,7 +153,7 @@ Then create a new key:
 curl -X POST https://api.tolka.health/v1/admin/keys \
   -H "Authorization: Bearer $TOLKA_ADMIN_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"name": "Emergency replacement key", "type": "live"}'
+  -d '{"label": "Emergency replacement key"}'
 ```
 
 ---
@@ -147,4 +162,3 @@ curl -X POST https://api.tolka.health/v1/admin/keys \
 
 - [Admin Keys API reference →](/api-reference/admin-keys/)
 - [Authentication overview →](/getting-started/authentication/)
-

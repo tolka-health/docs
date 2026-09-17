@@ -20,25 +20,23 @@ Test and production responses go through the same translation pipeline — only 
 
 ---
 
-## Supported language pairs
+## Supported languages
 
-| Source | Target | Code pair | Notes |
-|--------|--------|-----------|-------|
-| Norwegian Bokmål | English | `nb → en` | Primary supported pair |
-| English | Norwegian Bokmål | `en → nb` | |
-| Arabic | Norwegian Bokmål | `ar → nb` | |
-| Arabic | English | `ar → en` | |
-| Somali | Norwegian Bokmål | `so → nb` | |
-| Somali | English | `so → en` | |
-| Polish | Norwegian Bokmål | `pl → nb` | |
-| Polish | English | `pl → en` | |
-| Tigrinya | Norwegian Bokmål | `ti → nb` | |
-| Dari | English | `prs → en` | |
+| Language | Code |
+|----------|------|
+| Norwegian Bokmål | `no` |
+| English | `en` |
+| Arabic | `ar` |
+| Somali | `so` |
+| Polish | `pl` |
+| Ukrainian | `uk` |
 
-Language codes follow **ISO 639-1**. Pass them in `source_language` and `target_language`.
+Language codes follow **ISO 639-1**. Pass them in `source_language` and `target_language` — any of the six is valid in either position, as long as the two differ.
+
+Norwegian↔X is the most heavily validated direction for each language (the golden-fixture regression suite runs `en↔no`, `no↔ar`, `no↔pl`, `no↔so`, and `no↔uk`). Cross-pairs that don't route through Norwegian (e.g. `ar↔pl`) go through the same pipeline but have less production validation behind them — treat `risk` and `confidence` as even more load-bearing for those pairs.
 
 :::caution[Low-resource language pairs]
-Some language pairs have adjusted confidence baselines. Always rely on `risk` as your primary UI signal rather than the raw `confidence` float.
+Somali (`so`) has an adjusted, lower confidence baseline in both directions against every other supported language, reflecting more limited LLM training data for that pair. Always rely on `risk` as your primary UI signal rather than the raw `confidence` float.
 :::
 
 ---
@@ -51,9 +49,11 @@ Pass one of these values in the `domain` field:
 |-------|-----------------|
 | `emergency` | Emergency and acute care — prioritises speed and unambiguous terminology |
 | `gp` | General practice consultations |
+| `specialist` | Specialist consultations — precise, technical terminology |
 | `mental_health` | Mental health and psychiatric settings |
-| `pediatric` | Paediatric care |
-| `pharmacy` | Medication instructions and pharmaceutical context |
+| `physical_therapy` | Physiotherapy and rehabilitation |
+
+See [Clinical Domains →](/concepts/clinical-domains/) for how each domain changes translation behaviour.
 
 ---
 
