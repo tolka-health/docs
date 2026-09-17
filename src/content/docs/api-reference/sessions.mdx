@@ -10,7 +10,7 @@ import { Aside } from '@astrojs/starlight/components';
 
 `POST /v1/medical/session` creates an encrypted session token that carries `domain`/`speaker` context across multiple translation calls in a single clinical encounter.
 
-For the full schema, see the [Interactive Reference](/api-reference/index/).
+For the full schema, see the [Interactive Reference](/api-reference/).
 
 :::note[Context only, not conversation memory]
 A session carries `domain`/`speaker` forward so you don't repeat `context` on every call. It does **not** give the model awareness of previous exchanges in the encounter — each `translate()`/`safeTranslate()` call is still translated independently. `source_language`/`target_language` are also not part of the session — pass them on every call.

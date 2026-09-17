@@ -60,7 +60,7 @@ The `session_token` field contains a token that is malformed, tampered with, or 
 
 The request body failed schema validation (missing a required field, wrong type, an unsupported `source_language`/`target_language`/`domain` value, or `source_language` equal to `target_language`), or the request otherwise can't be fulfilled as specified (e.g. attempting to revoke the last active API key). The response includes a `fields` value naming the offending field(s) when the failure is a schema violation.
 
-**Fix:** Check the request against the [Interactive Reference](/api-reference/index/). For supported values, see the [language pairs table](/getting-started/environments/) and the [clinical domains](/concepts/clinical-domains/) list.
+**Fix:** Check the request against the [Interactive Reference](/api-reference/). For supported values, see the [language pairs table](/getting-started/environments/) and the [clinical domains](/concepts/clinical-domains/) list.
 
 ---
 
@@ -98,7 +98,7 @@ The organization referenced by the request could not be found.
 
 ### `not_found` — 404
 
-The route itself does not exist. Check the path and method against the [Interactive Reference](/api-reference/index/).
+The route itself does not exist. Check the path and method against the [Interactive Reference](/api-reference/).
 
 ---
 
