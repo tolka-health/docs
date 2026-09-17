@@ -1,13 +1,17 @@
 ---
 title: TolkaClient
-description: The TolkaClient JavaScript/TypeScript API client — translate, safeTranslate, createSession, and admin methods.
+description: The TolkaClient JavaScript/TypeScript API client — translate, safeTranslate, and createSession.
 sidebar:
   order: 2
 ---
 
 import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
 
-`TolkaClient` is the primary programmatic interface to the Tolka API. It wraps every HTTP endpoint with typed methods and handles retries, error parsing, and session management.
+`TolkaClient` wraps the three translation endpoints — `/translate`, `/safe-translate`, `/session` — with typed methods, automatic retries, and error parsing.
+
+:::note[Admin endpoints aren't wrapped]
+`/v1/admin/keys`, `/v1/admin/usage`, `/v1/admin/audit-log`, and `/v1/admin/phrases` have no `TolkaClient` methods — call them directly with `fetch` or cURL. Only `GET /v1/admin/org/branding` has a client method (`getOrgBranding`), covered below. See [Admin Keys](/api-reference/admin-keys/), [Admin — Usage](/api-reference/usage/), and [Admin — Audit Log Export](/api-reference/admin-audit-log/) for the raw HTTP contracts.
+:::
 
 ---
 
@@ -18,125 +22,127 @@ import { TolkaClient } from '@tolka/web-sdk';
 
 const tolka = new TolkaClient({
   apiKey: process.env.TOLKA_API_KEY!,
-  // Optional overrides:
-  baseUrl: 'https://api.tolka.health', // default
-  timeout: 10_000,                      // ms, default 10s
-  maxRetries: 2,                        // on 5xx only, default 2
+  // Optional overrides — shown values are the SDK's actual defaults:
+  baseUrl: 'https://api.tolka.health', // default: "http://localhost:3000" — always set this explicitly outside local dev
+  timeout: 15_000,                      // ms, default 15000. Throws TolkaApiError({errorCode: 'network_error'}) on expiry; not retried
+  maxRetries: 2,                        // retries on 408/429/500/502/503/504, default 2 (up to 3 attempts total)
+  retryBaseDelayMs: 200,                // base delay for the equal-jitter backoff schedule, default 200
+});
+```
+
+:::caution[Default `baseUrl` is localhost]
+The SDK defaults `baseUrl` to `http://localhost:3000` for local development against a self-hosted API. Set it explicitly to `https://api.tolka.health` for anything talking to the real service — nothing will work otherwise.
+:::
+
+### Keeping `sk_live_` keys off the client
+
+For browser code, don't pass `apiKey` directly with a live key. Use `getToken` instead — it's called before every request, so your token endpoint controls rotation and expiry, not the SDK:
+
+```typescript
+let cached: { token: string; expiresAt: number } | null = null;
+
+const tolka = new TolkaClient({
+  baseUrl: 'https://api.tolka.health',
+  getToken: async () => {
+    if (cached && cached.expiresAt > Date.now() + 30_000) return cached.token;
+    cached = await fetch('/api/tolka-token').then((r) => r.json());
+    return cached!.token;
+  },
 });
 ```
 
 ---
 
-## `tolka.translate(params)`
+## `tolka.translate(request, opts?)`
+
+`mode: "standard"` always returns a translation, even at low confidence.
 
 ```typescript
 const result = await tolka.translate({
   text: 'Har du hodepine?',
   source_language: 'no',
   target_language: 'en',
-  context: { domain: 'gp' },
-  // sessionToken: session.token, // optional
+  mode: 'standard',
+  context: { domain: 'gp' }, // optional
 });
 
-result.translation      // string
-result.backTranslation  // string
-result.confidence       // number (0–1)
-result.risk             // 'low' | 'medium' | 'high' | 'critical'
-result.flags            // string[]
-result.verified         // boolean
-result.metadata         // { domain, source_language, target_language, model, requestId }
+result.translation        // string | null
+result.back_translation   // string | null
+result.confidence         // number (0–1)
+result.risk               // 'low' | 'medium' | 'high' | 'critical' | 'unknown'
+result.flags              // { type, detail, severity }[]
+result.verified           // boolean
+result.metadata           // { latency_ms, model, request_id, data_residency }
 ```
+
+See [Understanding the Response](/getting-started/understanding-the-response/) for what every field means.
 
 ---
 
-## `tolka.safeTranslate(params)`
+## `tolka.safeTranslate(request, opts?)`
 
-Same signature as `translate`. When the translation is withheld:
+Same request shape as `translate` (`mode` is forced to `"safe"` server-side regardless of what you pass). On a low-confidence or critical-flag result, `translation` is `null` and two extra fields explain why:
 
 ```typescript
-const result = await tolka.safeTranslate({ text, source_language, target_language, domain });
+const result = await tolka.safeTranslate({
+  text,
+  source_language,
+  target_language,
+  mode: 'safe',
+  context: { domain: 'gp' },
+});
 
-if (result.withheld) {
-  // result.translation === null
-  console.warn('Withheld due to:', result.flags);
+if (!result.verified && result.translation === null) {
+  console.warn('Withheld:', result.reason_class, result.escalation_options);
 }
 ```
 
 ---
 
-## `tolka.sessions.create(params)`
+## `tolka.createSession(context, opts?)`
 
 ```typescript
-const session = await tolka.sessions.create({
-  context: { domain: 'gp' },
-  source_language: 'ar',
-  target_language: 'no',
-  ttlMinutes: 45, // optional, default 60
+const session = await tolka.createSession({
+  domain: 'gp',
+  speaker: 'doctor', // required
+  // intent: 'history_taking', // optional
 });
 
-session.token     // "stk_enc_..."
-session.expiresAt // ISO 8601 string
-session.sessionId // opaque ID for logging
+session.session_token  // string — pass this in later translate()/safeTranslate() calls
+session.expires_at     // ISO 8601 string
 ```
+
+Pass the returned `session_token` in subsequent `translate()`/`safeTranslate()` calls (as a top-level `session_token` field on the request) to keep clinical context across a multi-turn conversation. Every response made with a `session_token` includes a refreshed one — store it back, or the 15-minute idle TTL collapses into the 60-minute hard cap.
 
 ---
 
-## `tolka.admin.keys.*`
+## `tolka.getOrgBranding(opts?)`
 
 ```typescript
-// List keys
-const { keys } = await tolka.admin.keys.list();
+const branding = await tolka.getOrgBranding();
 
-// Create a key
-const key = await tolka.admin.keys.create({ name: 'CI key', type: 'test' });
-// key.secret — only available at creation. Store it immediately.
-
-// Rotate a key
-const rotated = await tolka.admin.keys.rotate('key_01HX...');
-
-// Revoke a key
-await tolka.admin.keys.revoke('key_01HX...');
+branding.display_name  // string | null
+branding.logo_url      // string | null
+branding.brand_color   // string | null
 ```
 
----
-
-## `tolka.admin.usage.query(params)`
-
-```typescript
-const usage = await tolka.admin.usage.query({
-  from: '2026-04-01',
-  to: '2026-04-11',
-  granularity: 'day',
-});
-```
+All three fields are nullable — `null` means no override is set. There is no `updateOrgBranding` method yet; `PATCH /v1/admin/org/branding` must be called directly.
 
 ---
 
 ## Error handling
 
-All methods throw `TolkaApiError` on API errors:
+All methods throw `TolkaApiError` on failure. See [Error Handling](/sdks/web/error-handling/) for the full field reference and retry patterns.
 
 ```typescript
-import { TolkaClient, TolkaApiError } from '@tolka/web-sdk';
+import { TolkaApiError } from '@tolka/web-sdk';
 
 try {
   const result = await tolka.translate({ ... });
 } catch (err) {
   if (err instanceof TolkaApiError) {
-    console.error(err.errorCode);  // e.g. 'rate_limited'
-    console.error(err.message);    // human-readable
-    console.error(err.requestId);  // for support tickets, may be undefined
-    console.error(err.status);     // HTTP status, or 0 for network-level failures
+    console.error(err.errorCode); // e.g. 'rate_limited'
+    console.error(err.status);
   }
 }
 ```
-
-See [Error Handling](/sdks/web/error-handling/) for full retry patterns.
-
----
-
-## What's next
-
-- [Web Components →](/sdks/web/web-components/)
-- [Error Handling →](/sdks/web/error-handling/)
-

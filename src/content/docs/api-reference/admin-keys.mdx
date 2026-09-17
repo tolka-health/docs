@@ -6,9 +6,9 @@ sidebar:
   label: Admin — Keys
 ---
 
-import { Tabs, TabItem } from '@astrojs/starlight/components';
+import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
 
-The Admin Keys API lets you programmatically manage API keys for your organisation. For the full schema, see the [Interactive Reference](/api-reference/index/).
+The Admin Keys API lets you programmatically manage API keys for your organisation. These endpoints aren't wrapped by `TolkaClient` — call them with `fetch` or cURL directly.
 
 ---
 
@@ -16,13 +16,12 @@ The Admin Keys API lets you programmatically manage API keys for your organisati
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `GET` | `/v1/admin/keys` | List all keys |
+| `GET` | `/v1/admin/keys` | List all keys for your org |
 | `POST` | `/v1/admin/keys` | Create a new key |
-| `GET` | `/v1/admin/keys/:id` | Get a single key |
-| `POST` | `/v1/admin/keys/:id/rotate` | Rotate (replace) a key |
+| `POST` | `/v1/admin/keys/:id/rotate` | Create a replacement key, old one stays active |
 | `DELETE` | `/v1/admin/keys/:id` | Revoke a key |
 
-All endpoints require a `sk_live_` or `sk_test_` key with admin scope.
+There's no `GET /v1/admin/keys/:id` — list all keys and find the one you need by `id` or `key_prefix`/`key_suffix`.
 
 ---
 
@@ -39,63 +38,88 @@ Response:
   "keys": [
     {
       "id": "key_01HX4K2MN7...",
-      "name": "Production – EHR integration",
-      "prefix": "sk_live_",
+      "org_id": "org_01HX...",
+      "key_prefix": "sk_live_",
+      "key_suffix": "a1b2",
+      "label": "Production – EHR integration",
+      "is_active": true,
       "created_at": "2026-04-01T08:00:00Z",
-      "last_used_at": "2026-04-11T14:23:00Z",
-      "expires_at": null
+      "revoked_at": null
     }
-  ],
-  "total": 1
+  ]
 }
 ```
 
 :::note[Secret is never returned]
-The full key secret is only returned once — at creation time. Store it securely. The list and get endpoints return only the key `id`, `name`, and `prefix`.
+The full key secret is only returned once, in the response of `POST /v1/admin/keys` or `POST /v1/admin/keys/:id/rotate`. Every other endpoint returns only `key_prefix` and `key_suffix` — enough to identify a key in your dashboard, never enough to reconstruct it.
+:::
+
+:::note[No expiry field]
+Keys don't expire on a timer — `is_active`/`revoked_at` are the only lifecycle state. If you need periodic rotation, that's a process you run yourself (see [Key Rotation](/guides/key-rotation/)), not something the API enforces.
 :::
 
 ---
 
 ## Create a key
 
-<Tabs>
-<TabItem label="cURL">
 ```bash
 curl -X POST https://api.tolka.health/v1/admin/keys \
   -H "Authorization: Bearer $TOLKA_API_KEY" \
   -H "Content-Type: application/json" \
-  -d '{
-    "name": "CI pipeline key",
-    "type": "test",
-    "expires_in_days": 90
-  }'
+  -d '{"label": "CI pipeline key"}'
 ```
-</TabItem>
-<TabItem label="TypeScript">
-```typescript
-const key = await tolka.admin.keys.create({
-  name: 'CI pipeline key',
-  type: 'test',
-  expiresInDays: 90,
-});
-// key.secret is only available here — store it now
-console.log(key.secret); // "sk_test_..."
+
+Response:
+```json
+{
+  "key": "sk_test_...",
+  "id": "key_01HX4K2MN7...",
+  "key_prefix": "sk_test_",
+  "key_suffix": "c3d4",
+  "label": "CI pipeline key"
+}
 ```
-</TabItem>
-</Tabs>
+
+`label` is the only accepted field, and it's optional. `key` is the full secret — store it now, it's never shown again.
 
 ---
 
 ## Rotate a key (zero-downtime)
 
-Rotation generates a new secret while briefly keeping the old key valid (overlap window: 5 minutes). Use this for zero-downtime key updates.
+Rotation creates a brand-new key and leaves the old one active — there's no automatic expiry window, so you must revoke the old key yourself once you've rolled out the new one.
 
 ```bash
 curl -X POST https://api.tolka.health/v1/admin/keys/key_01HX.../rotate \
   -H "Authorization: Bearer $TOLKA_API_KEY"
 ```
 
-See the [Key Rotation guide](/guides/key-rotation/) for a full zero-downtime deployment procedure.
+Response:
+```json
+{
+  "key": "sk_test_...",
+  "id": "key_01HX4K2MN8...",
+  "key_prefix": "sk_test_",
+  "key_suffix": "e5f6",
+  "label": "rotated",
+  "old_key_id": "key_01HX4K2MN7...",
+  "message": "New key created. Old key remains active until explicitly revoked."
+}
+```
+
+See the [Key Rotation guide](/guides/key-rotation/) for the full procedure, including the required manual revoke step.
+
+---
+
+## Revoke a key
+
+```bash
+curl -X DELETE https://api.tolka.health/v1/admin/keys/key_01HX... \
+  -H "Authorization: Bearer $TOLKA_API_KEY"
+```
+
+:::caution[Can't revoke your last active key]
+Returns `400 invalid_request` if this would leave your org with zero active keys. Create a replacement first.
+:::
 
 ---
 
@@ -103,4 +127,3 @@ See the [Key Rotation guide](/guides/key-rotation/) for a full zero-downtime dep
 
 - [Zero-downtime Key Rotation guide →](/guides/key-rotation/)
 - [Authentication overview →](/getting-started/authentication/)
-

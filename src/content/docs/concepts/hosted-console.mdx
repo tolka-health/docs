@@ -1,0 +1,42 @@
+---
+title: Hosted Console
+description: Tolka's Hosted Console — a ready-to-use translation UI for clinicians who don't want to integrate the API themselves.
+sidebar:
+  order: 6
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+The Hosted Console is a browser-based translation UI at `console.tolka.health/<org-slug>` — a way for a clinician to start translating with an API key, without writing any integration code. It's the right fit for small clinics or a pilot rollout; larger integrators typically build on the [Web SDK](/sdks/web/installation/) or the API directly instead.
+
+---
+
+## What it is
+
+- **Org-scoped by URL path.** Each org gets `console.tolka.health/<org-slug>`; there's no separate per-org deployment.
+- **Sign in with an API key.** A clinician pastes their `sk_test_`/`sk_live_` key (or, for token-based auth flows, a bearer token) to start a session.
+- **A working translation UI**, built on the same `<tolka-translate>` web component covered in [Web Components](/sdks/web/web-components/) — not a separate, bespoke interface.
+
+---
+
+## The trust points that matter for evaluating it
+
+If you're deciding whether the Console is trustworthy enough to hand a clinician, here's what's structurally guaranteed rather than just promised:
+
+- **No private endpoints, no server-side business logic.** The Console is built exclusively on the same public API surface (`/v1/medical/*`, `/v1/admin/*`) that any integrator using the SDK or raw HTTP calls uses. If a Console feature needed something the public API doesn't offer, that capability would have to land on the API first — the Console can't quietly grow its own backend shortcut.
+- **No server process in the deployed image at all.** The Console ships as static files served by `nginx`, with zero Node.js runtime in production. There is no server-side code path where business logic — or a bug — could accumulate outside the audited API.
+- **Credentials never touch persistent storage.** The API key or token you sign in with lives only in memory for that browser tab — never `localStorage`, `sessionStorage`, a URL parameter, or a cookie. Closing the tab or reloading requires signing in again. A live (`sk_live_`) key is rejected outright at sign-in, not merely warned about, because the Console is a shared public origin rather than a host your org already controls.
+- **Zero PHI persistence**, same guarantee as the API itself — no client-side storage of translated patient text beyond the in-memory session, and no analytics event captures translation content.
+
+---
+
+## Current scope
+
+The Console today covers the sign-in shell and a working `<tolka-translate>` mount — the same translation flow you'd get embedding the web component yourself. It does not yet include a dedicated multi-turn conversation UI, org branding (logo/color/display name), or an admin dashboard for keys/usage/audit-log — those are tracked as follow-on work, not silently-missing features.
+
+---
+
+## What's next
+
+- [Web Components — the same `<tolka-translate>` element the Console uses →](/sdks/web/web-components/)
+- [Authentication — API key vs. token-based auth →](/getting-started/authentication/)

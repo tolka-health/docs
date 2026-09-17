@@ -6,9 +6,15 @@ sidebar:
   label: POST /session
 ---
 
-`POST /v1/medical/session` creates an encrypted session token that carries context across multiple translation calls in a single clinical encounter.
+import { Aside } from '@astrojs/starlight/components';
 
-For the full schema, see the [Interactive Reference](/api-reference/index/).
+`POST /v1/medical/session` creates an encrypted session token that carries `domain`/`speaker` context across multiple translation calls in a single clinical encounter.
+
+For the full schema, see the [Interactive Reference](/api-reference/).
+
+:::note[Context only, not conversation memory]
+A session carries `domain`/`speaker` forward so you don't repeat `context` on every call. It does **not** give the model awareness of previous exchanges in the encounter — each `translate()`/`safeTranslate()` call is still translated independently. `source_language`/`target_language` are also not part of the session — pass them on every call.
+:::
 
 ---
 
@@ -16,20 +22,19 @@ For the full schema, see the [Interactive Reference](/api-reference/index/).
 
 Create a session when:
 - You are starting a new clinical consultation that will involve multiple translated exchanges
-- You want to simplify repeated calls (no need to pass `domain`, `source_language`, `target_language` each time)
-- You need conversation continuity (the model is aware of previous exchanges in the session)
+- You want to simplify repeated calls (no need to pass `context: {domain, speaker}` each time)
 
 ---
 
 ## Session lifecycle
 
 ```
-POST /v1/medical/session → stk_enc_... (valid for ttl_minutes)
+POST /v1/medical/session {context: {domain, speaker}} → stk_enc_... (15 min idle / 60 min hard TTL, fixed)
         ↓
-POST /v1/medical/translate + session_token → translation
-POST /v1/medical/translate + session_token → translation
+POST /v1/medical/translate {text, source_language, target_language, session_token} → translation (+ refreshed session_token)
+POST /v1/medical/translate {text, source_language, target_language, session_token} → translation (+ refreshed session_token)
         ↓
-Token expires after ttl_minutes (default: 60)
+Token expires 15 minutes after the last call, or 60 minutes after creation, whichever comes first
         ↓
 Create new session for next encounter
 ```
@@ -38,26 +43,29 @@ Create new session for next encounter
 
 ## Request fields
 
-| Field | Type | Required | Default | Description |
-|-------|------|----------|---------|-------------|
-| `domain` | string | Yes | — | Clinical domain for all translations in this session |
-| `source_language` | string | Yes | — | ISO 639-1 source language |
-| `target_language` | string | Yes | — | ISO 639-1 target language |
-| `ttl_minutes` | integer | No | 60 | Session duration: 15–480 |
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `context` | object | Yes | `{ domain, speaker, intent? }` |
+| `context.domain` | string | Yes | Clinical domain for this session |
+| `context.speaker` | string | Yes | `"doctor"` \| `"nurse"` \| `"patient"` \| `"paramedic"` |
+| `context.intent` | string | No | `"diagnosis_question"` \| `"instruction"` \| `"history_taking"` \| `"consent"` |
+
+There is no `ttl_minutes`, `source_language`, or `target_language` field — the TTL is fixed, and language is supplied per translate call, not per session.
 
 ## Response fields
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `token` | string | Encrypted session token (prefix: `stk_enc_`) |
+| `session_token` | string | Encrypted session token (prefix: `stk_enc_`) |
 | `expires_at` | string | ISO 8601 timestamp when the token expires |
-| `session_id` | string | Opaque identifier for logging/support |
+
+There is no `session_id` field.
 
 ---
 
 ## Security model
 
-Session tokens are encrypted opaque blobs. The encryption key lives server-side. A token can only be used with the same API key that created it — it cannot be transferred to another key or organisation.
+Session tokens are encrypted opaque blobs. The encryption key lives server-side. A token can only be used with the same API key's org that created it — cross-org replay throws `session_invalid`, the same error as a tampered token, so there's no ownership-leak signal.
 
 Store tokens in memory only — not in cookies, `localStorage`, or `sessionStorage`. See [Sessions concept](/concepts/sessions/) for full security guidance.
 
@@ -67,4 +75,3 @@ Store tokens in memory only — not in cookies, `localStorage`, or `sessionStora
 
 - [Sessions concept — full security and lifecycle details →](/concepts/sessions/)
 - [GP Consultation guide — session-based conversation flow →](/guides/gp-consultation/)
-
