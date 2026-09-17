@@ -32,10 +32,11 @@ async function translateEmergency(text: string, source_language: string) {
     text,
     source_language,
     target_language: 'no', // or 'en' depending on your setup
+    mode: 'safe',
     context: { domain: 'emergency' },
   });
 
-  if (result.withheld) {
+  if (result.translation === null) {
     // In ED: alert immediately and escalate to professional interpreter
     triggerInterpreterAlert({
       reason: result.flags,
@@ -53,23 +54,22 @@ async function translateEmergency(text: string, source_language: string) {
 
 ## Web component for ED triage
 
+`<tolka-voice>` only captures and transcribes speech in-browser — it doesn't call the translation API itself. Embed it inside `<tolka-translate>` so its transcript feeds straight into a real translation, `mode="safe"` for the automatic escalation:
+
 ```html
-<tolka-voice
+<tolka-translate
   api-key="sk_live_..."
   source-lang="so"
   target-lang="no"
   domain="emergency"
-  safe-mode="true"
-  auto-submit="true"
-  max-seconds="30"
+  mode="safe"
   locale="so">
-</tolka-voice>
+  <tolka-voice slot="voice" source-lang="so" locale="so"></tolka-voice>
+</tolka-translate>
 ```
 
-`auto-submit="true"` triggers translation immediately when recording stops — critical for rapid triage.
-
 :::caution[Always provide text fallback]
-Microphone access may be blocked on hospital network policies. Always co-locate `<tolka-voice>` with `<tolka-translate>` as a fallback.
+Microphone access may be blocked on hospital network policies. `<tolka-voice>` degrades to a disabled button when the browser's Speech API is unavailable — `<tolka-translate>`'s own text input remains usable either way, so embedding voice this way already gives you the fallback for free.
 :::
 
 ---

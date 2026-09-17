@@ -16,7 +16,7 @@ For the full schema, see the [Interactive Reference](/api-reference/index/).
 
 ## Withheld response shape
 
-When a translation is withheld, `translation` and `back_translation` are `null` and `withheld: true` is present:
+Withholding fires whenever `risk` comes out `"high"` or `"critical"`. When it does, `translation` and `back_translation` are `null`, `verified` is `false`, and two extra fields explain what happened and what to do next — there is no `withheld` field, `translation === null` **is** the signal:
 
 ```json
 {
@@ -24,14 +24,19 @@ When a translation is withheld, `translation` and `back_translation` are `null` 
   "back_translation": null,
   "confidence": 0.48,
   "risk": "critical",
-  "flags": ["negation_flip", "keyword_mismatch"],
-  "verified": true,
-  "withheld": true,
+  "flags": [{ "type": "negation_flip", "detail": "…", "severity": "critical" }],
+  "suggestion": "Please rephrase using simpler language",
+  "reason_class": "critical_flag",
+  "escalation_options": [
+    { "type": "human_interpreter_dispatch", "label": "Request a human interpreter" },
+    { "type": "clinician_acknowledgment", "label": "Clinician acknowledges risk and proceeds" }
+  ],
+  "verified": false,
   "metadata": { ... }
 }
 ```
 
-This is a `200` response — not an error. Your UI must check `withheld` before rendering `translation`.
+This is a `200` response — not an error. Your UI must check `translation === null` (or `!verified`) before rendering `translation`. See [Understanding the Response](/getting-started/understanding-the-response/#reason_class--string-present-only-on-refusals) for the full `reason_class`/`escalation_options` reference.
 
 ---
 
@@ -47,7 +52,6 @@ When the translation passes safety checks:
   "risk": "low",
   "flags": [],
   "verified": true,
-  "withheld": false,
   "metadata": { ... }
 }
 ```
@@ -81,11 +85,12 @@ const result = await tolka.safeTranslate({
   context: { domain: 'emergency' },
 });
 
-if (result.withheld) {
-  // Translation is NOT safe to display
+if (result.translation === null) {
+  // Translation is NOT safe to display — result.reason_class explains why
   return (
     <RefusalAlert
       flags={result.flags}
+      escalationOptions={result.escalation_options}
       message="The translation quality could not be verified. Use a professional interpreter."
     />
   );
@@ -112,8 +117,8 @@ response = requests.post(
 )
 data = response.json()
 
-if data.get("withheld"):
-    print(f"Translation withheld — flags: {data['flags']}")
+if data["translation"] is None:
+    print(f"Translation withheld ({data.get('reason_class')}) — flags: {data['flags']}")
 else:
     print(data["translation"])
 ```

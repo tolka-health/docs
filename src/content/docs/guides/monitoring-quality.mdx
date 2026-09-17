@@ -5,48 +5,66 @@ sidebar:
   order: 8
 ---
 
-import { Tabs, TabItem } from '@astrojs/starlight/components';
+import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
 
 Monitoring translation quality is a patient safety responsibility, not just an operational one. This guide covers the metrics to track and the thresholds to alert on.
 
+:::note[The usage API is org-level and date-bucketed only]
+`GET /v1/admin/usage` gives you one row per day per org: `request_count`, `error_count`, `avg_confidence`, `avg_latency_ms`, `template_hit_count`. It does **not** break down by risk level, domain, or language pair, and there's no server-side "withheld count." Anything more granular has to come from your own application logs of the response bodies you already receive on every call — see the second table below.
+:::
+
 ---
 
-## Key metrics
+## Key metrics from the usage API
 
 | Metric | How to get it | Alert guidance |
 |--------|--------------|----------------|
-| `confidence_p50` | `GET /v1/admin/usage` | Alert on significant week-over-week drops |
-| `confidence_p10` | `GET /v1/admin/usage` | Alert on sustained declines per language pair |
-| Critical risk rate | `by_risk.critical / total_requests` | Alert if noticeably above your observed baseline |
-| Withheld rate | `withheld_count / total_requests` | Alert on sustained increases above your baseline |
-| `verified: false` rate | Track in your application logs | Alert on any sustained increase |
+| `avg_confidence` | `GET /v1/admin/usage` | Alert on significant day-over-day drops |
+| `error_count` / `request_count` | `GET /v1/admin/usage` | Alert if the error rate rises above your observed baseline |
+| `avg_latency_ms` | `GET /v1/admin/usage` | Alert on sustained latency increases (p50/p99 targets: 2s/5s) |
+| `template_hit_count` | `GET /v1/admin/usage` | A rising phrase-library hit rate is good news (faster, pre-validated) — a falling one may mean traffic mix shifted |
+
+## Key metrics you have to track yourself
+
+Risk level, refusal rate, and per-domain/per-language-pair breakdowns aren't exposed by any admin endpoint today — track them from the response body of every `/translate` and `/safe-translate` call in your own logs (never log the translation text itself, just the metadata below):
+
+| Metric | Where it comes from | Alert guidance |
+|--------|---------------------|-----------------|
+| Critical risk rate | Count `risk: "critical"` responses ÷ total | Alert if noticeably above your observed baseline |
+| Withheld rate | Count `/safe-translate` responses where `translation === null` ÷ total | Alert on sustained increases above your baseline |
+| `verified: false` rate | Count responses where `verified === false` | Alert on any sustained increase |
+| Per-domain / per-language-pair breakdowns | Tag each logged response with the `domain`/`source_language`/`target_language` you sent | Aggregate breakdown must live in your own logging/observability stack |
 
 ---
 
 ## Querying usage metrics
 
 <Tabs>
-<TabItem label="TypeScript">
-```typescript
-const usage = await tolka.admin.usage.query({
-  from: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-  to: new Date().toISOString().split('T')[0],
-  granularity: 'day',
-});
-
-const criticalRate = usage.by_risk.critical / usage.total_requests;
-const withheldRate = usage.withheld_count / usage.total_requests;
-
-// Set your own alert thresholds based on your observed baselines
-if (criticalRate > YOUR_CRITICAL_RATE_THRESHOLD) {
-  alert(`Critical risk rate elevated: ${(criticalRate * 100).toFixed(1)}%`);
-}
-```
-</TabItem>
 <TabItem label="cURL">
 ```bash
-curl "https://api.tolka.health/v1/admin/usage?from=2026-04-04&to=2026-04-11&granularity=day" \
+curl "https://api.tolka.health/v1/admin/usage?from=2026-04-04&to=2026-04-11" \
   -H "Authorization: Bearer $TOLKA_API_KEY"
+```
+</TabItem>
+<TabItem label="TypeScript">
+```typescript
+// Admin endpoints aren't wrapped by TolkaClient — call the HTTP API directly
+const from = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+const to = new Date().toISOString().split('T')[0];
+
+const response = await fetch(
+  `https://api.tolka.health/v1/admin/usage?from=${from}&to=${to}`,
+  { headers: { Authorization: `Bearer ${process.env.TOLKA_API_KEY}` } },
+);
+const { usage } = await response.json(); // usage: UsageRecord[], one row per date
+
+const totalRequests = usage.reduce((sum, day) => sum + day.request_count, 0);
+const totalErrors = usage.reduce((sum, day) => sum + day.error_count, 0);
+const errorRate = totalErrors / totalRequests;
+
+if (errorRate > YOUR_ERROR_RATE_THRESHOLD) {
+  alert(`Error rate elevated: ${(errorRate * 100).toFixed(1)}%`);
+}
 ```
 </TabItem>
 </Tabs>
@@ -55,32 +73,21 @@ curl "https://api.tolka.health/v1/admin/usage?from=2026-04-04&to=2026-04-11&gran
 
 ## Segmenting by language pair and domain
 
-Aggregate metrics can mask problems in specific language pairs. Always break down monitoring by language pair:
+Since the usage API only returns org-level daily totals, segmentation has to happen in your own logging — tag every response you log with the request's `domain`, `source_language`, and `target_language`:
 
 ```typescript
-// Check each supported language pair separately
-const pairs = [
-  { source: 'no', target: 'en' },
-  { source: 'ar', target: 'no' },
-  { source: 'so', target: 'no' },
-  { source: 'pl', target: 'no' },
-];
+// In your own application, after each translate()/safeTranslate() call:
+logQualityEvent({
+  timestamp: new Date().toISOString(),
+  domain: request.context?.domain ?? 'unspecified',
+  language_pair: `${request.source_language}-${request.target_language}`,
+  risk: result.risk,
+  verified: result.verified,
+  withheld: result.translation === null,
+});
 
-for (const pair of pairs) {
-  const usage = await tolka.admin.usage.query({
-    from: weekAgo,
-    to: today,
-    source_language: pair.source,
-    target_language: pair.target,
-  });
-
-  if (usage.total_requests > 10) { // only alert if there's meaningful volume
-    const criticalRate = usage.by_risk.critical / usage.total_requests;
-    if (criticalRate > YOUR_CRITICAL_RATE_THRESHOLD) {
-      notify(`High critical rate for ${pair.source}→${pair.target}: ${criticalRate}`);
-    }
-  }
-}
+// Then aggregate however your observability stack supports — e.g. group by
+// language_pair and alert when a pair's critical-risk share exceeds baseline.
 ```
 
 ---
@@ -89,26 +96,24 @@ for (const pair of pairs) {
 
 | Observation | Likely cause | Action |
 |-------------|--------------|--------|
-| Rising critical rate for a specific language pair | Domain mismatch (wrong domain being passed) | Audit which `domain` your integration uses for this pair |
-| Falling `confidence_p50` across all pairs | Model update (check `metadata.model` in logs) | Monitor for 48h; contact support if it continues |
-| Spike in `verified: false` | Upstream verification issues | Check [the support page](/about/support/); contact support |
-| Rising withheld rate for low-resource pairs | Expected — low-resource pairs have adjusted baselines | Ensure clinician escalation paths are working |
+| Rising critical rate for a specific language pair (from your own logs) | Domain mismatch (wrong domain being passed) | Audit which `domain` your integration uses for this pair |
+| Falling `avg_confidence` across the org | Model or provider change | Monitor for 48h; contact support if it continues |
+| Spike in `verified: false` (from your own logs) | Upstream verification issues | Check [the support page](/about/support/); contact support |
+| Rising withheld rate for low-resource pairs (from your own logs) | Expected — Somali pairs have an adjusted, lower confidence baseline | Ensure clinician escalation paths are working |
+| Rising `error_count` | Malformed requests or client-side bug | Check `invalid_request` responses' `fields` value |
 
 ---
 
 ## Dashboard integration
 
-Connect the usage API to your existing monitoring stack:
-
-- **Grafana / Prometheus:** Schedule a cron job to call the usage API and push metrics to a Prometheus pushgateway
-- **Datadog:** Use the Datadog HTTP check or a Lambda function to call the usage API and send custom metrics
-- **PagerDuty:** Wire your monitoring stack to page on-call when critical rate or withheld rate thresholds are exceeded
+- **Usage-API metrics (volume, confidence, latency, template hits):** schedule a daily job to pull `GET /v1/admin/usage` and push to your metrics store.
+- **Risk/refusal metrics:** these only exist in your own application logs — wire your existing logging pipeline (not the Tolka API) to your dashboard/alerting stack.
+- **PagerDuty:** page on-call from your own alerting rules once both sources are flowing into the same place.
 
 ---
 
 ## What's next
 
-- [Admin Usage API reference →](/api-reference/usage/)
+- [Admin — Usage API reference →](/api-reference/usage/)
 - [Handling Refusals →](/guides/handling-refusals/)
 - [Going to Production →](/getting-started/going-to-production/)
-

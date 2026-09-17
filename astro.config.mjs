@@ -114,6 +114,7 @@ export default defineConfig({
             { label: 'Clinical Domains', slug: 'concepts/clinical-domains' },
             { label: 'Safe Mode', slug: 'concepts/safe-mode' },
             { label: 'Sessions', slug: 'concepts/sessions' },
+            { label: 'Hosted Console', slug: 'concepts/hosted-console' },
             {
               label: 'Privacy Architecture',
               slug: 'concepts/privacy-architecture',
@@ -140,6 +141,8 @@ export default defineConfig({
             { label: 'POST /session', slug: 'api-reference/sessions' },
             { label: 'Admin: Keys', slug: 'api-reference/admin-keys' },
             { label: 'Admin: Usage', slug: 'api-reference/usage' },
+            { label: 'Admin: Phrase Library', slug: 'api-reference/admin-phrases' },
+            { label: 'Admin: Audit Log', slug: 'api-reference/admin-audit-log' },
             { label: 'Error Catalog', slug: 'api-reference/errors' },
             { label: 'Headers', slug: 'api-reference/headers' },
           ],
