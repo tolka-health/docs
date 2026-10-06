@@ -1,6 +1,6 @@
 ---
 title: Rate Limits
-description: Per-plan rate limits for the Tolka API, response headers, and retry strategies.
+description: Per-organisation rate limits for the Tolka API, response headers, and retry strategies.
 sidebar:
   order: 5
 ---
@@ -9,14 +9,15 @@ import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
 
 ## Per-plan limits
 
-| Plan | Requests/minute | Requests/month | Burst |
-|------|----------------|----------------|-------|
-| Sandbox (shared) | 10 / IP | 50 / IP / day | No burst |
-| Community | 20 | 200 | 40 for 10s |
-| Starter | 60 | 500 | 120 for 10s |
-| Pro | 300 | 5,000 | 600 for 10s |
-| Enterprise | Custom | Unlimited | Negotiated |
-| Emergency | 500 | Unlimited | 1,000 for 10s |
+Limits apply per organisation, per minute.
+
+| Plan | Requests/minute |
+|------|----------------|
+| Starter | 60 |
+| Pro | 300 |
+| Enterprise | 1,000 |
+
+Monthly volumes and any other limits are set in your agreement. Limits are enforced by the API process and may reset if it restarts.
 
 ---
 

@@ -8,7 +8,11 @@ sidebar:
 
 import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
 
-`POST /v1/medical/translate` is the standard translation endpoint. It **always** returns a translation, regardless of confidence or risk level.
+`POST /v1/medical/translate` is the standard translation endpoint. When free-text translation is enabled for your account, it returns a translation regardless of confidence or risk level.
+
+:::caution[Free-text translation is currently switched off]
+As of October 2026, free-text translation is off for all accounts. Only text that exactly matches a pre-written phrase in the phrase library returns a translation. Any other text returns a `200` refusal with `translation: null` and `reason_class: "templates_only"`, and an interpreter is recommended. See [Understanding the Response](/getting-started/understanding-the-response/#reason_class--string-present-only-on-refusals).
+:::
 
 For the full request/response schema, see the [Interactive Reference](/api-reference/).
 

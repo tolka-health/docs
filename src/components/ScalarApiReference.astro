@@ -14,11 +14,9 @@
     <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
   </svg>
   <div>
-    <strong>Do not enter real patient information.</strong> This playground is for testing with
-    synthetic data only. Input is processed by the API without being written to Tolka's database or logs, but your
-    browser may cache request history. Use the pre-filled examples or clearly synthetic phrases
-    such as <em>"Har du smerter?"</em>. Need access?
-    <a href="/getting-started/authentication/">Request a test key →</a>
+    <strong>This reference is read-only.</strong> There is no hosted sandbox, so requests cannot be sent from this page.
+    Do not enter real patient information anywhere in the API.
+    <a href="/getting-started/authentication/">How to request access →</a>
   </div>
 </div>
 
@@ -33,12 +31,11 @@
     const script = document.createElement('script');
     script.id = 'api-reference';
     script.dataset.url = '/openapi/tolka-v1.yaml';
-    // Only the local development server is listed in the public spec
+    // No hosted sandbox exists: the spec lists only the local development server, so this is a read-only reference
     script.dataset.configuration = JSON.stringify({
       theme: 'default',
       layout: 'modern',
       defaultHttpClient: { targetKey: 'js', clientKey: 'fetch' },
-      servers: [{ url: 'https://sandbox.tolka-api.fly.dev', description: 'Sandbox (evaluation only)' }],
       // Disable browser autocomplete on all input fields
       persistAuth: false,
       // Pre-populate synthetic examples from spec's example values

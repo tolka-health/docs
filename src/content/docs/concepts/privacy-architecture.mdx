@@ -1,6 +1,6 @@
 ---
 title: Privacy Architecture
-description: "How Tolka handles translation text and what it stores: in-memory processing, per-request application logging disabled, and the documented exceptions."
+description: "How Tolka handles translation text and what it stores: in-memory processing, no logging of request text, and the documented exceptions."
 sidebar:
   order: 6
 ---
@@ -32,7 +32,7 @@ Translation text is not part of what Tolka stores about your organisation, apart
 | Request audit log: request ID, organisation, endpoint, status code, latency, model label, risk level, error code (no text) | Security and audit evidence | No automatic deletion today |
 | Clinician flags (optional feature): the source text, translation, back-translation and note a clinician submits; scoped to your organisation; not available to templates-only accounts | Quality feedback | No automatic deletion today |
 
-Tolka does not currently delete this data automatically. Retention periods will be agreed with each customer in the Data Processing Agreement. Backups and host platform logs have not yet been reviewed for retention.
+Request text and query strings are not logged, and request-level info logging is off; a small set of event lines without text is still emitted, and host platform logs have not been reviewed. Tolka does not currently delete stored data automatically. Retention periods will be agreed with each customer in the Data Processing Agreement. Backups and host platform logs have not yet been reviewed for retention.
 
 <Aside type="caution" title="Other data Tolka holds">
 Clinician flags store the text a clinician chooses to submit. Separately, contact details you send through the demo request form on tolka.health are handled as described in the privacy notice on that site. They are not translation text.
