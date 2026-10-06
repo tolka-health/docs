@@ -34,11 +34,16 @@ jobs:
 
       - name: Validate OpenAPI spec
         run: |
-          pnpm dlx @redocly/cli lint public/openapi/tolka-v1.yaml --format=stylish
+          pnpm --package=@redocly/cli dlx redocly lint public/openapi/tolka-v1.yaml --format=stylish
 
+      # `astro-link-checker` ships no executable (pnpm dlx fails with
+      # ERR_PNPM_DLX_NO_BIN), so this step never ran. Same lychee command as
+      # `pnpm lint:links`, run offline against the built HTML.
       - name: Check for broken internal links
-        run: |
-          pnpm dlx astro-link-checker --base-dir ./dist --ignore-external
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: --offline --no-progress --root-dir ./dist './dist/**/*.html'
+          fail: true
 
       - name: Validate code examples (TypeScript)
         run: |
