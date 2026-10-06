@@ -8,7 +8,7 @@ sidebar:
 import { Aside } from '@astrojs/starlight/components';
 import ApiResponse from '../../../components/ApiResponse.astro';
 
-Every call to `/v1/medical/translate` or `/v1/medical/safe-translate` returns the same response envelope. Here is a full example with every field populated:
+Every call to `/v1/medical/translate` or `/v1/medical/safe-translate` returns the same response envelope, though not every field is always present. Here is a full example of a successful, verified translation:
 
 ```json
 {
@@ -22,16 +22,17 @@ Every call to `/v1/medical/translate` or `/v1/medical/safe-translate` returns th
   "metadata": {
     "latency_ms": 2840,
     "model": "tolka-v1",
-    "request_id": "req_01HX4K2MN7VPTJ8X9ZQR3W5YB6"
+    "request_id": "req_01HX4K2MN7VPTJ8X9ZQR3W5YB6",
+    "data_residency": "unknown"
   }
 }
 ```
 
 ---
 
-## `translation` — string
+## `translation` — string | null
 
-The translated text in the target language. This is the value to display to the end user.
+The translated text in the target language, or `null` on a `/safe-translate` refusal (see [`reason_class`](#reason_class--string-present-only-on-refusals) below). When non-null, this is the value to display to the end user.
 
 :::caution[For high-risk translations]
 When `risk` is `high` or `critical`, your UI **must** present a clinician acknowledgment step before displaying the translation to the patient. See [Handling Refusals](/guides/handling-refusals/).
@@ -39,12 +40,17 @@ When `risk` is `high` or `critical`, your UI **must** present a clinician acknow
 
 ---
 
-## `back_translation` — string
+## `back_translation` — string | null
 
 An independent retranslation from the target language back to the source language. This is **not** round-tripped from `translation` — it is generated independently to catch meaning drift.
 
+`back_translation` is `null` in two different situations that mean opposite things for trust:
+
+- **Back-translation failed** (`verified: false`, `confidence: 0`, `risk: "unknown"`) — the verification step itself couldn't run. Treat the translation with the same caution as a low-confidence result.
+- **Phrase-library exact match** (`verified: true`, `confidence: 1.0`, `risk: "low"`) — the text matched a pre-validated glossary phrase and bypassed the LLM pipeline entirely, so there was nothing to back-translate. This is the highest-trust case, not a degraded one.
+
 **How to use it in your UI:**
-- You can optionally display `back_translation` alongside `translation` so the clinician can visually compare.
+- You can optionally display `back_translation` alongside `translation` so the clinician can visually compare, when it's present.
 - A back-translation that differs significantly from the original is reflected in a lower `confidence` score and may trigger `flags`.
 
 ---
@@ -56,7 +62,7 @@ A quality score combining three independent verification signals. A higher score
 Higher scores indicate greater fidelity to the original clinical meaning. However, **use `risk` as your primary UI signal** — it already accounts for language-pair differences and maps directly to recommended clinical actions.
 
 :::note[Low-resource languages]
-For language pairs with limited training data (e.g., Somali→English), confidence baselines are adjusted to reflect data coverage differences. Use `risk` — not raw `confidence` — as your UI decision signal. It already normalises for language-pair variation.
+For language pairs with limited training data (e.g., Somali↔any other language), confidence baselines are adjusted to reflect data coverage differences. Use `risk` — not raw `confidence` — as your UI decision signal. It already normalises for language-pair variation.
 :::
 
 ---
@@ -71,6 +77,7 @@ The clinical risk level of this translation. This is the **primary field** your 
 | `"medium"` | Translation may have minor ambiguity | Show a subtle caution indicator |
 | `"high"` | Meaningful difference detected between source and back-translation | Require clinician acknowledgment before displaying to patient |
 | `"critical"` | An automatic safety rule fired | Block display; require clinician to review original text |
+| `"unknown"` | Back-translation could not be attempted or completed — the safety pipeline never ran | Treat identically to `"high"`: require clinician acknowledgment before displaying |
 
 :::danger[Critical risk]
 A `"critical"` risk level means a deterministic safety rule fired — for example, a negation was flipped or a dosage number changed. Always block display and require clinician review.
@@ -78,15 +85,22 @@ A `"critical"` risk level means a deterministic safety rule fired — for exampl
 
 ---
 
-## `flags` — array of strings
+## `flags` — array of objects
 
-Zero or more safety flags explaining why `risk` is elevated. An empty array `[]` with `risk: "low"` means no issues were detected.
+Zero or more safety flags explaining why `risk` is elevated. Each entry has this shape:
 
-| Flag | Triggered when |
-|------|---------------|
+```json
+{ "type": "negation_flip", "detail": "…human-readable explanation…", "severity": "critical" }
+```
+
+An empty array `[]` with `risk: "low"` means no issues were detected. `severity` is either `"warning"` or `"critical"` — any `"critical"`-severity flag forces `risk` to `"critical"` regardless of the confidence score.
+
+| `type` | Triggered when |
+|--------|---------------|
 | `"negation_flip"` | A negation present in the source was absent in the translation, or vice versa (e.g., "no pain" → "pain") |
 | `"numerical_change"` | A number in the source changed in the translation (dosages, frequencies, ages) |
 | `"keyword_mismatch"` | A clinically significant medical term in the source is absent from the translation |
+| `"ambiguity"` | Reserved for a future check — defined in the schema but not currently produced by any safety rule |
 
 Multiple flags can be present simultaneously.
 
@@ -94,7 +108,34 @@ Multiple flags can be present simultaneously.
 
 ## `verified` — boolean
 
-`true` if back-translation verification completed successfully. `false` if the verification step could not be completed — in this case `confidence` may be lower and you should treat the translation with caution regardless of `risk`.
+`true` if back-translation verification completed successfully, **or** if the text was served from the phrase library (which is pre-validated and doesn't need back-translation). `false` if verification could not be completed, or if this is a `/safe-translate` refusal — in both cases, treat the translation with caution regardless of `risk`.
+
+---
+
+## `reason_class` — string, present only on refusals
+
+Only present when `translation` is `null` on a `/safe-translate` call. Explains, machine-readably, why the translation was withheld:
+
+| Value | Meaning |
+|-------|---------|
+| `"low_confidence"` | Confidence fell below the safe-mode threshold, with no critical-severity flag |
+| `"critical_flag"` | A critical-severity risk flag fired, regardless of the confidence score |
+
+---
+
+## `escalation_options` — array of objects, present only on refusals
+
+Alternatives offered in place of the withheld translation. Always includes at least the last two of these; the first is conditional:
+
+| `type` | When present | `suggested_phrase` |
+|--------|--------------|---------------------|
+| `"phrase_suggestion"` | Only when the near-miss template matcher found a sufficiently similar pre-validated glossary phrase | Present — the suggested replacement text |
+| `"human_interpreter_dispatch"` | Always | Absent (this is a static label today — no live dispatch integration exists yet) |
+| `"clinician_acknowledgment"` | Always | Absent |
+
+:::note[Acknowledgment is audited]
+If a clinician re-issues the same request with `mode: "standard"` after a refusal, and the result is still `high`/`critical` risk, that override is recorded as a distinct audit event server-side. This isn't a client-side toggle you implement — it happens automatically when you call `/translate` after a `/safe-translate` refusal for the same content.
+:::
 
 ---
 
@@ -105,6 +146,7 @@ Multiple flags can be present simultaneously.
 | `latency_ms` | End-to-end pipeline latency in milliseconds (includes forward translation, back-translation, and scoring) |
 | `model` | Stable Tolka model identifier (e.g. `tolka-v1`). Use for debugging and regression tracking; the underlying language model is versioned and abstracted by this identifier. |
 | `request_id` | Unique request identifier. Include this in support tickets. |
+| `data_residency` | Coarse region assertion for where this request's provider leg was processed: `"eu"`, `"us"`, or `"unknown"`. Currently `"unknown"` for every LLM-backed request — Tolka hasn't yet confirmed EU-only routing with its current model providers. Only phrase-library hits (which never leave Tolka's own EU infrastructure) report `"eu"`. |
 
 ---
 
@@ -113,4 +155,3 @@ Multiple flags can be present simultaneously.
 - [Set up authentication →](/getting-started/authentication/)
 - [Learn about risk levels in depth →](/concepts/confidence-and-risk/)
 - [Learn how confidence is computed →](/concepts/translation-pipeline/)
-

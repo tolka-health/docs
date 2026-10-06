@@ -1,0 +1,91 @@
+---
+title: Admin — Audit Log Export
+description: Export PHI-free request audit records via the Tolka Admin Audit Log API.
+sidebar:
+  order: 8
+  label: Admin — Audit Log
+---
+
+import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
+
+`GET /v1/admin/audit-log` exports your org's request audit trail — for SIEM ingestion, compliance review, or your own retention needs. This endpoint isn't wrapped by `TolkaClient` — call it directly.
+
+:::note[PHI-free by construction]
+Every field below is metadata about a request, never its content. No translated text, no source text, nothing patient-identifiable — the same guarantee that applies to Tolka's own server-side logging applies here.
+:::
+
+:::caution[503 if audit logging isn't configured]
+This endpoint returns `503 audit_log_unavailable` in any environment where the durable audit-log store hasn't been provisioned. That's a deployment configuration state, not a client-side error — retrying won't help until the environment is configured.
+:::
+
+---
+
+## Query parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `from` | ISO 8601 date | Start of the export window (default: a fixed lookback from today) |
+| `to` | ISO 8601 date | End of the export window (default: today) |
+| `format` | `"json"` \| `"csv"` | Default `"json"`. `"csv"` returns `text/csv` with a `Content-Disposition: attachment` header. |
+
+---
+
+## Example request and response
+
+<Tabs>
+<TabItem label="JSON">
+```bash
+curl "https://api.tolka.health/v1/admin/audit-log?from=2026-04-01&to=2026-04-11" \
+  -H "Authorization: Bearer $TOLKA_API_KEY"
+```
+
+```json
+{
+  "audit_log": [
+    {
+      "request_id": "req_01HX4K2MN7...",
+      "org_id": "org_01HX...",
+      "endpoint": "/v1/medical/safe-translate",
+      "status_code": 200,
+      "latency_ms": 2340,
+      "model_used": "tolka-v1",
+      "risk_level": "low",
+      "error_code": null,
+      "created_at": "2026-04-01T08:12:03Z"
+    }
+  ]
+}
+```
+</TabItem>
+<TabItem label="CSV">
+```bash
+curl "https://api.tolka.health/v1/admin/audit-log?from=2026-04-01&to=2026-04-11&format=csv" \
+  -H "Authorization: Bearer $TOLKA_API_KEY" \
+  -o audit-log.csv
+```
+
+```
+request_id,org_id,endpoint,status_code,latency_ms,model_used,risk_level,error_code,created_at
+req_01HX4K2MN7...,org_01HX...,/v1/medical/safe-translate,200,2340,tolka-v1,low,,2026-04-01T08:12:03Z
+```
+</TabItem>
+</Tabs>
+
+| Field | Description |
+|-------|-------------|
+| `request_id` | Correlates to the `X-Request-Id` header returned on the original call |
+| `org_id` | Your organization's ID |
+| `endpoint` | Which API path was called |
+| `status_code` | HTTP status of the original response |
+| `latency_ms` | End-to-end latency of the original request |
+| `model_used` | Stable model identifier, when applicable (nullable) |
+| `risk_level` | The `risk` value from the response, when applicable (nullable) |
+| `error_code` | The `error_code` value, if the request errored (nullable) |
+| `created_at` | When the audit record was written |
+
+---
+
+## What's next
+
+- [Admin — Usage →](/api-reference/usage/)
+- [Compliance →](/about/compliance/)

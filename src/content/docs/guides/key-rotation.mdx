@@ -56,7 +56,12 @@ Unlike some API key systems, Tolka does not auto-revoke the old key after a time
    </TabItem>
    <TabItem label="TypeScript">
    ```typescript
-   const rotated = await tolka.admin.keys.rotate('key_01HX...');
+   // Admin endpoints aren't wrapped by TolkaClient — call the HTTP API directly
+   const response = await fetch('https://api.tolka.health/v1/admin/keys/key_01HX.../rotate', {
+     method: 'POST',
+     headers: { Authorization: `Bearer ${process.env.TOLKA_API_KEY}` },
+   });
+   const rotated = await response.json();
    // rotated.key — store in your secret manager NOW
    // rotated.old_key_id — the key you'll revoke in step 5
    await secretManager.update('TOLKA_API_KEY', rotated.key);

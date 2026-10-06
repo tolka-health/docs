@@ -6,11 +6,13 @@ sidebar:
   label: Admin — Usage
 ---
 
-import { Tabs, TabItem } from '@astrojs/starlight/components';
+import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
 
-`GET /v1/admin/usage` returns aggregated usage statistics for your account. No raw translation text is exposed — only counts, confidence distributions, and risk breakdowns.
+`GET /v1/admin/usage` returns one row per day for your org, over a date range. No raw translation text is exposed — only counts, averages, and latency. This endpoint isn't wrapped by `TolkaClient` — call it directly.
 
-For the full schema, see the [Interactive Reference](/api-reference/index/).
+:::note[Org-level and date-only]
+There's no `domain`, `source_language`, `target_language`, or `granularity` filter — you get one row per calendar day, at the org level, and nothing more granular. See [Monitoring Quality](/guides/monitoring-quality/) for how to get risk-level and per-domain breakdowns from your own logs instead.
+:::
 
 ---
 
@@ -18,12 +20,8 @@ For the full schema, see the [Interactive Reference](/api-reference/index/).
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `from` | ISO 8601 date | Start of the reporting window |
-| `to` | ISO 8601 date | End of the reporting window |
-| `domain` | string | Filter by clinical domain (optional) |
-| `source_language` | string | Filter by source language (optional) |
-| `target_language` | string | Filter by target language (optional) |
-| `granularity` | `day` \| `week` \| `month` | Aggregation bucket (default: `day`) |
+| `from` | ISO 8601 date | Start of the reporting window (default: a fixed lookback from today) |
+| `to` | ISO 8601 date | End of the reporting window (default: today) |
 
 ---
 
@@ -32,55 +30,65 @@ For the full schema, see the [Interactive Reference](/api-reference/index/).
 <Tabs>
 <TabItem label="cURL">
 ```bash
-curl "https://api.tolka.health/v1/admin/usage?from=2026-04-01&to=2026-04-11&granularity=day" \
+curl "https://api.tolka.health/v1/admin/usage?from=2026-04-01&to=2026-04-11" \
   -H "Authorization: Bearer $TOLKA_API_KEY"
 ```
 </TabItem>
 <TabItem label="TypeScript">
 ```typescript
-const usage = await tolka.admin.usage.query({
-  from: '2026-04-01',
-  to: '2026-04-11',
-  granularity: 'day',
-});
+// Admin endpoints aren't wrapped by TolkaClient — call the HTTP API directly
+const response = await fetch(
+  'https://api.tolka.health/v1/admin/usage?from=2026-04-01&to=2026-04-11',
+  { headers: { Authorization: `Bearer ${process.env.TOLKA_API_KEY}` } },
+);
+const { usage } = await response.json();
 ```
 </TabItem>
 </Tabs>
 
 ```json
 {
-  "period": { "from": "2026-04-01", "to": "2026-04-11" },
-  "total_requests": 1284,
-  "by_risk": {
-    "low": 1102,
-    "medium": 118,
-    "high": 52,
-    "critical": 12
-  },
-  "by_domain": {
-    "emergency": 340,
-    "gp": 712,
-    "specialist": 98,
-    "mental_health": 88,
-    "physical_therapy": 46
-  },
-  "confidence_p50": 0.89,
-  "confidence_p10": 0.71,
-  "withheld_count": 12,
-  "buckets": [
-    { "date": "2026-04-01", "requests": 118, "withheld": 1 },
-    { "date": "2026-04-02", "requests": 134, "withheld": 2 }
+  "usage": [
+    {
+      "org_id": "org_01HX...",
+      "date": "2026-04-01",
+      "request_count": 118,
+      "error_count": 2,
+      "avg_confidence": 0.89,
+      "avg_latency_ms": 2340,
+      "template_hit_count": 31
+    },
+    {
+      "org_id": "org_01HX...",
+      "date": "2026-04-02",
+      "request_count": 134,
+      "error_count": 0,
+      "avg_confidence": 0.91,
+      "avg_latency_ms": 2210,
+      "template_hit_count": 40
+    }
   ]
 }
 ```
+
+| Field | Description |
+|-------|-------------|
+| `date` | The calendar day this row covers |
+| `request_count` | Total translation requests that day |
+| `error_count` | Requests that resulted in an error response (any `error_code`) |
+| `avg_confidence` | Mean `confidence` across the day's successful responses, or `null` if there were none |
+| `avg_latency_ms` | Mean end-to-end pipeline latency, or `null` if there were no successful responses |
+| `template_hit_count` | Of `request_count`, how many were served directly from the phrase library (bypassed the LLM pipeline entirely) — always ≤ `request_count` |
 
 ---
 
 ## Using usage data for monitoring
 
-- **Elevated `by_risk.critical` rate** — if `critical` exceeds 2–3% of total, investigate whether the correct `domain` is being passed for the texts being translated.
-- **Declining `confidence_p50`** — a drop in median confidence over time may indicate a language pair mismatch or domain mismatch in your integration.
-- **`withheld_count` trends** — rising withheld counts are an early signal of translation quality issues for a specific language pair or domain.
+- **Rising `error_count` relative to `request_count`** — investigate malformed requests client-side; check the `fields` value on `invalid_request` responses.
+- **Declining `avg_confidence`** — a drop in mean confidence over time may indicate a provider change or a language/domain mismatch creeping into your integration.
+- **Rising `template_hit_count` share** — generally a good sign (faster, pre-validated responses), but a sudden jump could also mean your input text isn't varying the way you expect.
+
+For risk-level, refusal-rate, and per-domain/per-language-pair breakdowns, see [Monitoring Quality](/guides/monitoring-quality/) — none of that is available from this endpoint; it has to come from your own logs of each response body.
 
 ---
 
@@ -88,4 +96,3 @@ const usage = await tolka.admin.usage.query({
 
 - [Monitoring Quality guide →](/guides/monitoring-quality/)
 - [Rate Limits →](/getting-started/rate-limits/)
-

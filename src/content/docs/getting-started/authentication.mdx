@@ -69,13 +69,9 @@ headers = {"Authorization": f"Bearer {os.environ['TOLKA_API_KEY']}"}
 
 ## Rotate a key (API)
 
+Admin endpoints aren't wrapped by `TolkaClient` — call them directly:
+
 <Tabs>
-<TabItem label="TypeScript">
-```typescript
-const newKey = await tolka.admin.keys.rotate('key_01HX...');
-// Store newKey.secret immediately — it is shown only once.
-```
-</TabItem>
 <TabItem label="cURL">
 ```bash
 curl -X POST https://api.tolka.health/v1/admin/keys/key_01HX.../rotate \

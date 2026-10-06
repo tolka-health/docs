@@ -75,7 +75,7 @@ jobs:
 
       - name: Validate OpenAPI spec
         run: |
-          pnpm dlx @redocly/cli lint /tmp/tolka-v1-new.yaml
+          pnpm --package=@redocly/cli dlx redocly lint /tmp/tolka-v1-new.yaml
 
       - name: Verify sandbox URL only (no production URL)
         run: |

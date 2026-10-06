@@ -1,0 +1,73 @@
+---
+title: Admin — Phrase Library
+description: Read-only visibility into Tolka's phrase library via the Admin Phrases API.
+sidebar:
+  order: 7
+  label: Admin — Phrase Library
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+`GET /v1/admin/phrases` gives read-only visibility into the phrase library — the set of pre-validated, human-reviewed translations that bypass the LLM pipeline entirely on an exact match (see [Translation Pipeline](/concepts/translation-pipeline/)). This endpoint isn't wrapped by `TolkaClient` — call it directly.
+
+:::note[Read-only, Tolka-authored content]
+There's no create/update/delete here — phrase library content is authored and validated by Tolka, never by your integration, and it's never derived from patient input. This endpoint exists purely so you can see what's covered and how recently it was reviewed.
+:::
+
+---
+
+## Query parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `domain` | `ClinicalDomain` | Optional. Filters the `phrases` list to one domain. Does **not** filter `domains` — that summary always covers all five domains. |
+
+---
+
+## Example request and response
+
+```bash
+curl "https://api.tolka.health/v1/admin/phrases?domain=gp" \
+  -H "Authorization: Bearer $TOLKA_API_KEY"
+```
+
+```json
+{
+  "domains": [
+    { "domain": "emergency", "count": 0, "last_validated_date": null },
+    { "domain": "gp", "count": 0, "last_validated_date": null },
+    { "domain": "specialist", "count": 0, "last_validated_date": null },
+    { "domain": "mental_health", "count": 0, "last_validated_date": null },
+    { "domain": "physical_therapy", "count": 0, "last_validated_date": null }
+  ],
+  "phrases": [
+    {
+      "id": "gp-example-phrase",
+      "domain": "gp",
+      "languages": ["no", "en", "ar"],
+      "validated_by": "example-reviewer",
+      "validated_date": "2026-01-01"
+    }
+  ]
+}
+```
+
+:::note[Illustrative values only]
+The counts and dates above are placeholders, not real coverage numbers — call the endpoint against your own org to see actual figures. `domains` always lists all five clinical domains, even ones with zero entries (`count: 0`, `last_validated_date: null`).
+:::
+
+| Field | Description |
+|-------|-------------|
+| `domains[].domain` / `.count` / `.last_validated_date` | Per-domain entry count and the most recent `validated_date` seen in that domain (`null` if the domain has no entries yet) |
+| `phrases[].id` | Stable phrase identifier |
+| `phrases[].domain` | Which clinical domain this phrase belongs to |
+| `phrases[].languages` | Which languages have a non-empty translation for this phrase |
+| `phrases[].validated_by` | Who signed off on this phrase's translations |
+| `phrases[].validated_date` | When it was last validated |
+
+---
+
+## What's next
+
+- [Translation Pipeline — how phrase-library matches skip the LLM →](/concepts/translation-pipeline/)
+- [Clinical Domains →](/concepts/clinical-domains/)

@@ -9,7 +9,7 @@
     "build": "astro build",
     "preview": "astro preview",
     "check": "astro check",
-    "lint:links": "lychee --offline ./src/content/**/*.mdx",
+    "lint:links": "astro build && lychee --offline --root-dir ./dist \"./dist/**/*.html\"",
     "lint:prose": "vale src/content",
     "prepare": "git config core.hooksPath .hooks"
   },

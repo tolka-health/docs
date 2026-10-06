@@ -24,11 +24,11 @@ Initial public release of the Tolka medical translation API and Web SDK.
 - `POST /v1/medical/translate` — domain-aware medical translation with back-translation verification
 - `POST /v1/medical/safe-translate` — translation with automatic withholding on high/critical risk
 - `POST /v1/medical/session` — encrypted client-side session tokens for multi-turn consultations
-- `GET /v1/admin/keys` · `POST /v1/admin/keys` · `GET /v1/admin/keys/:id` · `POST /v1/admin/keys/:id/rotate` · `DELETE /v1/admin/keys/:id` — full key lifecycle management
-- `GET /v1/admin/usage` — aggregated usage statistics with risk and domain breakdowns
+- `GET /v1/admin/keys` · `POST /v1/admin/keys` · `POST /v1/admin/keys/:id/rotate` · `DELETE /v1/admin/keys/:id` — key lifecycle management (no single-key `GET`; list and filter client-side)
+- `GET /v1/admin/usage` — daily org-level usage counts, confidence, and latency (no risk or domain breakdown — see [Monitoring Quality](/guides/monitoring-quality/))
 - Five clinical domains: `emergency`, `gp`, `specialist`, `mental_health`, `physical_therapy`
 - Six supported languages — Norwegian Bokmål, English, Arabic, Somali, Polish, Ukrainian — translatable in any direction
-- Risk levels: `low`, `medium`, `high`, `critical`
+- Risk levels: `low`, `medium`, `high`, `critical`, `unknown`
 - Safety flags: `negation_flip`, `numerical_change`, `keyword_mismatch`
 - `X-RateLimit-*` response headers on all endpoints
 - `X-Request-Id` tracing header
@@ -36,14 +36,13 @@ Initial public release of the Tolka medical translation API and Web SDK.
 
 #### Web SDK (`@tolka/web-sdk` v1.0.0)
 - `TolkaClient` with full TypeScript types
-- `TolkaClient.translate()`, `TolkaClient.safeTranslate()`, `TolkaClient.sessions.create()`
-- `TolkaClient.admin.keys.*` and `TolkaClient.admin.usage.query()`
+- `TolkaClient.translate()`, `TolkaClient.safeTranslate()`, `TolkaClient.createSession()`, `TolkaClient.getOrgBranding()`
 - `<tolka-translate>` web component with risk indicator, PHI disclaimer, and event API
 - `<tolka-voice>` web component with microphone input and auto-submit
-- Built-in locales: `en`, `nb`, `ar`, `so`, `pl`
+- `<tolka-confidence-meter>` web component for standalone confidence/risk display
+- Built-in UI locales: `en`, `nb`, `ar`, `so`, `pl`, `uk`
 - CSS custom properties and `::part()` theming API
-- `TolkaApiError` with typed `code`, `requestId`, and `retryAfter`
-- CDN distribution at `tolka.health/tolka-sdk.js`
+- `TolkaApiError` with typed `errorCode`, `status`, `suggestion`, and `requestId`
 
 #### Infrastructure
 - EU-only deployment, Frankfurt region (data residency commitment)

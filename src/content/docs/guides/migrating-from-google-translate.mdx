@@ -50,9 +50,9 @@ const result = await tolka.safeTranslate({
   context: { domain: 'gp' }, // match your care context
 });
 
-if (result.withheld) {
+if (result.translation === null) {
   // Tolka detected a safety issue — handle it
-  return showFallback(result.flags);
+  return showFallback(result.flags, result.reason_class);
 }
 
 const translation = result.translation;
@@ -123,7 +123,7 @@ const translation = result.translation;
 4. **Handle the richer response**
 
    You now have `confidence`, `risk`, `flags`, and `back_translation`. At minimum, add:
-   - A check for `result.withheld`
+   - A check for `result.translation === null`
    - A clinician acknowledgment step when `result.risk === 'high'`
    - A hard block when `result.risk === 'critical'`
 

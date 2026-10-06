@@ -7,25 +7,26 @@ sidebar:
 
 import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
 
-Sessions allow you to maintain context across multiple translation exchanges in a single clinical encounter (e.g., a GP consultation with several questions and answers). Session state is encrypted and stored client-side — Tolka's servers are stateless.
+Sessions let you carry `domain`/`speaker` context across multiple translation exchanges in a single clinical encounter (e.g., a GP consultation with several questions and answers), without repeating `context` on every call. Session state is encrypted and stored client-side — Tolka's servers are stateless. Sessions do **not** carry language — `source_language`/`target_language` are still required on every `translate()`/`safeTranslate()` call.
 
 ---
 
 ## How sessions work
 
-1. **Create a session** — `POST /v1/medical/session` returns an encrypted token representing the session context.
+1. **Create a session** — `POST /v1/medical/session` returns an encrypted token representing `domain`+`speaker`.
 2. **Pass the token** — Include the session token in subsequent translate calls via the `session_token` field.
-3. **Token expiry** — Tokens have a configurable TTL (default: 60 minutes). An expired token returns `401 SESSION_EXPIRED`.
+3. **Token expiry** — Fixed 15-minute idle TTL, 60-minute hard maximum — not configurable. An expired token returns `400 session_expired`.
+4. **Token refresh** — Every response made with a `session_token` includes a refreshed one; store it back to keep the idle TTL alive.
 
 ```mermaid
 sequenceDiagram
   participant App
   participant Tolka API
-  App->>Tolka API: POST /v1/medical/session {domain, source_language, target_language}
-  Tolka API-->>App: {session_token: "stk_enc_..."}
-  App->>Tolka API: POST /v1/medical/translate {text, session_token}
-  Tolka API-->>App: {translation, confidence, risk, ...}
-  App->>Tolka API: POST /v1/medical/translate {text, session_token}
+  App->>Tolka API: POST /v1/medical/session {context: {domain, speaker}}
+  Tolka API-->>App: {session_token: "stk_enc_...", expires_at: "..."}
+  App->>Tolka API: POST /v1/medical/translate {text, source_language, target_language, session_token}
+  Tolka API-->>App: {translation, confidence, risk, ..., session_token: "stk_enc_... (refreshed)"}
+  App->>Tolka API: POST /v1/medical/translate {text, source_language, target_language, session_token: "(refreshed token)"}
   Tolka API-->>App: {translation, confidence, risk, ...}
 ```
 
@@ -36,12 +37,11 @@ sequenceDiagram
 <Tabs>
 <TabItem label="TypeScript">
 ```typescript
-const session = await tolka.sessions.create({
-  context: { domain: 'gp', speaker: 'doctor' },
-});
+const session = await tolka.createSession({ domain: 'gp', speaker: 'doctor' });
 
-// session.token — store this in your app state, not in the URL or localStorage
-console.log(session.token); // "stk_enc_01HX..."
+// session.session_token — store this in your app state, not in the URL or localStorage
+console.log(session.session_token); // "stk_enc_01HX..."
+console.log(session.expires_at);    // ISO 8601 string
 ```
 </TabItem>
 <TabItem label="cURL">
@@ -63,10 +63,15 @@ curl -X POST https://api.tolka.health/v1/medical/session \
 ```typescript
 const result = await tolka.translate({
   text: 'كيف حالك اليوم؟',
-  sessionToken: session.token,
-  // source_language and target_language are optional when session_token is present
-  // — they are inferred from the session
+  source_language: 'ar',
+  target_language: 'no',
+  mode: 'standard',
+  session_token: session.session_token,
+  // context omitted — domain/speaker inherited from the session
 });
+
+// Store the refreshed token for the next call in this encounter
+const nextSessionToken = result.session_token ?? session.session_token;
 ```
 
 ---
@@ -86,16 +91,14 @@ Each session token carries context from all translations in the encounter. Shari
 
 ## Token TTL and expiry
 
-The default TTL is **60 minutes** from creation. You can set `ttl_minutes` between 15 and 480 (8 hours).
+The TTL is fixed: **15 minutes idle**, **60 minutes hard maximum** from creation, whichever comes first. There's no request parameter to change this.
 
 When a token expires:
 
 ```json
 {
-  "error": {
-    "code": "SESSION_EXPIRED",
-    "message": "Session token has expired. Create a new session to continue."
-  }
+  "error_code": "session_expired",
+  "message": "Session has expired. Start a new session."
 }
 ```
 
@@ -107,4 +110,3 @@ Handle this gracefully in your UI — typically by creating a new session and co
 
 - [POST /session reference →](/api-reference/sessions/)
 - [GP Consultation guide — session-based conversation flow →](/guides/gp-consultation/)
-
