@@ -4,7 +4,7 @@ info:
   version: 1.0.0
   description: >
     Privacy-first medical translation API with back-translation validation,
-    risk scoring, and clinical context awareness. No patient data is stored.
+    risk scoring, and clinical context awareness. Translation text is processed in memory and is not written to Tolka's database, logs or caches by the translation pipeline. The optional clinician-flag endpoints store the submitted text, scoped to the organisation.
   contact:
     name: Tolka Engineering
   license:
@@ -13,8 +13,6 @@ info:
 servers:
   - url: http://localhost:3000
     description: Local development
-  - url: https://api.tolka.health
-    description: Production (EU — Frankfurt)
 
 security:
   - BearerAuth: []

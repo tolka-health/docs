@@ -1,6 +1,6 @@
 ---
 title: Privacy Architecture
-description: "How Tolka handles translation text and what it stores: in-memory processing, no request logging, and the documented exceptions."
+description: "How Tolka handles translation text and what it stores: in-memory processing, per-request application logging disabled, and the documented exceptions."
 sidebar:
   order: 6
 ---
@@ -27,15 +27,15 @@ Translation text is not part of what Tolka stores about your organisation, apart
 
 | Data | Purpose | Retention |
 |------|---------|-----------|
-| Organisation metadata, hashed API keys | Account and authentication | Not yet set |
-| Daily usage counts per organisation (no text) | Usage accounting and limits | Not yet set |
-| Request audit log: request ID, organisation, endpoint, status code, latency, model label, risk level, error code (no text) | Security and audit evidence | Not yet set |
-| Clinician flags (optional feature): the source text, translation, back-translation and note a clinician submits; scoped to your organisation; not available to templates-only accounts | Quality feedback | Not yet set |
+| Organisation metadata, hashed API keys | Account and authentication | No automatic deletion today |
+| Daily usage counts per organisation (no text) | Usage accounting and limits | No automatic deletion today |
+| Request audit log: request ID, organisation, endpoint, status code, latency, model label, risk level, error code (no text) | Security and audit evidence | No automatic deletion today |
+| Clinician flags (optional feature): the source text, translation, back-translation and note a clinician submits; scoped to your organisation; not available to templates-only accounts | Quality feedback | No automatic deletion today |
 
-Retention periods are not yet defined. We will publish them here once they are.
+Tolka does not currently delete this data automatically. Retention periods will be agreed with each customer in the Data Processing Agreement. Backups and host platform logs have not yet been reviewed for retention.
 
-<Aside type="caution" title="Exceptions to 'no text stored'">
-Clinician flags store the text a clinician chooses to submit. Separately, contact details sent through the demo request form on tolka.health are held by our website host; they are not translation text.
+<Aside type="caution" title="Other data Tolka holds">
+Clinician flags store the text a clinician chooses to submit. Separately, contact details you send through the demo request form on tolka.health are handled as described in the privacy notice on that site. They are not translation text.
 </Aside>
 
 ---
@@ -44,7 +44,7 @@ Clinician flags store the text a clinician chooses to submit. Separately, contac
 
 Tolka's API and Console run on Fly.io in Frankfurt, Germany. Pre-written phrase lookups and refusals make no call to any translation provider.
 
-Free-text translation uses third-party language-model providers. Their data-residency terms have not yet been established, and free-text translation is currently switched off for all accounts. We make no claim that all processing stays in the EU.
+Free-text translation uses third-party language-model providers. Their data-residency terms have not yet been established, and free-text translation is switched off for all accounts as of October 2026. We make no claim that all processing stays in the EU.
 
 ---
 
@@ -73,8 +73,8 @@ Tolka API (Frankfurt)
 
 Tolka acts as a **data processor** on behalf of your organisation (the data controller) when you use the API with patient text:
 
-- You are responsible for having a lawful basis for the processing (typically Article 9(2)(h), healthcare purposes).
-- Tolka's obligations as processor are set out in a Data Processing Agreement. See [Compliance & Trust](/about/compliance/).
+- Your organisation is responsible for establishing the lawful basis and any health-sector conditions for sending patient communications to a processor. Tolka does not advise on this.
+- Tolka's role and obligations as a processor are to be set out in a Data Processing Agreement between Tolka and your organisation. See [Compliance & Trust](/about/compliance/).
 
 ---
 

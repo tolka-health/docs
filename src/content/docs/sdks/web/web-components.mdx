@@ -71,10 +71,10 @@ There are no `disclaimer` or `withheld-message` slots.
 
 ## `<tolka-voice>`
 
-A microphone-input component using the browser's **Web Speech API** — it captures and transcribes speech entirely in-browser and emits the transcript as text. It does **not** call the Tolka translation API itself, hold an API key, or know about `target-lang`/`domain`/`mode` — you wire its output into `<tolka-translate>` or your own `translate()`/`safeTranslate()` call.
+A microphone-input component using the browser's **Web Speech API** — it captures speech through the browser and emits the transcript as text. It does **not** call the Tolka translation API itself, hold an API key, or know about `target-lang`/`domain`/`mode` — you wire its output into `<tolka-translate>` or your own `translate()`/`safeTranslate()` call.
 
-:::note[No audio leaves the browser]
-Speech recognition runs entirely client-side via the browser's Web Speech API. No audio is sent to Tolka servers. Where the API is unavailable (Firefox, non-HTTPS contexts), the microphone button renders disabled.
+:::note[Speech recognition is done by your browser]
+Speech recognition is performed by your browser's speech service. Depending on the browser, audio may be sent to the browser vendor. Tolka does not receive audio. Check your browser's terms before using voice input with patient speech. Read-aloud likewise passes the translated text to the browser's speech engine. Where the API is unavailable (Firefox, non-HTTPS contexts), the microphone button renders disabled.
 :::
 
 ### Embedded in `<tolka-translate>`

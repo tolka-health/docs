@@ -7,59 +7,57 @@ sidebar:
 
 import { Aside } from '@astrojs/starlight/components';
 
-This page is for DPOs, legal teams, and procurement officers evaluating Tolka. Information is provided inline, without an email gate.
+This page is for DPOs, legal teams, and procurement officers evaluating Tolka. Information is provided inline.
 
 ---
 
 ## GDPR
 
-**Role:** Tolka acts as a **data processor** under Article 28. Your organisation is the data controller.
+**Role:** For customer translation content, Tolka's intended role is processor on your organisation's instructions, to be confirmed in the Data Processing Agreement. For its own website and account data, Tolka acts as controller.
 
 **Lawful basis for processing:** Healthcare providers typically rely on Article 9(2)(h) (healthcare purposes) or Article 6(1)(c) (legal obligation) for processing patient communications. Tolka does not establish your lawful basis — that is your organisation's responsibility.
 
-**Data minimisation:** Tolka's translation pipeline processes text in memory and does not write it to its database, logs or caches. The exception is the optional clinician-flag feature (see [Privacy Architecture](/concepts/privacy-architecture/)).
+**How the translation pipeline handles text:** Tolka's translation pipeline processes text in memory and does not write it to its database, logs or caches. The exception is the optional clinician-flag feature (see [Privacy Architecture](/concepts/privacy-architecture/)).
 
-**Data subject rights:** Tolka holds account metadata, API key records, usage counts and a request audit log for your organisation, and, if you use clinician flags, the text submitted with them. For requests about access or erasure, contact [legal@tolka.health](mailto:legal@tolka.health). The process and timeline are not yet defined.
+**Data subject rights:** Tolka holds account metadata, API key records, usage counts and a request audit log for your organisation, and, if you use clinician flags, the text submitted with them. If you are a patient, contact the healthcare provider that treated you. Customer organisations can send access or erasure instructions to [legal@tolka.health](mailto:legal@tolka.health); the process and timeline are set out in the DPA.
 
-**International transfers:** The API and Console run in Frankfurt. Free-text translation providers and their transfer terms have not yet been established, and free-text translation is currently off.
+**International transfers:** The API and Console run on Fly.io in Frankfurt. Hosting in the EU does not by itself decide whether personal data is transferred outside the EEA, and we have not completed that assessment for our infrastructure providers. Free-text translation providers and their transfer terms have not been established, and free-text translation is switched off as of October 2026.
 
-**DPA:** A Data Processing Agreement can be requested from [legal@tolka.health](mailto:legal@tolka.health?subject=DPA%20request).
+**DPA:** Customers who intend to process personal data through Tolka need a Data Processing Agreement in place first. Contact [legal@tolka.health](mailto:legal@tolka.health?subject=DPA) to start that process.
 
 ---
 
 ## Normen (Norwegian healthcare security standard)
 
-Tolka is preparing for Normen. Current status:
+Tolka has not yet been assessed against Normen and holds no Normen declaration or certification. Current status:
 
 | Area | Status |
 |------|--------|
 | Hosting location | API and Console in Frankfurt; provider residency not yet established |
 | Access logging | Request audit log (request ID, organisation, endpoint, status; no text) |
-| Encryption in transit | HTTPS enforced |
-| Encryption at rest | Provided by our database host; not yet verified by us |
-| Security assessment | In progress |
-| Formal Normen registration | In progress; no date committed |
+| Encryption in transit | API: HTTPS only (HTTP redirected) |
+| Encryption at rest | Not verified by Tolka |
 
-Contact [compliance@tolka.health](mailto:compliance@tolka.health) about the current status.
+Questions can be sent to [compliance@tolka.health](mailto:compliance@tolka.health).
 
 ---
 
 ## MDR (Medical Device Regulation)
 
-Tolka has not yet completed a regulatory classification and makes no statement about whether it is a medical device. Integrators in regulated contexts should obtain their own independent legal review. For Tolka's current position, contact [compliance@tolka.health](mailto:compliance@tolka.health?subject=MDR%20question).
+The regulatory status of Tolka under the EU Medical Device Regulation has not been determined, and this page makes no statement about it. Organisations deploying Tolka in a clinical workflow should take their own regulatory advice.
 
 ---
 
 ## EU AI Act
 
-Tolka has not completed an EU AI Act assessment and does not claim a risk tier. Design measures in place today:
+Tolka has not determined its classification under the EU AI Act and does not claim a risk tier. Design measures in place today. These checks are heuristics and do not detect every error:
 
 - **Back-translation check:** for free-text translations, where enabled, the result is translated back and compared with the original.
 - **Multi-signal risk scoring:** several signals feed the risk level on a response.
 - **Critical overrides:** changes to negations, numbers and medical keywords raise the risk level.
 - **Human oversight:** the API lets integrators require clinician acknowledgment for high-risk translations. Tolka is not designed to be used as a fully autonomous clinical translation system.
 
-For the current documentation, contact [compliance@tolka.health](mailto:compliance@tolka.health?subject=AI%20Act%20documentation).
+Questions about AI Act status can be sent to [compliance@tolka.health](mailto:compliance@tolka.health).
 
 ---
 
@@ -69,15 +67,15 @@ For the current documentation, contact [compliance@tolka.health](mailto:complian
 |---------|----------------|
 | Transport security | HTTPS enforced |
 | Authentication | API key with Bearer token; key rotation supported |
-| Rate limiting | Per-key and per-IP limits |
-| Audit logging | Request audit log; no text in logs |
+| Rate limiting | Per-key rate limits |
+| Audit logging | Request audit log. Request text is not written to application logs by design (covered by an automated test) |
 | Hosting | API and Console on Fly.io in Frankfurt |
 
 ---
 
 ## Documents
 
-No compliance documents are published on this site yet. A DPA can be requested from [legal@tolka.health](mailto:legal@tolka.health?subject=DPA%20request). For other documentation, contact [compliance@tolka.health](mailto:compliance@tolka.health).
+No compliance documents are published on this site yet. For questions, contact [compliance@tolka.health](mailto:compliance@tolka.health).
 
 ---
 

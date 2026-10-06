@@ -146,7 +146,7 @@ If a clinician re-issues the same request with `mode: "standard"` after a refusa
 | `latency_ms` | End-to-end pipeline latency in milliseconds (includes forward translation, back-translation, and scoring) |
 | `model` | Stable Tolka model identifier (e.g. `tolka-v1`). Use for debugging and regression tracking; the underlying language model is versioned and abstracted by this identifier. |
 | `request_id` | Unique request identifier. Include this in support tickets. |
-| `data_residency` | Coarse region assertion for where this request's provider leg was processed: `"eu"`, `"us"`, or `"unknown"`. Currently `"unknown"` for every LLM-backed request — Tolka hasn't yet confirmed EU-only routing with its current model providers. Only phrase-library hits (which never leave Tolka's own EU infrastructure) report `"eu"`. |
+| `data_residency` | Coarse region assertion for where this request's provider leg was processed: `"eu"`, `"us"`, or `"unknown"`. Currently `"unknown"` for every LLM-backed request — Tolka hasn't yet confirmed EU-only routing with its current model providers. Only phrase-library hits (which are not sent to any translation provider) report `"eu"`. |
 
 ---
 

@@ -11,7 +11,7 @@ import { Aside } from '@astrojs/starlight/components';
 `GET /v1/admin/phrases` gives read-only visibility into the phrase library — the set of pre-written translations that bypass the LLM pipeline on an exact match; clinical review of the library is not yet complete (see [Translation Pipeline](/concepts/translation-pipeline/)). This endpoint isn't wrapped by `TolkaClient` — call it directly.
 
 :::note[Read-only, Tolka-authored content]
-There's no create/update/delete here — phrase library content is authored and validated by Tolka, never by your integration, and it's never derived from patient input. This endpoint exists purely so you can see what's covered and how recently it was reviewed.
+There's no create/update/delete here — phrase library content is authored by Tolka, never by your integration, and it's never derived from patient input. Clinical review of the library is not yet complete. This endpoint exists so you can see what's covered.
 :::
 
 ---
@@ -62,8 +62,8 @@ The counts and dates above are placeholders, not real coverage numbers — call 
 | `phrases[].id` | Stable phrase identifier |
 | `phrases[].domain` | Which clinical domain this phrase belongs to |
 | `phrases[].languages` | Which languages have a non-empty translation for this phrase |
-| `phrases[].validated_by` | Who signed off on this phrase's translations |
-| `phrases[].validated_date` | When it was last validated |
+| `phrases[].validated_by` | Provenance field; unverified, do not rely on it as a sign-off |
+| `phrases[].validated_date` | Provenance field; unverified |
 
 ---
 

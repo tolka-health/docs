@@ -7,7 +7,7 @@ sidebar:
 
 import { Aside } from '@astrojs/starlight/components';
 
-The Hosted Console is a browser-based translation UI at `console.tolka.health/<org-slug>` — a way for a clinician to start translating with an API key, without writing any integration code. It's the right fit for small clinics or a pilot rollout; larger integrators typically build on the [Web SDK](/sdks/web/installation/) or the API directly instead.
+The Hosted Console is a browser-based translation UI at `console.tolka.health/<org-slug>` — a way for a clinician to start translating with an API key, without writing any integration code. It is intended for evaluation and pilot use; larger integrators typically build on the [Web SDK](/sdks/web/installation/) or the API directly instead.
 
 ---
 
@@ -25,8 +25,7 @@ If you're deciding whether to hand the Console to a clinician, these are the des
 
 - **No private endpoints, no server-side business logic.** The Console is built exclusively on the same public API surface (`/v1/medical/*`, `/v1/admin/*`) that any integrator using the SDK or raw HTTP calls uses. If a Console feature needed something the public API doesn't offer, that capability would have to land on the API first — the Console can't quietly grow its own backend shortcut.
 - **No server process in the deployed image at all.** The Console ships as static files served by `nginx`, with zero Node.js runtime in production. There is no server-side code path where business logic — or a bug — could accumulate outside the API.
-- **Credentials are designed not to touch persistent storage.** The API key or token you sign in with lives only in memory for that browser tab — never `localStorage`, `sessionStorage`, a URL parameter, or a cookie. Closing the tab or reloading requires signing in again. A live (`sk_live_`) key is rejected outright at sign-in, not merely warned about, because the Console is a shared public origin rather than a host your org already controls.
-- **Designed not to persist translated text in the browser.** Beyond the in-memory session, the Console is built not to store translated patient text in the browser or send it in analytics events. We have not yet independently verified browser-side storage.
+- **API key held in memory.** The Console is built to hold your API key in memory only, not in `localStorage` or `sessionStorage` (covered by an automated test). A live (`sk_live_`) key is rejected at sign-in. We have not independently verified other browser storage mechanisms or how browsers handle translated text. Do not rely on this page for your own risk assessment.
 
 ---
 
