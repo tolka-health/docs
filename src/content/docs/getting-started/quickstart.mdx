@@ -10,11 +10,13 @@ import { Tabs, TabItem, Aside, Steps } from '@astrojs/starlight/components';
 Get a working medical translation in **5 minutes**.
 
 :::note[You'll need a test API key]
-Tolka is in private launch. Request a test key (`sk_test_...`) via the early-access form at **[tolka.health](https://tolka.health)** — keys are issued the same day during business hours (Europe/Oslo).
+Tolka is in private launch. To request a test key (`sk_test_...`), use the **[demo request form](https://tolka.health/pilot#book-demo)**. We reply by email.
 
 Throughout this guide, replace `sk_test_YOUR_KEY_HERE` with your real key.
 
-Test keys are rate-limited (see [Rate limits](/getting-started/rate-limits/)) and process the same translation pipeline as production keys — no behavioral differences.
+Test keys are rate-limited (see [Rate limits](/getting-started/rate-limits/)) and use the same API as production keys.
+
+Free-text translation is currently switched off for all accounts. The examples below return a translation only when the text exactly matches a pre-written phrase; otherwise you get a `templates_only` refusal (see [Understanding the Response](/getting-started/understanding-the-response/#reason_class--string-present-only-on-refusals).)
 :::
 
 ## Choose your path

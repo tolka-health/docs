@@ -7,10 +7,10 @@ sidebar:
 
 import { Steps, Tabs, TabItem, Aside } from '@astrojs/starlight/components';
 
-Tolka is a drop-in replacement for Google Cloud Translation in medical contexts. This guide shows the exact code changes needed and explains the richer response you get in return.
+This guide shows how to move from Google Cloud Translation to Tolka. It shows the exact code changes needed and explains the richer response you get in return.
 
 :::caution[Why this matters]
-Google Translate is not medically safe for clinical use. It has no back-translation verification, no confidence scoring, no safety checks, and no awareness of clinical domain. A single negation flip ("no pain" → "pain") is undetectable with Google Translate. With Tolka, it triggers `risk: "critical"` and `flags: ["negation_flip"]` automatically.
+A single negation flip ("no pain" → "pain") can go unnoticed in a plain translation. Tolka's checks are designed to flag such changes with `risk: "critical"` and `flags: ["negation_flip"]`, but may not catch every one. Tolka does not replace a qualified interpreter.
 :::
 
 ---

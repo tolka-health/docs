@@ -19,7 +19,7 @@ Authorization: Bearer sk_test_your_key_here
 
 | Prefix | Name | Rate limit | Use case |
 |--------|------|------------|----------|
-| `sk_test_...` | Test key | 60 req/min (Starter tier) | Development and integration testing. Request via the early-access form at [tolka.health](https://tolka.health). |
+| `sk_test_...` | Test key | 60 req/min (Starter tier) | Development and integration testing. Available on request through the [demo request form](https://tolka.health/pilot#book-demo). |
 | `sk_live_...` | Production key | Per-plan limit | Production deployments only. Issued after a pilot agreement. |
 
 :::danger[Never commit keys to source control]
@@ -30,9 +30,9 @@ Always load keys from environment variables. Use `.env` files locally and your C
 
 ## Get a test key
 
-1. **Sign up at [docs.tolka.health/signup](https://docs.tolka.health/signup)** — email and organisation name only, no credit card required.
-2. A `sk_test_` key is provisioned immediately.
-3. Manage keys via the [Admin Keys API](/api-reference/admin-keys/) — list, rotate, revoke. A self-service dashboard at `dashboard.tolka.health` is on the Q3 roadmap; until then the API is the canonical interface.
+1. **Send a request through the [demo request form](https://tolka.health/pilot#book-demo)** with your work email and, optionally, your organisation.
+2. We reply by email. There is no self-service signup yet, and keys are issued by us after that reply.
+3. Manage keys via the [Admin Keys API](/api-reference/admin-keys/) — list, rotate, revoke. A self-service dashboard is planned; until then the API is the canonical interface.
 
 ---
 

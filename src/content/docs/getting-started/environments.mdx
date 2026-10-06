@@ -33,7 +33,7 @@ Test and production responses go through the same translation pipeline — only 
 
 Language codes follow **ISO 639-1**. Pass them in `source_language` and `target_language` — any of the six is valid in either position, as long as the two differ.
 
-Norwegian↔X is the most heavily validated direction for each language (the golden-fixture regression suite runs `en↔no`, `no↔ar`, `no↔pl`, `no↔so`, and `no↔uk`). Cross-pairs that don't route through Norwegian (e.g. `ar↔pl`) go through the same pipeline but have less production validation behind them — treat `risk` and `confidence` as even more load-bearing for those pairs.
+Norwegian↔X is the direction with the most test coverage for each language (the golden-fixture regression suite runs `en↔no`, `no↔ar`, `no↔pl`, `no↔so`, and `no↔uk`). Cross-pairs that don't route through Norwegian (e.g. `ar↔pl`) go through the same pipeline but have less testing behind them — treat `risk` and `confidence` as even more load-bearing for those pairs.
 
 :::caution[Low-resource language pairs]
 Somali (`so`) has an adjusted, lower confidence baseline in both directions against every other supported language, reflecting more limited LLM training data for that pair. Always rely on `risk` as your primary UI signal rather than the raw `confidence` float.

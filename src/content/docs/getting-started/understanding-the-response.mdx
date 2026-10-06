@@ -47,7 +47,7 @@ An independent retranslation from the target language back to the source languag
 `back_translation` is `null` in two different situations that mean opposite things for trust:
 
 - **Back-translation failed** (`verified: false`, `confidence: 0`, `risk: "unknown"`) — the verification step itself couldn't run. Treat the translation with the same caution as a low-confidence result.
-- **Phrase-library exact match** (`verified: true`, `confidence: 1.0`, `risk: "low"`) — the text matched a pre-validated glossary phrase and bypassed the LLM pipeline entirely, so there was nothing to back-translate. This is the highest-trust case, not a degraded one.
+- **Phrase-library exact match** (`verified: true`, `confidence: 1.0`, `risk: "low"`) — the text matched a pre-written glossary phrase and bypassed the LLM pipeline, so there was nothing to back-translate. It is not a degraded case. Clinical review of the phrase library is not yet complete.
 
 **How to use it in your UI:**
 - You can optionally display `back_translation` alongside `translation` so the clinician can visually compare, when it's present.
@@ -108,7 +108,7 @@ Multiple flags can be present simultaneously.
 
 ## `verified` — boolean
 
-`true` if back-translation verification completed successfully, **or** if the text was served from the phrase library (which is pre-validated and doesn't need back-translation). `false` if verification could not be completed, or if this is a `/safe-translate` refusal — in both cases, treat the translation with caution regardless of `risk`.
+`true` if back-translation verification completed successfully, **or** if the text was served from the phrase library (pre-written, so it is not back-translated). `false` if verification could not be completed, or if this is a `/safe-translate` refusal — in both cases, treat the translation with caution regardless of `risk`.
 
 ---
 
@@ -129,7 +129,7 @@ Alternatives offered in place of the withheld translation. Always includes at le
 
 | `type` | When present | `suggested_phrase` |
 |--------|--------------|---------------------|
-| `"phrase_suggestion"` | Only when the near-miss template matcher found a sufficiently similar pre-validated glossary phrase | Present — the suggested replacement text |
+| `"phrase_suggestion"` | Only when the near-miss template matcher found a sufficiently similar pre-written glossary phrase | Present — the suggested replacement text |
 | `"human_interpreter_dispatch"` | Always | Absent (this is a static label today — no live dispatch integration exists yet) |
 | `"clinician_acknowledgment"` | Always | Absent |
 
@@ -146,7 +146,7 @@ If a clinician re-issues the same request with `mode: "standard"` after a refusa
 | `latency_ms` | End-to-end pipeline latency in milliseconds (includes forward translation, back-translation, and scoring) |
 | `model` | Stable Tolka model identifier (e.g. `tolka-v1`). Use for debugging and regression tracking; the underlying language model is versioned and abstracted by this identifier. |
 | `request_id` | Unique request identifier. Include this in support tickets. |
-| `data_residency` | Coarse region assertion for where this request's provider leg was processed: `"eu"`, `"us"`, or `"unknown"`. Currently `"unknown"` for every LLM-backed request — Tolka hasn't yet confirmed EU-only routing with its current model providers. Only phrase-library hits (which never leave Tolka's own EU infrastructure) report `"eu"`. |
+| `data_residency` | Coarse region assertion for where this request's provider leg was processed: `"eu"`, `"us"`, or `"unknown"`. Currently `"unknown"` for every LLM-backed request — Tolka hasn't yet confirmed EU-only routing with its current model providers. Only phrase-library hits (which are not sent to any translation provider) report `"eu"`. |
 
 ---
 

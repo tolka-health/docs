@@ -8,6 +8,10 @@ sidebar:
 
 import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
 
+:::caution[Free-text translation is currently switched off]
+As of October 2026, free-text translation is off for all accounts. Only text that exactly matches a pre-written phrase in the phrase library returns a translation. Any other text returns a `200` refusal with `translation: null` and `reason_class: "templates_only"`, and an interpreter is recommended. See [Understanding the Response](/getting-started/understanding-the-response/#reason_class--string-present-only-on-refusals).
+:::
+
 `POST /v1/medical/safe-translate` behaves identically to `/translate` but **automatically withholds the translation** when risk exceeds the safe threshold (`"high"` or `"critical"`).
 
 For the full schema, see the [Interactive Reference](/api-reference/).

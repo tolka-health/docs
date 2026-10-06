@@ -10,8 +10,8 @@ import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
 
 `GET /v1/admin/audit-log` exports your org's request audit trail — for SIEM ingestion, compliance review, or your own retention needs. This endpoint isn't wrapped by `TolkaClient` — call it directly.
 
-:::note[PHI-free by construction]
-Every field below is metadata about a request, never its content. No translated text, no source text, nothing patient-identifiable — the same guarantee that applies to Tolka's own server-side logging applies here.
+:::note[No request or response text]
+The audit log does not store request or response text. Fields below are metadata about a request.
 :::
 
 :::caution[503 if audit logging isn't configured]
