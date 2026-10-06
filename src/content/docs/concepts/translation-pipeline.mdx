@@ -61,7 +61,7 @@ Certain checks can independently trigger safety `flags`:
 | `numerical_change` | A number was altered (dosages, frequencies, ages) |
 | `keyword_mismatch` | A clinically significant term was dropped or changed |
 
-These flags always produce `risk: "critical"` regardless of the overall confidence score. They are deterministic, not probabilistic.
+These flags set `risk: "critical"` regardless of the overall confidence score. They are rule-based, not probabilistic.
 
 ---
 

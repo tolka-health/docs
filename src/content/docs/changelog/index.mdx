@@ -14,6 +14,12 @@ Subscribe via [RSS feed](/changelog.xml) to get notified of new releases.
 
 ---
 
+## Correction — 2026-10-06
+
+We corrected earlier wording about data residency and storage in these docs. The API and Console are hosted in Frankfurt; we do not claim that all processing stays in the EU.
+
+---
+
 ## [1.0.0] — 2026-04-11
 
 Initial public release of the Tolka medical translation API and Web SDK.
@@ -45,7 +51,7 @@ Initial public release of the Tolka medical translation API and Web SDK.
 - `TolkaApiError` with typed `errorCode`, `status`, `suggestion`, and `requestId`
 
 #### Infrastructure
-- EU-only deployment, Frankfurt region (data residency commitment)
+- API and Console hosted in Frankfurt (EU)
 - GitHub Actions CI: build, link check, code example validation
 - OpenAPI spec sync from API repo on tagged releases
 
@@ -57,6 +63,6 @@ Initial public release of the Tolka medical translation API and Web SDK.
 - Android SDK (Kotlin + Jetpack Compose)
 - iOS SDK (Swift + SwiftUI)
 - Offline mode for `emergency` domain (Emergency plan)
-- Developer self-service signup at `docs.tolka.health/signup`
+- Developer self-service signup (not available yet; access requests currently go through the demo request form on tolka.health)
 - Batch translation endpoint `POST /v1/medical/translate/batch`
 

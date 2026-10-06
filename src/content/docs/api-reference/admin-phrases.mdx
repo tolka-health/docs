@@ -8,7 +8,7 @@ sidebar:
 
 import { Aside } from '@astrojs/starlight/components';
 
-`GET /v1/admin/phrases` gives read-only visibility into the phrase library — the set of pre-validated, human-reviewed translations that bypass the LLM pipeline entirely on an exact match (see [Translation Pipeline](/concepts/translation-pipeline/)). This endpoint isn't wrapped by `TolkaClient` — call it directly.
+`GET /v1/admin/phrases` gives read-only visibility into the phrase library — the set of pre-written translations that bypass the LLM pipeline on an exact match; clinical review of the library is not yet complete (see [Translation Pipeline](/concepts/translation-pipeline/)). This endpoint isn't wrapped by `TolkaClient` — call it directly.
 
 :::note[Read-only, Tolka-authored content]
 There's no create/update/delete here — phrase library content is authored and validated by Tolka, never by your integration, and it's never derived from patient input. This endpoint exists purely so you can see what's covered and how recently it was reviewed.
