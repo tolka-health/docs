@@ -9,7 +9,7 @@ export default defineConfig({
     starlight({
       title: '',
       description:
-        'Developer documentation for the Tolka medical translation API. Zero PHI storage · EU-only deployment · Back-translation verified.',
+        'Developer documentation for the Tolka medical translation API. The API runs in Frankfurt. Pre-written phrases, translation checks and interpreter signals.',
       logo: {
         src: './src/assets/tolka-logo.svg',
         replacesTitle: false,

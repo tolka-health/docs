@@ -86,7 +86,7 @@ const { usage } = await response.json();
 
 - **Rising `error_count` relative to `request_count`** — investigate malformed requests client-side; check the `fields` value on `invalid_request` responses.
 - **Declining `avg_confidence`** — a drop in mean confidence over time may indicate a provider change or a language/domain mismatch creeping into your integration.
-- **Rising `template_hit_count` share** — generally a good sign (faster, pre-validated responses), but a sudden jump could also mean your input text isn't varying the way you expect.
+- **Rising `template_hit_count` share** — generally a good sign (faster responses from pre-written phrases), but a sudden jump could also mean your input text isn't varying the way you expect.
 
 For risk-level, refusal-rate, and per-domain/per-language-pair breakdowns, see [Monitoring Quality](/guides/monitoring-quality/) — none of that is available from this endpoint; it has to come from your own logs of each response body.
 
