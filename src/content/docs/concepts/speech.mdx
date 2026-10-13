@@ -10,7 +10,7 @@ import { Aside } from '@astrojs/starlight/components';
 `POST /v1/medical/speak` turns a short text into mp3 audio so a patient can hear a translation read aloud.
 
 <Aside type="caution" title="Preview feature, off by default">
-Speech is a preview feature. It is off unless Tolka enables it for your environment, and it is not enabled for customer use today. When it is off, the route returns 503 `provider_unavailable`; fall back to the browser's own speech engine.
+Speech is a preview feature. It is off unless Tolka enables it for your environment; ask Tolka before relying on it. When it is off, the route returns 503 `provider_unavailable`; fall back to the browser's own speech engine.
 </Aside>
 
 ---
@@ -54,8 +54,8 @@ Speech requests are not retried by the SDK.
 
 ## Data handling
 
-- When speech is enabled, the text to be voiced is sent to a third-party text-to-speech provider (a sub-processor), which returns the audio. Tolka does not store or log the text or the audio.
-- The provider's retention terms and processing region for Tolka's account have not been confirmed. Until they are, do not send real patient information. During the pilot, use speech only for phrase-library text.
+- When speech is enabled, the text to be voiced is sent to a third-party text-to-speech provider that processes it on Tolka's behalf, which returns the audio. Tolka does not store or log the text or the audio.
+- The provider's retention terms and processing region for Tolka's account have not been confirmed. Until they are, do not send real patient information; use speech only for phrase-library text.
 - Audio is played in the Console without being saved by Tolka.
 - If the browser's speech engine is used as a fallback, some browsers send the text to the browser vendor.
 - Tolka does not receive recordings of your voice. Voice input uses the browser's Web Speech API, and depending on the browser the audio is processed by the browser vendor.
