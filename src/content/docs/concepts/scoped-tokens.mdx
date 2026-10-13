@@ -1,0 +1,71 @@
+---
+title: Scoped Tokens
+description: Short-lived, route-limited bearer tokens (tka_) for browser surfaces such as the Hosted Console and the web widget.
+sidebar:
+  order: 7
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+A scoped token is a short-lived bearer credential for browser surfaces. It is used instead of an API key wherever a long-lived key should not sit in a browser: the [Hosted Console](/concepts/hosted-console/), demos and the [web widget](/sdks/web/web-components/).
+
+```http
+Authorization: Bearer tka_...
+```
+
+---
+
+## How a token works
+
+- **Bound to one API key.** A token points at a single active API key in your organization. It carries no secret and no patient data. The API checks the bound key's status each time a token is used, so revoking the key stops tokens minted from it.
+- **Short-lived.** A token expires within 8 hours at most. Tokens are issued with a lifetime of 1 hour unless a different one is requested.
+- **Limited to a few routes.** A token can call only:
+
+| Route | Purpose |
+|-------|---------|
+| `POST /v1/medical/translate` | Translation |
+| `POST /v1/medical/safe-translate` | Safe-mode translation |
+| `POST /v1/medical/session` | Start a session |
+| `POST /v1/medical/speak` | [Speech](/concepts/speech/) |
+| `GET /v1/admin/templates` | Phrase templates for a language pair |
+| `GET /v1/admin/org/branding` | Organization branding and mode |
+
+Every other route returns **403 `forbidden`** with the message "This token cannot access this endpoint". Key management, usage and audit-log routes need an API key. See the [Error Catalog](/api-reference/errors/#forbidden--403).
+
+- **It spends your quota.** A token uses the bound key's organization rate limit and usage quota, and its requests are attributed to that organization.
+- **No individual revocation.** A single token cannot be revoked on its own. It stops working when it expires or when its bound API key is revoked. Use a dedicated key for token-based access so you can revoke it without touching your real integration.
+
+<Aside type="caution">
+Use tokens for demos and pilots. Treat a token like a password until it expires.
+</Aside>
+
+---
+
+## Getting a token
+
+Tokens are issued to your organization by Tolka on request. There is no public endpoint to mint them. [Contact support](/about/support/) with the organization and the API key the tokens should be bound to.
+
+---
+
+## Using a token
+
+In the Console, paste the token at sign-in. The Console checks it against the API before signing you in.
+
+In your own code, pass it through `getToken` so that it never has to appear in a DOM attribute:
+
+```typescript
+import { TolkaClient } from '@tolka/web-sdk';
+
+const tolka = new TolkaClient({
+  getToken: async () => myTokenSource(), // returns a tka_ token
+});
+```
+
+For the widget, see [Web Components](/sdks/web/web-components/#authenticating-with-a-token).
+
+---
+
+## What's next
+
+- [Authentication →](/getting-started/authentication/)
+- [Hosted Console →](/concepts/hosted-console/)
