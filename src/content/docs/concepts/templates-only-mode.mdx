@@ -23,7 +23,11 @@ The mode is set by Tolka for an organization. It cannot be switched on or off th
 | Clinician flags | `/v1/quality/flags` routes return 403 `templates_only`. |
 | Console | Free text is hidden. A phrase picker (domain filter, search, one-tap translate) is shown. |
 
-A refusal looks like this:
+For a phrase-library hit, `confidence: 1.0` and `verified: true` mean the text matched a library entry. They are not a measure of clinical accuracy, and the library's content is pending clinical review.
+
+The same refusal and speech limits also apply to every organization when free text is disabled for the environment.
+
+A refusal looks like this (abridged: the full response also carries `flags`, `alternatives`, `escalation_options` and `metadata`):
 
 ```json
 {
@@ -37,7 +41,7 @@ A refusal looks like this:
 }
 ```
 
-The response may include a `phrase_suggestion` escalation option when a similar phrase exists. The suggested phrase is library text, never derived from the input, and is never substituted automatically. Clients that switch on `reason_class` must handle `templates_only`. See [Handling Refusals](/guides/handling-refusals/).
+`escalation_options` always contains `human_interpreter_dispatch` (a recommendation: Tolka does not book interpreters) and never `clinician_acknowledgment`. It also contains `phrase_suggestion` when a similar phrase exists. The suggested phrase is library text, never derived from the input, and is never substituted automatically. Clients that switch on `reason_class` must handle `templates_only`. See [Handling Refusals](/guides/handling-refusals/).
 
 ---
 

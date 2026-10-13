@@ -34,7 +34,7 @@ A **different** case — back-translation failing outright, rather than a safety
 
 1. **Never show `null` to the user** — display a clear, human-readable explanation
 2. **Name the reason** using `reason_class` and `flags`, if present (e.g., "A negation may have been lost")
-3. **Offer the real `escalation_options`** the response gives you — don't invent your own; `human_interpreter_dispatch` and `clinician_acknowledgment` are always present, `phrase_suggestion` only when the near-miss matcher found something
+3. **Offer the real `escalation_options`** the response gives you — don't invent your own; `human_interpreter_dispatch` is always present, `clinician_acknowledgment` is present for safety refusals but never for `templates_only` refusals, and `phrase_suggestion` only when the near-miss matcher found something
 4. **Do not retry automatically** — the same text will produce the same result
 
 ### When `risk: "high"` (translation provided)

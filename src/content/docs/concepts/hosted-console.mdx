@@ -1,13 +1,15 @@
 ---
 title: Hosted Console
-description: Tolka's Hosted Console — a ready-to-use translation UI for clinicians who don't want to integrate the API themselves.
+description: Tolka's Hosted Console — a translation UI for evaluation and pilots, for teams who don't want to integrate the API themselves.
 sidebar:
   order: 6
 ---
 
 import { Aside } from '@astrojs/starlight/components';
 
-The Hosted Console is a browser-based translation UI at `console.tolka.health/<org-slug>` — a way for a clinician to start translating with an API key, without writing any integration code. It's the right fit for small clinics or a pilot rollout; larger integrators typically build on the [Web SDK](/sdks/web/installation/) or the API directly instead.
+The Hosted Console is a browser-based translation UI at `console.tolka.health/<org-slug>`, for evaluation and pilots. A clinician signs in with a scoped token or a test key, without writing integration code. Larger integrators typically build on the [Web SDK](/sdks/web/installation/) or the API directly instead.
+
+Tolka is in development and does not replace a qualified interpreter.
 
 ---
 
@@ -24,13 +26,13 @@ The Hosted Console is a browser-based translation UI at `console.tolka.health/<o
 - **Public API only.** The Console is built on the same public API surface (`/v1/medical/*`, `/v1/admin/*`) that any integrator uses. A Console feature that needs something the API does not offer has to land on the API first.
 - **Static files.** The Console ships as static files served by `nginx`, with no Node.js runtime in the deployed image.
 - **Credential in the tab only.** The credential you sign in with is kept in the browser tab's `sessionStorage` so a reload does not sign you out. It is cleared when you sign out or close the tab, and is never put in `localStorage`, a URL or a cookie. A live (`sk_live_`) key is rejected at sign-in because the Console is a shared public origin.
-- **No patient text in browser storage.** The Console does not write patient text or translations to browser storage. It remembers only non-patient selections for the tab (language pair, domain, speaker, mode, lookup tab) and your light/dark/system theme choice. No analytics event captures translation content.
+- **No patient text in browser storage.** The Console does not write patient text or translations to browser storage. It remembers only non-patient selections for the tab (language pair, domain, speaker, mode, lookup tab) and your light/dark/system theme choice (the theme is remembered across sessions in `localStorage`). The Console sends no analytics events, and none captures translation content.
 
 ---
 
 ## Features
 
-- **Translate and Playground.** Translate with clinical context, or open the Playground to inspect confidence, back-translation and risk flags.
+- **Translate and Playground.** Where free-text translation is enabled for your environment, translate with clinical context, or open the Playground to inspect confidence, back-translation and risk flags. Free-text translation is currently switched off in the hosted environment; pre-written phrases are available.
 - **Phrase picker** for [templates-only](/concepts/templates-only-mode/) organizations: free text is hidden and phrases are chosen from a list.
 - **Audio playback and a voice picker** where [speech](/concepts/speech/) is enabled. Speech is off by default, and the browser's speech engine is the fallback.
 - **Light, dark or system theme.**

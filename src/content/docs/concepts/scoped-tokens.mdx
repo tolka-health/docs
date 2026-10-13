@@ -17,7 +17,7 @@ Authorization: Bearer tka_...
 
 ## How a token works
 
-- **Bound to one API key.** A token points at a single active API key in your organization. It carries no secret and no patient data. On every request the API checks that the key is still active, so **revoking the key stops every token minted from it**.
+- **Bound to one API key.** A token points at a single active API key in your organization. It carries no secret and no patient data. The API checks the bound key's status each time a token is used, so revoking the key stops tokens minted from it.
 - **Short-lived.** A token expires within 8 hours at most. Tokens are issued with a lifetime of 1 hour unless a different one is requested.
 - **Limited to a few routes.** A token can call only:
 
@@ -32,7 +32,7 @@ Authorization: Bearer tka_...
 
 Every other route returns **403 `forbidden`** with the message "This token cannot access this endpoint". Key management, usage and audit-log routes need an API key. See the [Error Catalog](/api-reference/errors/#forbidden--403).
 
-- **It spends your quota.** A token uses the bound key's organization rate limit and processes text under that organization's terms.
+- **It spends your quota.** A token uses the bound key's organization rate limit and usage quota, and its requests are attributed to that organization.
 - **No individual revocation.** A single token cannot be revoked on its own. It stops working when it expires or when its bound API key is revoked. Use a dedicated key for token-based access so you can revoke it without touching your real integration.
 
 <Aside type="caution">

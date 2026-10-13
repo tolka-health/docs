@@ -40,7 +40,7 @@ The key in the `Authorization` header is malformed, revoked, or does not exist.
 
 ### `forbidden` — 403
 
-The request used a [scoped token](/concepts/scoped-tokens/) on a route tokens cannot call (message: "This token cannot access this endpoint"). API keys never receive this error.
+The request used a [scoped token](/concepts/scoped-tokens/) on a route tokens cannot call (message: "This token cannot access this endpoint"). API keys do not receive this error.
 
 **Fix:** Use an API key for key management, usage, audit-log and other admin routes.
 
@@ -132,9 +132,9 @@ The translation pipeline is temporarily unavailable — typically during a deplo
 
 ### `provider_unavailable` — 503
 
-The underlying LLM or embedding provider is unreachable or returned a fatal error.
+The underlying LLM or embedding provider is unreachable or returned a fatal error. [Speech](/concepts/speech/) also returns this code when speech is switched off or the language has no voice.
 
-**Fix:** Retry. If the error persists across multiple requests, check [the support page](/about/support/).
+**Fix:** Retry. For speech, do not retry: fall back to the browser's speech engine. If the error persists across multiple requests, check [the support page](/about/support/).
 
 ---
 

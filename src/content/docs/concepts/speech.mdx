@@ -9,8 +9,8 @@ import { Aside } from '@astrojs/starlight/components';
 
 `POST /v1/medical/speak` turns a short text into mp3 audio so a patient can hear a translation read aloud.
 
-<Aside type="caution" title="Off by default">
-Speech is **disabled unless it is enabled for your environment**. When it is off, the route returns 503 `provider_unavailable` and clients should fall back to the browser's own speech engine. Check with Tolka before relying on it.
+<Aside type="caution" title="Preview feature, off by default">
+Speech is a preview feature. It is off unless Tolka enables it for your environment, and it is not enabled for customer use today. When it is off, the route returns 503 `provider_unavailable`; fall back to the browser's own speech engine.
 </Aside>
 
 ---
@@ -20,8 +20,7 @@ Speech is **disabled unless it is enabled for your environment**. When it is off
 ```json
 {
   "text": "Har du smerter?",
-  "lang": "no",
-  "voice": "nb-NO-PernilleNeural"
+  "lang": "no"
 }
 ```
 
@@ -29,7 +28,7 @@ Speech is **disabled unless it is enabled for your environment**. When it is off
 |-------|----------|-------------|
 | `text` | yes | 1 to 500 characters. |
 | `lang` | yes | A supported language code (`no`, `ar`, `so`, `pl`, `uk`, `en`). |
-| `voice` | no | A voice id that belongs to `lang`. Defaults to the language's default voice. A voice that does not belong to `lang` returns 400. |
+| `voice` | no | A voice id that belongs to `lang`. Defaults to the language's default voice. A voice that does not belong to `lang`, or is unknown, returns 400. |
 
 The response is `audio/mpeg` with `Cache-Control: no-store`. Using the SDK:
 
@@ -37,7 +36,7 @@ The response is `audio/mpeg` with `Cache-Control: no-store`. Using the SDK:
 const audio: Blob = await tolka.speak({ text, lang: 'no' });
 ```
 
-Availability and quality vary by language and environment, and voices are not clinically validated.
+Availability and quality vary by language and environment. Voices have not been assessed for clinical use, and Somali voice quality in particular has not been assessed. A voice reading a translation aloud does not make the translation accurate or safe; a qualified interpreter remains the reference.
 
 ---
 
@@ -55,9 +54,9 @@ Speech requests are not retried by the SDK.
 
 ## Data handling
 
-- The text is sent to a third-party text-to-speech provider, which returns the audio. Tolka does not store or log the text or the audio.
-- The provider's own retention terms are not covered by this statement. **Do not send patient-identifying text.**
-- Audio is played from memory in the Console and is not persisted.
+- When speech is enabled, the text to be voiced is sent to a third-party text-to-speech provider (a sub-processor), which returns the audio. Tolka does not store or log the text or the audio.
+- The provider's retention terms and processing region for Tolka's account have not been confirmed. Until they are, do not send real patient information. During the pilot, use speech only for phrase-library text.
+- Audio is played in the Console without being saved by Tolka.
 - If the browser's speech engine is used as a fallback, some browsers send the text to the browser vendor.
 - Tolka does not receive recordings of your voice. Voice input uses the browser's Web Speech API, and depending on the browser the audio is processed by the browser vendor.
 
