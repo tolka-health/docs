@@ -25,11 +25,19 @@ A complete translation UI: text input, language selector, translated output, and
 </tolka-translate>
 ```
 
+### Authenticating with a token
+
+Instead of an `api-key` attribute you can set a `getToken` **property** (JavaScript only, never an attribute), so the credential does not appear in the DOM. It is called before every request, so a refreshed token is picked up without remounting. Use it with a [scoped token](/concepts/scoped-tokens/).
+
+```js
+document.querySelector('tolka-translate').getToken = async () => fetchMyToken();
+```
+
 ### Attributes
 
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `api-key` | string | — | Required. Your Tolka API key. |
+| `api-key` | string | — | Required unless the `getToken` property is set. Your Tolka API key. Wins if both are set. |
 | `base-url` | string | `"http://localhost:3000"` | API server URL. Set explicitly — the default is for local dev only. |
 | `source-lang` | `"no" \| "ar" \| "so" \| "pl" \| "uk" \| "en"` | `"no"` | Source language code. |
 | `target-lang` | `"no" \| "ar" \| "so" \| "pl" \| "uk" \| "en"` | `"ar"` | Target language code. |

@@ -1,0 +1,64 @@
+---
+title: Speech (Text-to-Speech)
+description: POST /v1/medical/speak — optional text-to-speech playback. Off by default.
+sidebar:
+  order: 8
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+`POST /v1/medical/speak` turns a short text into mp3 audio so a patient can hear a translation read aloud.
+
+<Aside type="caution" title="Off by default">
+Speech is **disabled unless it is enabled for your environment**. When it is off, the route returns 503 `provider_unavailable` and clients should fall back to the browser's own speech engine. Check with Tolka before relying on it.
+</Aside>
+
+---
+
+## Request
+
+```json
+{
+  "text": "Har du smerter?",
+  "lang": "no",
+  "voice": "nb-NO-PernilleNeural"
+}
+```
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `text` | yes | 1 to 500 characters. |
+| `lang` | yes | A supported language code (`no`, `ar`, `so`, `pl`, `uk`, `en`). |
+| `voice` | no | A voice id that belongs to `lang`. Defaults to the language's default voice. A voice that does not belong to `lang` returns 400. |
+
+The response is `audio/mpeg` with `Cache-Control: no-store`. Using the SDK:
+
+```typescript
+const audio: Blob = await tolka.speak({ text, lang: 'no' });
+```
+
+Availability and quality vary by language and environment, and voices are not clinically validated.
+
+---
+
+## Errors
+
+| Status | `error_code` | Meaning |
+|--------|--------------|---------|
+| 400 | `invalid_request` | Bad body, or `voice` does not belong to `lang`. |
+| 403 | `templates_only` | The organization is in [templates-only mode](/concepts/templates-only-mode/) (or free text is disabled for the environment) and the text is not a phrase-library entry. |
+| 503 | `provider_unavailable` | Speech is off, or the language has no voice. Fall back to on-device speech, except for texts refused with 403. |
+
+Speech requests are not retried by the SDK.
+
+---
+
+## Data handling
+
+- The text is sent to a third-party text-to-speech provider, which returns the audio. Tolka does not store or log the text or the audio.
+- The provider's own retention terms are not covered by this statement. **Do not send patient-identifying text.**
+- Audio is played from memory in the Console and is not persisted.
+- If the browser's speech engine is used as a fallback, some browsers send the text to the browser vendor.
+- Tolka does not receive recordings of your voice. Voice input uses the browser's Web Speech API, and depending on the browser the audio is processed by the browser vendor.
+
+See [Privacy Architecture](/concepts/privacy-architecture/) for the platform-level picture.

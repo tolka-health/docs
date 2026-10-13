@@ -1,0 +1,55 @@
+---
+title: Templates-Only Mode
+description: An organization-level mode in which only pre-written phrase-library translations are served and free text is refused.
+sidebar:
+  order: 9
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Templates-only mode restricts an organization to the **phrase library**: pre-written phrases with fixed translations. It is used for pilots that should not send free text to a model provider.
+
+The mode is set by Tolka for an organization. It cannot be switched on or off through the API, so a key holder cannot lift it. It is reported as `templates_only` (a boolean, always present) on `GET /v1/admin/org/branding`.
+
+---
+
+## What changes
+
+| Area | Behaviour |
+|------|-----------|
+| Phrase hit | Served from the library as for any organization (`confidence: 1.0`, `verified: true`, `metadata.model: "phrase-library"`). |
+| Free-text miss | Refused **before any model provider is called**, with HTTP 200 and `reason_class: "templates_only"`. |
+| Speech | `POST /v1/medical/speak` only voices phrase-library text. Anything else returns 403 `templates_only`. |
+| Clinician flags | `/v1/quality/flags` routes return 403 `templates_only`. |
+| Console | Free text is hidden. A phrase picker (domain filter, search, one-tap translate) is shown. |
+
+A refusal looks like this:
+
+```json
+{
+  "translation": null,
+  "back_translation": null,
+  "confidence": 0,
+  "risk": "unknown",
+  "verified": false,
+  "reason_class": "templates_only",
+  "suggestion": "Nothing was translated. This account only offers pre-written phrases. Choose a phrase from the list, or use a qualified interpreter."
+}
+```
+
+The response may include a `phrase_suggestion` escalation option when a similar phrase exists. The suggested phrase is library text, never derived from the input, and is never substituted automatically. Clients that switch on `reason_class` must handle `templates_only`. See [Handling Refusals](/guides/handling-refusals/).
+
+---
+
+## Building a picker
+
+Use `GET /v1/admin/templates?source=&target=&domain=` (SDK `getTemplates()`). Every template returned has text in both languages, so translating its text is a phrase-library hit. Check `getOrgBranding().templates_only` to decide whether to show a free-text box.
+
+---
+
+## Limits to know
+
+<Aside type="caution">
+- Phrases are pending clinical review. The Console labels them "Pending review".
+- Templates are one-way, clinician to patient, and suit information, instructions and yes/no questions. They do not replace a qualified interpreter, and Tolka does not book interpreters.
+</Aside>

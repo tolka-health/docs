@@ -22,6 +22,8 @@ Safe mode withholds a translation when `risk` is `"high"` or `"critical"`. This 
 | A clinical term was dropped from the translation | `keyword_mismatch` (severity varies) | `critical_flag` if critical severity |
 | Overall quality below the safe threshold | No flag — `confidence` too low | `low_confidence` |
 
+Organizations in [templates-only mode](/concepts/templates-only-mode/) get a separate refusal: free text that is not in the phrase library returns `reason_class: "templates_only"` with `translation: null`, before any model provider is called. Switch on `reason_class` exhaustively so this value is handled.
+
 A **different** case — back-translation failing outright, rather than a safety rule firing — produces `risk: "unknown"`, `verified: false`, and `translation` still populated (not `null`). That's not a refusal; see [Understanding the Response](/getting-started/understanding-the-response/#risk--enum).
 
 ---

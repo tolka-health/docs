@@ -115,6 +115,9 @@ export default defineConfig({
             { label: 'Safe Mode', slug: 'concepts/safe-mode' },
             { label: 'Sessions', slug: 'concepts/sessions' },
             { label: 'Hosted Console', slug: 'concepts/hosted-console' },
+            { label: 'Scoped Tokens', slug: 'concepts/scoped-tokens' },
+            { label: 'Speech (Text-to-Speech)', slug: 'concepts/speech' },
+            { label: 'Templates-Only Mode', slug: 'concepts/templates-only-mode' },
             {
               label: 'Privacy Architecture',
               slug: 'concepts/privacy-architecture',

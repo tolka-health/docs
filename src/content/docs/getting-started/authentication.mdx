@@ -28,6 +28,12 @@ Always load keys from environment variables. Use `.env` files locally and your C
 
 ---
 
+## Scoped tokens for browsers
+
+For browser surfaces, use a short-lived [scoped token](/concepts/scoped-tokens/) (`tka_...`) instead of putting a key in the page. It is bound to one of your keys, expires within 8 hours, and can only call translation, session, speech and two read-only routes.
+
+---
+
 ## Get a test key
 
 1. **Sign up at [docs.tolka.health/signup](https://docs.tolka.health/signup)** — email and organisation name only, no credit card required.
